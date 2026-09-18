@@ -13,15 +13,15 @@
 | TEST-TEN-OWN-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Tenancy/DivisionIsolationContractTest.php` | PASSED | Cross-division route tampering denied with `ERR_403_DIVISI` and audit |
 | TEST-TEN-OWN-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Tenancy/DivisionIsolationContractTest.php` | PASSED | Super-admin context switch scopes reads without ownership mutation |
 | Phase 5 reference data | `docs/03-FEATURE-CATALOG.md`, `docs/23-IMPLEMENTATION-SEQUENCE.md` | `tests/Feature/Reference/MasterReferenceDataContractTest.php` | PASSED | 6 tests / 26 assertions cover school search/write boundary, category division scoping, division/settings super-admin boundary, scoped user creation, and operator denial |
-| TEST-LET-IN-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Incoming feature test | NOT_STARTED | Phase 6 |
-| TEST-LET-IN-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Incoming duplicate advisory feature test | NOT_STARTED | Phase 6 |
+| TEST-LET-IN-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Incoming/IncomingLetterWorkflowContractTest.php` | PASSED | External number collision from different sender allowed; no incoming unique number rejection |
+| TEST-LET-IN-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Incoming/IncomingLetterWorkflowContractTest.php` | PASSED | Exact duplicate returns advisory without insert; confirmed duplicate inserts and audits |
 | TEST-LET-OUT-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Outgoing duplicate rejection test | NOT_STARTED | Phase 7 |
 | TEST-LET-OUT-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Outgoing cross-division/year allowance test | NOT_STARTED | Phase 7 |
 | TEST-LET-OUT-003 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Outgoing year recalculation test | NOT_STARTED | Phase 7 |
 | TEST-FILE-MISS-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Missing attachment detail/404 test | NOT_STARTED | Phase 8 |
 | TEST-FILE-MISS-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Missing attachment remediation test | NOT_STARTED | Phase 8 |
-| TEST-IDEM-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Idempotent replay test | NOT_STARTED | Phase 6 |
-| TEST-IDEM-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Idempotency conflict test | NOT_STARTED | Phase 6 |
+| TEST-IDEM-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Incoming/IncomingLetterWorkflowContractTest.php` | PASSED | Same incoming create payload/key replays identical JSON response with one letter and one audit |
+| TEST-IDEM-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Incoming/IncomingLetterWorkflowContractTest.php` | PASSED | Same key with altered payload returns `ERR_409_IDEMPOTENCY_CONFLICT` without insertion |
 | TEST-UI-MOB-001 to 006 | `examples/acceptance-scenarios.md` | Browser/responsive tests | NOT_STARTED | Phase 13 |
 | TEST-UI-DSK-001 | `examples/acceptance-scenarios.md` | Desktop grid browser test | NOT_STARTED | Phase 13 |
 | TEST-PG-001 | `examples/acceptance-scenarios.md` | Public piagam claim feature/browser test | NOT_STARTED | Phase 9 |

@@ -123,3 +123,19 @@
 **Verification note:** An attempted parallel run of focused and full PHPUnit suites produced MariaDB migration/table race errors because both processes shared `sisurat_test`. No application code was changed for that environmental race; verification was repeated sequentially from a fresh test schema.
 
 **Phase 5 verdict:** VERIFIED.
+
+## Phase 6 - Incoming Letters
+
+**Date:** 2026-09-18
+
+| Command / Check | Result |
+| --- | --- |
+| `php artisan test tests/Feature/Incoming/IncomingLetterWorkflowContractTest.php` red (create/idempotency) | PASS: 4 tests failed with expected 405 before `POST /api/v1/surat-masuk` and idempotency existed |
+| `php artisan test tests/Feature/Incoming/IncomingLetterWorkflowContractTest.php` green (create/idempotency) | PASS: 4 tests, 32 assertions |
+| `php artisan test tests/Feature/Incoming/IncomingLetterWorkflowContractTest.php` red (update/delete/restore) | PASS: 2 new lifecycle tests failed with expected 405 before `PUT`, `DELETE`, and restore routes existed |
+| `php artisan test tests/Feature/Incoming/IncomingLetterWorkflowContractTest.php` green (full incoming workflow) | PASS: 6 tests, 50 assertions |
+| `php artisan test` | PASS: 36 tests, 206 assertions |
+| `vendor\bin\pint --test` | PASS after Pint formatting |
+| `php artisan route:list --path=api/v1/surat-masuk` | PASS: list, create, show, update, delete, and restore routes registered |
+
+**Phase 6 verdict:** VERIFIED for incoming-letter metadata lifecycle, duplicate advisory, RBAC, division ownership, soft delete/restore, and server-side idempotency. Attachment upload/storage is intentionally carried by Phase 8.

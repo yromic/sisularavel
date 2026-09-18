@@ -60,6 +60,26 @@ class AuditLogger
     }
 
     /**
+     * @param  array<string, mixed>  $newValues
+     */
+    public function incomingLetterEvent(string $eventCode, User $actor, IncomingLetter $letter, string $description, array $newValues = []): void
+    {
+        AuditLog::query()->create([
+            'user_id' => $actor->id,
+            'username' => $actor->username,
+            'role' => $actor->role,
+            'division_id' => $letter->division_id,
+            'event_code' => $eventCode,
+            'auditable_type' => IncomingLetter::class,
+            'auditable_id' => $letter->id,
+            'new_values' => $newValues,
+            'ip_address' => request()?->ip() ?? '127.0.0.1',
+            'user_agent' => request()?->userAgent(),
+            'description' => $description,
+        ]);
+    }
+
+    /**
      * @param  array<string, mixed>  $values
      * @return array<string, mixed>
      */

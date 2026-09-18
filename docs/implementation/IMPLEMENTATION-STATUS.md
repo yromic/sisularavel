@@ -8,8 +8,8 @@
 | Phase 3 - Authentication and Session Infrastructure | VERIFIED | 4 | 9 auth tests passed | Login/logout, rate limit, reset, activation, and password gate verified | `5fae78d` |
 | Phase 4 - RBAC and Division Isolation Engine | VERIFIED | 4 | 5 tenancy tests passed | Division-scoped listing, cross-division denial, super-admin context switching, inactive-account gate verified | `01cf881` |
 | Phase 5 - Master and Reference Data | VERIFIED | 4 | 6 reference tests passed | School search/management, division categories, division status, settings, and scoped user creation verified | Committed |
-| Phase 6 - Incoming Letters | NOT_STARTED | 5 | 0 | Ready to start | - |
-| Phase 7 - Outgoing Letters | NOT_STARTED | 3 | 0 | Waiting on Phase 6 | - |
+| Phase 6 - Incoming Letters | VERIFIED | 5 | 6 incoming tests passed | CRUD lifecycle, validation, duplicate advisory, immutable ownership, RBAC, soft delete/restore, and idempotency verified | Phase 6 checkpoint pending |
+| Phase 7 - Outgoing Letters | NOT_STARTED | 3 | 0 | Ready to start | - |
 | Phase 8 - Private File Storage and Streaming | NOT_STARTED | 5 | 0 | Waiting on Phase 7 | - |
 | Phase 9 - Piagam and Public Claim Workflows | NOT_STARTED | 3 | 0 | Waiting on Phase 8 | - |
 | Phase 10 - Search, Analytics, and Reporting | NOT_STARTED | 5 | 0 | Waiting on Phase 9 | - |
@@ -20,4 +20,4 @@
 
 ## Resume Point
 
-Start Phase 6 Incoming Letters from the verified reference-data foundation.
+Start Phase 7 Outgoing Letters from the verified incoming-letter foundation.

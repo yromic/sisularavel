@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreIncomingLetterRequest;
 use App\Models\IncomingLetter;
 use App\Services\AuditLogger;
 use App\Services\DivisionContext;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class IncomingLetterController extends Controller
 {
@@ -50,6 +54,138 @@ class IncomingLetterController extends Controller
         ]);
     }
 
+    public function store(StoreIncomingLetterRequest $request, DivisionContext $divisionContext, AuditLogger $auditLogger): JsonResponse
+    {
+        $user = $request->user();
+        $divisionId = $divisionContext->activeDivisionId($request, $user);
+
+        if ($divisionId === null) {
+            throw new HttpResponseException(response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['division_id' => ['Super Admin harus memilih konteks divisi aktif.']],
+            ], 422));
+        }
+
+        $duplicateExists = IncomingLetter::query()
+            ->where('division_id', $divisionId)
+            ->where('letter_number', $request->string('nomor_surat')->toString())
+            ->where('origin_agency', $request->string('asal_surat')->toString())
+            ->whereDate('letter_date', $request->date('tanggal_surat')->toDateString())
+            ->exists();
+
+        if ($duplicateExists && ! $request->boolean('confirm_duplicate')) {
+            return response()->json([
+                'success' => true,
+                'code' => 'DUPLICATE_ADVISORY',
+                'duplicate_advisory' => true,
+                'message' => 'Peringatan: Surat dari instansi, nomor, dan tanggal yang sama sudah terdaftar. Apakah Anda yakin ini bukan duplikat?',
+            ]);
+        }
+
+        $letter = DB::transaction(function () use ($request, $divisionId, $user, $duplicateExists, $auditLogger): IncomingLetter {
+            $letter = IncomingLetter::query()->create([
+                'uuid' => (string) Str::uuid(),
+                'division_id' => $divisionId,
+                'letter_number' => $request->string('nomor_surat')->toString(),
+                'origin_agency' => $request->string('asal_surat')->toString(),
+                'letter_date' => $request->date('tanggal_surat')->toDateString(),
+                'received_date' => $request->date('tanggal_diterima')->toDateString(),
+                'subject' => $request->string('perihal')->toString(),
+                'created_by_user_id' => $user->id,
+            ]);
+
+            $auditLogger->incomingLetterEvent(
+                $duplicateExists ? 'LETTER_INCOMING_DUPLICATE_CONFIRMED' : 'LETTER_INCOMING_CREATED',
+                $user,
+                $letter,
+                $duplicateExists ? 'Incoming letter created after duplicate advisory confirmation.' : 'Incoming letter created.',
+                $letter->only(['division_id', 'letter_number', 'origin_agency', 'letter_date', 'received_date', 'subject'])
+            );
+
+            return $letter;
+        });
+
+        return response()->json([
+            'success' => true,
+            'duplicate_advisory' => $duplicateExists,
+            'data' => $this->resource($letter),
+        ], 201);
+    }
+
+    public function update(StoreIncomingLetterRequest $request, IncomingLetter $incomingLetter, AuditLogger $auditLogger): JsonResponse
+    {
+        if (! $this->canManage($request, $incomingLetter)) {
+            return $this->forbiddenDivisionResponse();
+        }
+
+        $letter = DB::transaction(function () use ($request, $incomingLetter, $auditLogger): IncomingLetter {
+            $incomingLetter->forceFill([
+                'letter_number' => $request->string('nomor_surat')->toString(),
+                'origin_agency' => $request->string('asal_surat')->toString(),
+                'letter_date' => $request->date('tanggal_surat')->toDateString(),
+                'received_date' => $request->date('tanggal_diterima')->toDateString(),
+                'subject' => $request->string('perihal')->toString(),
+                'updated_by_user_id' => $request->user()->id,
+            ])->save();
+
+            $auditLogger->incomingLetterEvent(
+                'LETTER_INCOMING_UPDATED',
+                $request->user(),
+                $incomingLetter,
+                'Incoming letter metadata updated.',
+                $incomingLetter->only(['division_id', 'letter_number', 'origin_agency', 'letter_date', 'received_date', 'subject'])
+            );
+
+            return $incomingLetter;
+        });
+
+        return response()->json(['success' => true, 'data' => $this->resource($letter)]);
+    }
+
+    public function destroy(Request $request, IncomingLetter $incomingLetter, AuditLogger $auditLogger): JsonResponse
+    {
+        if (! $this->canManage($request, $incomingLetter)) {
+            return $this->forbiddenDivisionResponse();
+        }
+
+        DB::transaction(function () use ($request, $incomingLetter, $auditLogger): void {
+            $incomingLetter->forceFill(['deleted_by_user_id' => $request->user()->id])->save();
+            $incomingLetter->delete();
+
+            $auditLogger->incomingLetterEvent(
+                'LETTER_INCOMING_DELETED',
+                $request->user(),
+                $incomingLetter,
+                'Incoming letter soft deleted.'
+            );
+        });
+
+        return response()->json(['success' => true, 'data' => ['id' => $incomingLetter->id, 'deleted' => true]]);
+    }
+
+    public function restore(Request $request, int $incomingLetter, AuditLogger $auditLogger): JsonResponse
+    {
+        $letter = IncomingLetter::withTrashed()->findOrFail($incomingLetter);
+
+        if (! $this->canManage($request, $letter)) {
+            return $this->forbiddenDivisionResponse();
+        }
+
+        DB::transaction(function () use ($request, $letter, $auditLogger): void {
+            $letter->restore();
+            $letter->forceFill(['deleted_by_user_id' => null])->save();
+
+            $auditLogger->incomingLetterEvent(
+                'LETTER_INCOMING_RESTORED',
+                $request->user(),
+                $letter,
+                'Incoming letter restored.'
+            );
+        });
+
+        return response()->json(['success' => true, 'data' => ['id' => $letter->id, 'deleted' => false]]);
+    }
+
     private function canView(Request $request, IncomingLetter $incomingLetter): bool
     {
         $user = $request->user();
@@ -59,5 +195,42 @@ class IncomingLetterController extends Controller
         }
 
         return $user->division_id === $incomingLetter->division_id;
+    }
+
+    private function canManage(Request $request, IncomingLetter $incomingLetter): bool
+    {
+        $user = $request->user();
+
+        if ($user->role === 'super_admin') {
+            return true;
+        }
+
+        return $user->role === 'division_admin' && $user->division_id === $incomingLetter->division_id;
+    }
+
+    private function forbiddenDivisionResponse(): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'code' => 'ERR_403_DIVISI',
+            'message' => 'Anda tidak memiliki izin untuk mengakses data divisi ini.',
+        ], 403);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function resource(IncomingLetter $letter): array
+    {
+        return [
+            'id' => $letter->id,
+            'uuid' => $letter->uuid,
+            'division_id' => $letter->division_id,
+            'nomor_surat' => $letter->letter_number,
+            'asal_surat' => $letter->origin_agency,
+            'tanggal_surat' => $letter->letter_date->toDateString(),
+            'tanggal_diterima' => $letter->received_date->toDateString(),
+            'perihal' => $letter->subject,
+        ];
     }
 }

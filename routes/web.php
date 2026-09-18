@@ -40,6 +40,10 @@ Route::get('/dashboard', function () {
 Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated::class])->group(function () {
     Route::post('/api/v1/session/switch-division', [DivisionContextController::class, 'switch']);
     Route::get('/api/v1/surat-masuk', [IncomingLetterController::class, 'index']);
+    Route::post('/api/v1/surat-masuk', [IncomingLetterController::class, 'store'])->middleware('idempotent');
+    Route::put('/api/v1/surat-masuk/{incomingLetter}', [IncomingLetterController::class, 'update']);
+    Route::delete('/api/v1/surat-masuk/{incomingLetter}', [IncomingLetterController::class, 'destroy']);
+    Route::post('/api/v1/surat-masuk/{incomingLetter}/restore', [IncomingLetterController::class, 'restore']);
     Route::get('/api/v1/surat-masuk/{incomingLetter}', [IncomingLetterController::class, 'show']);
     Route::post('/api/v1/schools', [SchoolController::class, 'store']);
     Route::post('/api/v1/reference/pickup-categories', [ReferenceCategoryController::class, 'storePickup']);
