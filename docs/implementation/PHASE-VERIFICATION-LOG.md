@@ -155,3 +155,20 @@
 **Debug note:** The year-boundary acceptance scenario uses 2027 dates while the current system date is 2026-09-18; tests freeze time to `2027-01-10` for those scenarios so `before_or_equal:today` validation remains enforced.
 
 **Phase 7 verdict:** VERIFIED for outgoing-letter metadata lifecycle, annual division uniqueness, `letter_year` derivation/recalculation, RBAC update boundary, and create idempotency. Attachment upload/storage is intentionally carried by Phase 8.
+
+## Phase 8 - Private File Storage and Streaming
+
+**Date:** 2026-09-18
+
+| Command / Check | Result |
+| --- | --- |
+| `php artisan test tests/Feature/Attachments/AttachmentStorageContractTest.php` red | PASS: 4 tests failed before file hashing, preview, remediation, and MIME validation existed |
+| `php artisan test tests/Feature/Attachments/AttachmentStorageContractTest.php` green | PASS: 4 tests, 23 assertions |
+| `php artisan route:list --path=api/v1/attachments` | PASS: `GET /api/v1/attachments/{uuid}/preview` registered |
+| Parallel verification attempt | Produced shared `sisurat_test` migration race; no application changes made for the race |
+| `php artisan migrate:fresh --env=testing` | PASS: clean test schema rebuilt |
+| `php artisan test tests/Feature/Attachments/AttachmentStorageContractTest.php` sequential verification | PASS: 4 tests, 23 assertions |
+| `php artisan test` sequential verification | PASS: 44 tests, 247 assertions |
+| `vendor\bin\pint --test` | PASS after Pint formatting |
+
+**Phase 8 verdict:** VERIFIED for private document disk storage, generated paths, MIME validation, authorized streaming, cross-division denial, missing legacy attachment 404, and missing-attachment remediation.

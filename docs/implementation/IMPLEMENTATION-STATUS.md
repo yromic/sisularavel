@@ -9,9 +9,9 @@
 | Phase 4 - RBAC and Division Isolation Engine | VERIFIED | 4 | 5 tenancy tests passed | Division-scoped listing, cross-division denial, super-admin context switching, inactive-account gate verified | `01cf881` |
 | Phase 5 - Master and Reference Data | VERIFIED | 4 | 6 reference tests passed | School search/management, division categories, division status, settings, and scoped user creation verified | Committed |
 | Phase 6 - Incoming Letters | VERIFIED | 5 | 6 incoming tests passed | CRUD lifecycle, validation, duplicate advisory, immutable ownership, RBAC, soft delete/restore, and idempotency verified | `91c69b1` |
-| Phase 7 - Outgoing Letters | VERIFIED | 3 | 4 outgoing tests passed | Annual division uniqueness, `letter_year` derivation/recalculation, idempotent create, and scoped routes verified | Phase 7 checkpoint pending |
-| Phase 8 - Private File Storage and Streaming | NOT_STARTED | 5 | 0 | Ready to start | - |
-| Phase 9 - Piagam and Public Claim Workflows | NOT_STARTED | 3 | 0 | Waiting on Phase 8 | - |
+| Phase 7 - Outgoing Letters | VERIFIED | 3 | 4 outgoing tests passed | Annual division uniqueness, `letter_year` derivation/recalculation, idempotent create, and scoped routes verified | `c007c9f` |
+| Phase 8 - Private File Storage and Streaming | VERIFIED | 5 | 4 attachment tests passed | Private disk upload, MIME rejection, authorized streaming, cross-division denial, missing attachment 404, and remediation verified | Phase 8 checkpoint pending |
+| Phase 9 - Piagam and Public Claim Workflows | NOT_STARTED | 3 | 0 | Ready to start | - |
 | Phase 10 - Search, Analytics, and Reporting | NOT_STARTED | 5 | 0 | Waiting on Phase 9 | - |
 | Phase 11 - Audit Logging and Operational Hardening | NOT_STARTED | 3 | 0 | Waiting on Phase 10 | - |
 | Phase 12 - Legacy Migration Tooling | NOT_STARTED | 3 | 0 | Waiting on Phase 11 | - |
@@ -20,4 +20,4 @@
 
 ## Resume Point
 
-Start Phase 8 Private File Storage and Streaming from the verified incoming/outgoing letter foundations.
+Start Phase 9 Piagam and Public Claim Workflows from the verified private-storage foundation.

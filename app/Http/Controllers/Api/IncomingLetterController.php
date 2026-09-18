@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreIncomingLetterRequest;
 use App\Models\IncomingLetter;
+use App\Services\AttachmentStorageService;
 use App\Services\AuditLogger;
 use App\Services\DivisionContext;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -54,7 +55,7 @@ class IncomingLetterController extends Controller
         ]);
     }
 
-    public function store(StoreIncomingLetterRequest $request, DivisionContext $divisionContext, AuditLogger $auditLogger): JsonResponse
+    public function store(StoreIncomingLetterRequest $request, DivisionContext $divisionContext, AuditLogger $auditLogger, AttachmentStorageService $attachments): JsonResponse
     {
         $user = $request->user();
         $divisionId = $divisionContext->activeDivisionId($request, $user);
@@ -82,28 +83,42 @@ class IncomingLetterController extends Controller
             ]);
         }
 
-        $letter = DB::transaction(function () use ($request, $divisionId, $user, $duplicateExists, $auditLogger): IncomingLetter {
-            $letter = IncomingLetter::query()->create([
-                'uuid' => (string) Str::uuid(),
-                'division_id' => $divisionId,
-                'letter_number' => $request->string('nomor_surat')->toString(),
-                'origin_agency' => $request->string('asal_surat')->toString(),
-                'letter_date' => $request->date('tanggal_surat')->toDateString(),
-                'received_date' => $request->date('tanggal_diterima')->toDateString(),
-                'subject' => $request->string('perihal')->toString(),
-                'created_by_user_id' => $user->id,
-            ]);
+        $storedPath = null;
 
-            $auditLogger->incomingLetterEvent(
-                $duplicateExists ? 'LETTER_INCOMING_DUPLICATE_CONFIRMED' : 'LETTER_INCOMING_CREATED',
-                $user,
-                $letter,
-                $duplicateExists ? 'Incoming letter created after duplicate advisory confirmation.' : 'Incoming letter created.',
-                $letter->only(['division_id', 'letter_number', 'origin_agency', 'letter_date', 'received_date', 'subject'])
-            );
+        try {
+            $letter = DB::transaction(function () use ($request, $divisionId, $user, $duplicateExists, $auditLogger, $attachments, &$storedPath): IncomingLetter {
+                $letter = IncomingLetter::query()->create([
+                    'uuid' => (string) Str::uuid(),
+                    'division_id' => $divisionId,
+                    'letter_number' => $request->string('nomor_surat')->toString(),
+                    'origin_agency' => $request->string('asal_surat')->toString(),
+                    'letter_date' => $request->date('tanggal_surat')->toDateString(),
+                    'received_date' => $request->date('tanggal_diterima')->toDateString(),
+                    'subject' => $request->string('perihal')->toString(),
+                    'created_by_user_id' => $user->id,
+                ]);
 
-            return $letter;
-        });
+                $auditLogger->incomingLetterEvent(
+                    $duplicateExists ? 'LETTER_INCOMING_DUPLICATE_CONFIRMED' : 'LETTER_INCOMING_CREATED',
+                    $user,
+                    $letter,
+                    $duplicateExists ? 'Incoming letter created after duplicate advisory confirmation.' : 'Incoming letter created.',
+                    $letter->only(['division_id', 'letter_number', 'origin_agency', 'letter_date', 'received_date', 'subject'])
+                );
+
+                if ($request->hasFile('attachment')) {
+                    $attachment = $attachments->storeForModel($request->file('attachment'), $letter, $letter->division, $user);
+                    $storedPath = $attachment->file_path;
+                    $letter->setRelation('attachments', collect([$attachment]));
+                }
+
+                return $letter;
+            });
+        } catch (\Throwable $exception) {
+            $attachments->deleteStored($storedPath);
+
+            throw $exception;
+        }
 
         return response()->json([
             'success' => true,
@@ -186,6 +201,33 @@ class IncomingLetterController extends Controller
         return response()->json(['success' => true, 'data' => ['id' => $letter->id, 'deleted' => false]]);
     }
 
+    public function remediateAttachment(Request $request, IncomingLetter $incomingLetter, AttachmentStorageService $attachments, AuditLogger $auditLogger): JsonResponse
+    {
+        if (! $this->canManage($request, $incomingLetter)) {
+            return $this->forbiddenDivisionResponse();
+        }
+
+        $validated = $request->validate([
+            'attachment' => [
+                'required',
+                'file',
+                'max:10240',
+                'mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png',
+            ],
+        ]);
+
+        $attachment = $incomingLetter->attachments()->firstOrFail();
+        $attachment = $attachments->remediate($attachment, $validated['attachment'], $incomingLetter->division, $request->user());
+
+        $auditLogger->attachmentEvent('ATTACHMENT_UPLOADED', $request->user(), $attachment, 'Missing incoming letter attachment remediated.', [
+            'file_path' => $attachment->file_path,
+            'original_name' => $attachment->original_name,
+            'mime_type' => $attachment->mime_type,
+        ]);
+
+        return response()->json(['success' => true, 'data' => $this->attachmentResource($attachment)]);
+    }
+
     private function canView(Request $request, IncomingLetter $incomingLetter): bool
     {
         $user = $request->user();
@@ -231,6 +273,24 @@ class IncomingLetterController extends Controller
             'tanggal_surat' => $letter->letter_date->toDateString(),
             'tanggal_diterima' => $letter->received_date->toDateString(),
             'perihal' => $letter->subject,
+            'attachment' => $letter->relationLoaded('attachments') && $letter->attachments->isNotEmpty()
+                ? $this->attachmentResource($letter->attachments->first())
+                : null,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function attachmentResource($attachment): array
+    {
+        return [
+            'uuid' => $attachment->uuid,
+            'original_name' => $attachment->original_name,
+            'mime_type' => $attachment->mime_type,
+            'file_size_bytes' => $attachment->file_size_bytes,
+            'is_missing' => $attachment->is_missing,
+            'migration_status' => $attachment->migration_status,
         ];
     }
 }

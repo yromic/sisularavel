@@ -23,6 +23,12 @@ class StoreIncomingLetterRequest extends FormRequest
             'tanggal_surat' => ['required', 'date_format:Y-m-d', 'before_or_equal:today'],
             'tanggal_diterima' => ['required', 'date_format:Y-m-d', 'after_or_equal:tanggal_surat'],
             'confirm_duplicate' => ['sometimes', 'boolean'],
+            'attachment' => [
+                'sometimes',
+                'file',
+                'max:10240',
+                'mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png',
+            ],
         ];
     }
 
@@ -49,6 +55,8 @@ class StoreIncomingLetterRequest extends FormRequest
             'perihal.max' => 'Perihal surat wajib diisi (maks. 1000 karakter).',
             'tanggal_surat.before_or_equal' => 'Tanggal surat tidak boleh tanggal masa depan.',
             'tanggal_diterima.after_or_equal' => 'Tanggal diterima tidak boleh lebih awal dari tanggal surat.',
+            'attachment.mimetypes' => 'Berkas harus berupa PDF, Word, atau Gambar dengan ukuran maksimal 10 MB.',
+            'attachment.max' => 'Berkas harus berupa PDF, Word, atau Gambar dengan ukuran maksimal 10 MB.',
         ];
     }
 }

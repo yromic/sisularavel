@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Attachment;
 use App\Models\AuditLog;
 use App\Models\IncomingLetter;
 use App\Models\OutgoingLetter;
@@ -93,6 +94,26 @@ class AuditLogger
             'event_code' => $eventCode,
             'auditable_type' => OutgoingLetter::class,
             'auditable_id' => $letter->id,
+            'new_values' => $newValues,
+            'ip_address' => request()?->ip() ?? '127.0.0.1',
+            'user_agent' => request()?->userAgent(),
+            'description' => $description,
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $newValues
+     */
+    public function attachmentEvent(string $eventCode, User $actor, Attachment $attachment, string $description, array $newValues = []): void
+    {
+        AuditLog::query()->create([
+            'user_id' => $actor->id,
+            'username' => $actor->username,
+            'role' => $actor->role,
+            'division_id' => $attachment->division_id,
+            'event_code' => $eventCode,
+            'auditable_type' => Attachment::class,
+            'auditable_id' => $attachment->id,
             'new_values' => $newValues,
             'ip_address' => request()?->ip() ?? '127.0.0.1',
             'user_agent' => request()?->userAgent(),

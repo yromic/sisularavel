@@ -18,8 +18,10 @@
 | TEST-LET-OUT-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Outgoing/OutgoingLetterWorkflowContractTest.php` | PASSED | Duplicate outgoing number within same division/year returns `ERR_409_DUPLICATE_NUMBER` |
 | TEST-LET-OUT-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Outgoing/OutgoingLetterWorkflowContractTest.php` | PASSED | Same outgoing number permitted across divisions or different derived years |
 | TEST-LET-OUT-003 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Outgoing/OutgoingLetterWorkflowContractTest.php` | PASSED | Updating `tanggal_surat` recalculates `letter_year` and checks uniqueness |
-| TEST-FILE-MISS-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Missing attachment detail/404 test | NOT_STARTED | Phase 8 |
-| TEST-FILE-MISS-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Missing attachment remediation test | NOT_STARTED | Phase 8 |
+| TEST-FILE-MISS-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Attachments/AttachmentStorageContractTest.php` | PASSED | Missing legacy attachment preview returns safe `ERR_404_ATTACHMENT`; metadata records remain usable |
+| TEST-FILE-MISS-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Attachments/AttachmentStorageContractTest.php` | PASSED | Division admin remediation stores private PDF, clears missing flag/status, and audits `ATTACHMENT_UPLOADED` |
+| Attachment private streaming | `docs/10-FILE-STORAGE-CONTRACT.md`, `BR-FILE-001`, `SEC-002` | `tests/Feature/Attachments/AttachmentStorageContractTest.php` | PASSED | Authorized same-division preview streams from private disk; cross-division preview returns `ERR_403_DIVISI` |
+| Attachment upload validation | `docs/10-FILE-STORAGE-CONTRACT.md`, `BR-FILE-002` | `tests/Feature/Attachments/AttachmentStorageContractTest.php` | PASSED | `.exe`/unapproved MIME upload rejected with HTTP 422 and no letter/attachment rows |
 | TEST-IDEM-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Incoming/IncomingLetterWorkflowContractTest.php` | PASSED | Same incoming create payload/key replays identical JSON response with one letter and one audit |
 | TEST-IDEM-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Incoming/IncomingLetterWorkflowContractTest.php` | PASSED | Same key with altered payload returns `ERR_409_IDEMPOTENCY_CONFLICT` without insertion |
 | TEST-UI-MOB-001 to 006 | `examples/acceptance-scenarios.md` | Browser/responsive tests | NOT_STARTED | Phase 13 |

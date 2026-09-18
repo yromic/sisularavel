@@ -8,6 +8,7 @@ use Closure;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -122,6 +123,13 @@ class EnsureIdempotentMutation
         foreach ($value as &$item) {
             if (is_array($item)) {
                 $this->ksortRecursive($item);
+            } elseif ($item instanceof UploadedFile) {
+                $item = [
+                    'name' => $item->getClientOriginalName(),
+                    'size' => $item->getSize(),
+                    'mime' => $item->getMimeType(),
+                    'hash' => hash_file('sha256', $item->getRealPath()),
+                ];
             }
         }
     }
