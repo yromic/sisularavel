@@ -2,7 +2,7 @@
 
 | Requirement ID | Contract source | Implementation | Test IDs | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
-| SYS-001 | `contracts/requirements.yaml`, `docs/23-IMPLEMENTATION-SEQUENCE.md` | Laravel 12 baseline installed; foundation not complete | Baseline example tests | BLOCKED | Laravel 12.69.2 verified; `gd`/`imagick` missing |
+| SYS-001 | `contracts/requirements.yaml`, `docs/23-IMPLEMENTATION-SEQUENCE.md` | Laravel 12 baseline installed; `/health` route; local MariaDB `sisurat_dev`; Vite build | Baseline example tests, `HealthCheckTest` | VERIFIED | Laravel 12.69.2, PHP 8.2.12, `gd`, MariaDB 10.4.32 verified |
 | SYS-002 | `docs/13-AUDIT-LOG-CONTRACT.md` | Not started | `TEST-AUTH-*`, `TEST-LET-*` | NOT_STARTED | Phase 11 |
 | AUTH-001 | `docs/12-SECURITY-CONTRACT.md` | Not started | `TEST-AUTH-SEC-001`, `TEST-AUTH-ACT-001`, `TEST-AUTH-ACT-002` | NOT_STARTED | Phase 3 |
 | TEN-001 | `docs/08-RBAC-AND-DIVISION-SCOPE.md` | Not started | `TEST-TEN-OWN-001` | NOT_STARTED | Phase 4 |

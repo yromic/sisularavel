@@ -2,9 +2,9 @@
 
 | Phase | Status | Requirements | Tests | Verification | Checkpoint |
 | ----- | ------ | -----------: | ----: | ------------ | ---------- |
-| Phase 0 - Contract Intake and Environment Verification | BLOCKED | 3 | 2 baseline tests passed | Missing `gd`/`imagick` mandatory PHP extension | Not committed; git repo absent |
-| Phase 1 - Laravel Foundation | NOT_STARTED | 3 | 0 | Waiting on Phase 0 blocker | - |
-| Phase 2 - Database Schema and Relational Foundation | NOT_STARTED | 5 | 0 | Waiting on Phase 1 | - |
+| Phase 0 - Contract Intake and Environment Verification | VERIFIED | 3 | 3 tests passed | `gd` enabled; mandatory extension gate passed | `b284e52`; Phase 1 checkpoint pending |
+| Phase 1 - Laravel Foundation | VERIFIED | 3 | 3 tests passed | Health route, MariaDB connection, migrations, and Vite build verified | Phase 1 checkpoint pending |
+| Phase 2 - Database Schema and Relational Foundation | NOT_STARTED | 5 | 0 | Ready to start | - |
 | Phase 3 - Authentication and Session Infrastructure | NOT_STARTED | 4 | 0 | Waiting on Phase 2 | - |
 | Phase 4 - RBAC and Division Isolation Engine | NOT_STARTED | 4 | 0 | Waiting on Phase 3 | - |
 | Phase 5 - Master and Reference Data | NOT_STARTED | 3 | 0 | Waiting on Phase 4 | - |
@@ -20,11 +20,4 @@
 
 ## Resume Point
 
-Enable either PHP extension `gd` or `imagick` in the active XAMPP PHP CLI/runtime, then rerun:
-
-```bash
-php -m
-php artisan test
-```
-
-Phase 1 may start only after the mandatory image extension requirement passes.
+Start Phase 2 Database Schema and Relational Foundation from the verified Laravel 12 baseline.

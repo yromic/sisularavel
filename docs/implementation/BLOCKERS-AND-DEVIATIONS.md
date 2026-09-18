@@ -1,6 +1,8 @@
 # Blockers and Deviations
 
-## BLOCKER-ENV-001
+## BLOCKER-ENV-001 - Resolved
+
+**Status:** RESOLVED
 
 **Affected phase:** Phase 0 - Contract Intake and Environment Verification
 
@@ -28,9 +30,22 @@ php -m => gd absent; imagick absent
 
 Enable `gd` in XAMPP PHP 8.2, then rerun `php -m` and `php artisan test`.
 
+**Resolution:**
+
+`extension=gd` was uncommented in `C:\xampp\php\php.ini`. A backup was saved as `C:\xampp\php\php.ini.codex-backup-20260918202222`.
+
+**Verification after resolution:**
+
+```text
+php -m => gd present
+php -i => GD Support enabled
+php artisan test => 2 tests, 2 assertions passed
+composer validate --strict => ./composer.json is valid
+```
+
 **Safe work that can continue independently:**
 
-Contract intake documentation and implementation planning were completed. Application feature implementation should wait until the extension gate passes.
+Contract intake documentation and implementation planning were completed. Phase 1 foundation work may proceed.
 
 ## Deviations
 
