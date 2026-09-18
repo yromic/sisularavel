@@ -5,6 +5,11 @@
 
     RewriteEngine On
 
+    # Block direct access to sensitive deployment files on shared hosting.
+    RewriteRule ^\.env - [F,L]
+    RewriteRule ^composer\.(json|lock) - [F,L]
+    RewriteRule (^|/)\.[^/]+ - [F,L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

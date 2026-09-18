@@ -1,2 +1,4 @@
 User-agent: *
-Disallow:
+Disallow: /api/v1/attachments/
+Disallow: /attachments/
+Disallow: /storage/
