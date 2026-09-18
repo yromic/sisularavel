@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AttachmentController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DivisionContextController;
 use App\Http\Controllers\Api\DivisionManagementController;
 use App\Http\Controllers\Api\IncomingLetterController;
@@ -8,7 +9,9 @@ use App\Http\Controllers\Api\OutgoingLetterController;
 use App\Http\Controllers\Api\PiagamController;
 use App\Http\Controllers\Api\PublicPiagamController;
 use App\Http\Controllers\Api\ReferenceCategoryController;
+use App\Http\Controllers\Api\ReportExportController;
 use App\Http\Controllers\Api\SchoolController;
+use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\UserManagementController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -67,4 +70,7 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
     Route::post('/api/v1/users', [UserManagementController::class, 'store']);
     Route::get('/api/v1/piagam', [PiagamController::class, 'index']);
     Route::post('/api/v1/piagam', [PiagamController::class, 'store'])->middleware('idempotent');
+    Route::get('/api/v1/dashboard', [DashboardController::class, 'show']);
+    Route::get('/api/v1/search', [SearchController::class, 'index']);
+    Route::get('/api/v1/reports/export.csv', [ReportExportController::class, 'csv']);
 });

@@ -16,16 +16,16 @@
 | FUN-USR-01 | `docs/03-FEATURE-CATALOG.md` | Division-admin same-division operator creation; cross-division and role-escalation denial; super-admin global creation path | `MasterReferenceDataContractTest`, `PasswordActivationContractTest` | VERIFIED | Phase 3/5 |
 | FUN-DIV-01 | `docs/03-FEATURE-CATALOG.md` | Super-admin division creation/status management; non-super-admin denial | `MasterReferenceDataContractTest` | VERIFIED | Phase 5 |
 | FUN-SET-01 | `docs/03-FEATURE-CATALOG.md` | Super-admin settings update endpoint with audit-safe key/value persistence | `MasterReferenceDataContractTest` | VERIFIED | Phase 5 |
-| FUN-DASH-01 | `docs/03-FEATURE-CATALOG.md` | Not started | Aggregate count tests | NOT_STARTED | Phase 10 |
-| FUN-SRC-01 | `docs/03-FEATURE-CATALOG.md` | Not started | Scoped search tests | NOT_STARTED | Phase 10 |
-| FUN-REP-01 | `docs/03-FEATURE-CATALOG.md` | Not started | Export sanitization tests | NOT_STARTED | Phase 10 |
+| FUN-DASH-01 | `docs/03-FEATURE-CATALOG.md` | Live SQL-backed scoped counts and monthly incoming/outgoing aggregates | `SearchDashboardReportingContractTest` | VERIFIED | Phase 10 |
+| FUN-SRC-01 | `docs/03-FEATURE-CATALOG.md` | Server-side scoped archive search across incoming letters, outgoing letters, and piagams | `SearchDashboardReportingContractTest` | VERIFIED | Phase 10 |
+| FUN-REP-01 | `docs/03-FEATURE-CATALOG.md` | Scoped CSV export for archival rows with spreadsheet formula sanitization | `SearchDashboardReportingContractTest` | VERIFIED | Phase 10 |
 | FILE-001 | `docs/10-FILE-STORAGE-CONTRACT.md` | Private `private_documents` disk, authorized attachment preview endpoint, cross-division denial, missing attachment safe 404 | `AttachmentStorageContractTest` | VERIFIED | Phase 8 |
 | FILE-002 | `docs/10-FILE-STORAGE-CONTRACT.md` | Multipart incoming-letter attachment upload, generated UUID storage path, metadata persistence, MIME/size validation | `AttachmentStorageContractTest` | VERIFIED | Phase 8 |
 | FILE-003 | `docs/10-FILE-STORAGE-CONTRACT.md`, `DEC-FILE-003` | Durable missing attachment records remain readable; preview returns `ERR_404_ATTACHMENT`; division-admin remediation updates record to migrated | `AttachmentStorageContractTest` | VERIFIED | Phase 8 |
 | IDEM-001 | `docs/04-BUSINESS-RULES.md`, `DEC-SYS-001` | `Idempotency-Key` UUIDv4 route middleware, request fingerprinting, cached JSON replay, same-key/different-payload conflict, 24-hour expiration | `IncomingLetterWorkflowContractTest`, `OutgoingLetterWorkflowContractTest`, `PiagamWorkflowContractTest` | VERIFIED | Verified for incoming, outgoing, and public piagam claim creates |
 | SEC-001 | `docs/12-SECURITY-CONTRACT.md` | Bcrypt password verification, inactive-account rejection, login rate limiting, session regeneration/invalidation, reset token hashing | `AuthenticationContractTest`, `PasswordActivationContractTest` | VERIFIED | Phase 3 |
 | SEC-002 | `docs/12-SECURITY-CONTRACT.md` | Attachment preview mediated through authenticated route with division-scope authorization; no public URL exposure | `AttachmentStorageContractTest` | VERIFIED | Phase 8 |
-| SEC-004 | `contracts/requirements.yaml` | Not started | CSV formula injection tests | NOT_STARTED | Phase 10 |
+| SEC-004 | `contracts/requirements.yaml` | CSV cells beginning with `=`, `+`, `-`, or `@` are prefixed with a single quote during export | `SearchDashboardReportingContractTest` | VERIFIED | Phase 10 |
 | SEC-005 | `contracts/requirements.yaml` | Not started | Origin/CORS tests | NOT_STARTED | Phase 11 |
 | DB-001 | `docs/07-DATABASE-CONTRACT.md` | Contract migrations for 12 SISURAT tables, constraints, indexes, foreign keys, model foundations, and factories | `SchemaContractTest`, `ModelFoundationTest` | VERIFIED | Phase 2 rollback/remigration verified |
 | PERF-001 | `docs/19-PERFORMANCE-BASELINE.md` | Not started | Benchmark suite | NOT_STARTED | Phase 13 |
