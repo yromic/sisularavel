@@ -11,14 +11,45 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::create('divisions', function (Blueprint $table) {
+            $table->id();
+            $table->uuid('uuid')->unique();
+            $table->string('code', 20)->unique();
+            $table->string('name', 150);
+            $table->string('status', 20)->default('active')->index();
+            $table->string('legacy_drive_folder_id', 100)->nullable();
+            $table->foreignId('created_by_user_id')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->index('deleted_at');
+        });
+
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+            $table->uuid('uuid')->unique();
+            $table->string('username', 50)->unique();
+            $table->string('name', 150);
+            $table->string('email', 150)->nullable();
             $table->string('password');
-            $table->rememberToken();
+            $table->string('role', 50)->default('operator');
+            $table->foreignId('division_id')->nullable()->constrained('divisions')->restrictOnDelete();
+            $table->boolean('is_active')->default(true);
+            $table->boolean('must_reset_password')->default(false);
+            $table->char('password_reset_token', 64)->nullable();
+            $table->timestamp('password_reset_expires_at')->nullable();
             $table->timestamps();
+            $table->softDeletes();
+
+            $table->rememberToken();
+            $table->unique('email');
+            $table->index(['division_id', 'role', 'is_active']);
+            $table->index(['password_reset_token', 'password_reset_expires_at']);
+            $table->index('deleted_at');
+        });
+
+        Schema::table('divisions', function (Blueprint $table) {
+            $table->foreign('created_by_user_id')->references('id')->on('users')->nullOnDelete();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
@@ -42,8 +73,17 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::table('divisions', function (Blueprint $table) {
+            $table->dropForeign(['created_by_user_id']);
+        });
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropForeign(['division_id']);
+        });
+
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
+        Schema::dropIfExists('users');
+        Schema::dropIfExists('divisions');
     }
 };

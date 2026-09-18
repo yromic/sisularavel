@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Division;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -25,10 +26,15 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
+            'uuid' => fake()->uuid(),
+            'username' => fake()->unique()->userName(),
             'name' => fake()->name(),
+            'division_id' => Division::factory(),
             'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            'role' => 'operator',
+            'is_active' => true,
+            'must_reset_password' => false,
             'remember_token' => Str::random(10),
         ];
     }
@@ -38,8 +44,21 @@ class UserFactory extends Factory
      */
     public function unverified(): static
     {
+        return $this;
+    }
+
+    public function superAdmin(): static
+    {
         return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
+            'role' => 'super_admin',
+            'division_id' => null,
+        ]);
+    }
+
+    public function divisionAdmin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'division_admin',
         ]);
     }
 }

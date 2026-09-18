@@ -24,7 +24,7 @@
 | SEC-002 | `docs/12-SECURITY-CONTRACT.md` | Not started | Attachment authorization tests | NOT_STARTED | Phase 8 |
 | SEC-004 | `contracts/requirements.yaml` | Not started | CSV formula injection tests | NOT_STARTED | Phase 10 |
 | SEC-005 | `contracts/requirements.yaml` | Not started | Origin/CORS tests | NOT_STARTED | Phase 11 |
-| DB-001 | `docs/07-DATABASE-CONTRACT.md` | Not started | Schema/migration tests | NOT_STARTED | Phase 2 |
+| DB-001 | `docs/07-DATABASE-CONTRACT.md` | Contract migrations for 12 SISURAT tables, constraints, indexes, foreign keys, model foundations, and factories | `SchemaContractTest`, `ModelFoundationTest` | VERIFIED | Phase 2 rollback/remigration verified |
 | PERF-001 | `docs/19-PERFORMANCE-BASELINE.md` | Not started | Benchmark suite | NOT_STARTED | Phase 13 |
 | UI-001 | `docs/11-UI-UX-BEHAVIOR-CONTRACT.md` | Not started | `TEST-UI-MOB-001` | NOT_STARTED | Phase 6+ |
 | UI-002 | `docs/11-UI-UX-BEHAVIOR-CONTRACT.md` | Not started | `TEST-UI-MOB-005` | NOT_STARTED | Phase 6+ |

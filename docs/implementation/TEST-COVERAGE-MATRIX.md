@@ -5,6 +5,8 @@
 | Baseline Laravel boot | Laravel skeleton | `tests/Feature/ExampleTest.php` | PASSED | Existing test passed |
 | Baseline unit runner | Laravel skeleton | `tests/Unit/ExampleTest.php` | PASSED | Existing test passed |
 | Phase 1 health endpoint | `docs/23-IMPLEMENTATION-SEQUENCE.md` | `tests/Feature/HealthCheckTest.php` | PASSED | TDD red-green verified; `/health` returns status JSON |
+| Phase 2 schema contract | `docs/07-DATABASE-CONTRACT.md` | `tests/Feature/Database/SchemaContractTest.php` | PASSED | 4 tests / 40 assertions |
+| Phase 2 model foundation | `contracts/entities.yaml` | `tests/Feature/Database/ModelFoundationTest.php` | PASSED | 3 tests / 22 assertions |
 | TEST-LET-IN-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Incoming feature test | NOT_STARTED | Phase 6 |
 | TEST-LET-IN-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Incoming duplicate advisory feature test | NOT_STARTED | Phase 6 |
 | TEST-LET-OUT-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Outgoing duplicate rejection test | NOT_STARTED | Phase 7 |

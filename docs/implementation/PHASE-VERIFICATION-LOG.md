@@ -56,3 +56,22 @@
 | PDO database probe | PASS: connected to `sisurat_dev` |
 
 **Phase 1 verdict:** VERIFIED.
+
+## Phase 2 - Database Schema and Relational Foundation
+
+**Date:** 2026-09-18
+
+| Command / Check | Result |
+| --- | --- |
+| Create local test database | PASS: `sisurat_test` created with utf8mb4 collation |
+| `php artisan test tests/Feature/Database/SchemaContractTest.php` red | PASS: failed before migrations with missing contract tables/columns/constraints |
+| `php artisan test tests/Feature/Database/SchemaContractTest.php` green | PASS: 4 tests, 40 assertions |
+| `php artisan test tests/Feature/Database/ModelFoundationTest.php` red | PASS: failed before contract model classes/factories existed |
+| `php artisan test tests/Feature/Database/ModelFoundationTest.php` green | PASS: model tests passed after model/factory foundation |
+| `php artisan migrate:fresh --force` | PASS: all baseline and SISURAT migrations applied to local MariaDB |
+| `php artisan test` | PASS: 10 tests, 66 assertions |
+| `vendor\bin\pint --test` | PASS after formatting fixes |
+| `php artisan migrate:rollback --step=4 --force` | PASS: all four migration files rolled back |
+| `php artisan migrate --force` | PASS: local dev database remigrated |
+
+**Phase 2 verdict:** VERIFIED.

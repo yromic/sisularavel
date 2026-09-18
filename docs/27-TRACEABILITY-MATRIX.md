@@ -61,3 +61,4 @@ Every requirement in the system is verified to possess empirical evidence or an 
 | Requirement ID | Implementation Evidence | Test Evidence | Status |
 | :--- | :--- | :--- | :--- |
 | `SYS-001` | Laravel Framework `12.69.2`; PHP `8.2.12`; `gd` and required extensions loaded; `/health` route in `routes/web.php`; local MariaDB database `sisurat_dev`; Vite asset build | `tests/Feature/HealthCheckTest.php`; `php artisan test` = 3 tests / 4 assertions passed | `IMPLEMENTED_VERIFIED_PHASE_1` |
+| `DB-001` | `database/migrations/0001_01_01_000000_create_users_table.php`; `database/migrations/0001_01_01_000003_create_sisurat_domain_tables.php`; model classes under `app/Models`; base factories under `database/factories`; PHPUnit uses MariaDB test database `sisurat_test` | `tests/Feature/Database/SchemaContractTest.php`; `tests/Feature/Database/ModelFoundationTest.php`; `php artisan test` = 10 tests / 66 assertions passed | `IMPLEMENTED_VERIFIED_PHASE_2` |
