@@ -26,5 +26,6 @@
 | TEST-IDEM-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Incoming/IncomingLetterWorkflowContractTest.php` | PASSED | Same key with altered payload returns `ERR_409_IDEMPOTENCY_CONFLICT` without insertion |
 | TEST-UI-MOB-001 to 006 | `examples/acceptance-scenarios.md` | Browser/responsive tests | NOT_STARTED | Phase 13 |
 | TEST-UI-DSK-001 | `examples/acceptance-scenarios.md` | Desktop grid browser test | NOT_STARTED | Phase 13 |
-| TEST-PG-001 | `examples/acceptance-scenarios.md` | Public piagam claim feature/browser test | NOT_STARTED | Phase 9 |
+| TEST-PG-001 | `examples/acceptance-scenarios.md`, `docs/04-BUSINESS-RULES.md` | `tests/Feature/Piagam/PiagamWorkflowContractTest.php` | PASSED | Public claim validates NPSN/signature, stores private signature PNG, audits claim, and supports idempotent replay |
+| Phase 9 internal piagam | `docs/03-FEATURE-CATALOG.md`, `contracts/roles-permissions.yaml` | `tests/Feature/Piagam/PiagamWorkflowContractTest.php` | PASSED | Operator creates piagam in own division; list is scoped to own division |
 | TEST-MIG-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Migration dry-run reconciliation test | NOT_STARTED | Phase 12 |

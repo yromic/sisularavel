@@ -172,3 +172,19 @@
 | `vendor\bin\pint --test` | PASS after Pint formatting |
 
 **Phase 8 verdict:** VERIFIED for private document disk storage, generated paths, MIME validation, authorized streaming, cross-division denial, missing legacy attachment 404, and missing-attachment remediation.
+
+## Phase 9 - Piagam and Public Claim Workflows
+
+**Date:** 2026-09-18
+
+| Command / Check | Result |
+| --- | --- |
+| `php artisan test tests/Feature/Piagam/PiagamWorkflowContractTest.php` red | PASS: 3 tests failed with expected 404 before piagam routes/controllers existed |
+| `php artisan test tests/Feature/Piagam/PiagamWorkflowContractTest.php` green | PASS: 3 tests, 21 assertions |
+| `php artisan test` | PASS: 47 tests, 268 assertions |
+| `vendor\bin\pint --test` | PASS |
+| `php artisan route:list --path=api/v1/piagam` | PASS: internal index/create and public claim routes registered |
+
+**Reconciliation note:** The feature narrative says public piagam submission creates a record, while `PublicClaimPiagamRequest` requires `piagam_id`. Phase 9 follows the more specific validation contract: internal users create piagam records; public claim records receipt/signature against an existing piagam.
+
+**Phase 9 verdict:** VERIFIED.

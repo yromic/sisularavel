@@ -6,6 +6,7 @@ use App\Models\Attachment;
 use App\Models\AuditLog;
 use App\Models\IncomingLetter;
 use App\Models\OutgoingLetter;
+use App\Models\Piagam;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -115,6 +116,38 @@ class AuditLogger
             'auditable_type' => Attachment::class,
             'auditable_id' => $attachment->id,
             'new_values' => $newValues,
+            'ip_address' => request()?->ip() ?? '127.0.0.1',
+            'user_agent' => request()?->userAgent(),
+            'description' => $description,
+        ]);
+    }
+
+    public function piagamEvent(string $eventCode, User $actor, Piagam $piagam, string $description): void
+    {
+        AuditLog::query()->create([
+            'user_id' => $actor->id,
+            'username' => $actor->username,
+            'role' => $actor->role,
+            'division_id' => $piagam->division_id,
+            'event_code' => $eventCode,
+            'auditable_type' => Piagam::class,
+            'auditable_id' => $piagam->id,
+            'ip_address' => request()?->ip() ?? '127.0.0.1',
+            'user_agent' => request()?->userAgent(),
+            'description' => $description,
+        ]);
+    }
+
+    public function publicPiagamEvent(string $eventCode, Piagam $piagam, string $description): void
+    {
+        AuditLog::query()->create([
+            'user_id' => null,
+            'username' => 'public',
+            'role' => 'guest',
+            'division_id' => $piagam->division_id,
+            'event_code' => $eventCode,
+            'auditable_type' => Piagam::class,
+            'auditable_id' => $piagam->id,
             'ip_address' => request()?->ip() ?? '127.0.0.1',
             'user_agent' => request()?->userAgent(),
             'description' => $description,

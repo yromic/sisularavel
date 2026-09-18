@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\DivisionContextController;
 use App\Http\Controllers\Api\DivisionManagementController;
 use App\Http\Controllers\Api\IncomingLetterController;
 use App\Http\Controllers\Api\OutgoingLetterController;
+use App\Http\Controllers\Api\PiagamController;
+use App\Http\Controllers\Api\PublicPiagamController;
 use App\Http\Controllers\Api\ReferenceCategoryController;
 use App\Http\Controllers\Api\SchoolController;
 use App\Http\Controllers\Api\SettingController;
@@ -34,6 +36,7 @@ Route::post('/forgot-password', [PasswordActivationController::class, 'forgot'])
 Route::post('/password/reset', [PasswordActivationController::class, 'reset']);
 Route::post('/password/activate', [PasswordActivationController::class, 'activate'])->middleware('auth');
 Route::post('/admin/users/{user}/activation-secret', [PasswordActivationController::class, 'issueSecret'])->middleware('auth');
+Route::post('/api/v1/piagam/ambil', [PublicPiagamController::class, 'claim'])->middleware('idempotent');
 
 Route::get('/dashboard', function () {
     return response()->json(['success' => true]);
@@ -62,4 +65,6 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
     Route::patch('/api/v1/divisions/{division}/status', [DivisionManagementController::class, 'updateStatus']);
     Route::put('/api/v1/settings/{key}', [SettingController::class, 'update'])->where('key', '.*');
     Route::post('/api/v1/users', [UserManagementController::class, 'store']);
+    Route::get('/api/v1/piagam', [PiagamController::class, 'index']);
+    Route::post('/api/v1/piagam', [PiagamController::class, 'store'])->middleware('idempotent');
 });
