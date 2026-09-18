@@ -13,7 +13,7 @@
 | Phase 8 - Private File Storage and Streaming | VERIFIED | 5 | 4 attachment tests passed | Private disk upload, MIME rejection, authorized streaming, cross-division denial, missing attachment 404, and remediation verified | `881d817` |
 | Phase 9 - Piagam and Public Claim Workflows | VERIFIED | 3 | 3 piagam tests passed | Scoped internal piagam creation/listing, public claim validation, private signature storage, audit, and idempotent replay verified | `e8c901e` |
 | Phase 10 - Search, Analytics, and Reporting | VERIFIED | 5 | 3 reporting tests passed | Scoped dashboard counts, archive search, CSV export scoping, and formula-injection sanitization verified | `1c9af10` |
-| Phase 11 - Audit Logging and Operational Hardening | VERIFIED | 3 | 5 operations tests passed | Immutable audit records, redacted audit payloads, standardized JSON error envelopes, idempotency pruning, full suite, and Pint verified | `4859351` |
+| Phase 11 - Audit Logging and Operational Hardening | VERIFIED | 3 | 5 operations tests passed | Immutable audit records, redacted audit payloads, standardized JSON error envelopes, idempotency pruning, full suite, and Pint verified | `89ed126` |
 | Phase 12 - Legacy Migration Tooling | NOT_STARTED | 3 | 0 | Ready to start | - |
 | Phase 13 - E2E Verification and Benchmarking | NOT_STARTED | 9 | 0 | Waiting on Phase 12 | - |
 | Phase 14 - Deployment Readiness and Cutover Package | NOT_STARTED | 3 | 0 | Waiting on Phase 13 | - |
