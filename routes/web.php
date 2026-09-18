@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\PasswordActivationController;
+use App\Http\Middleware\EnsurePasswordIsActivated;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -12,3 +15,14 @@ Route::get('/health', function () {
         'app' => 'SISURAT',
     ]);
 });
+
+Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->middleware('auth');
+Route::post('/forgot-password', [PasswordActivationController::class, 'forgot']);
+Route::post('/password/reset', [PasswordActivationController::class, 'reset']);
+Route::post('/password/activate', [PasswordActivationController::class, 'activate'])->middleware('auth');
+Route::post('/admin/users/{user}/activation-secret', [PasswordActivationController::class, 'issueSecret'])->middleware('auth');
+
+Route::get('/dashboard', function () {
+    return response()->json(['success' => true]);
+})->middleware(['auth', EnsurePasswordIsActivated::class]);

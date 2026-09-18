@@ -4,7 +4,7 @@
 | --- | --- | --- | --- | --- | --- |
 | SYS-001 | `contracts/requirements.yaml`, `docs/23-IMPLEMENTATION-SEQUENCE.md` | Laravel 12 baseline installed; `/health` route; local MariaDB `sisurat_dev`; Vite build | Baseline example tests, `HealthCheckTest` | VERIFIED | Laravel 12.69.2, PHP 8.2.12, `gd`, MariaDB 10.4.32 verified |
 | SYS-002 | `docs/13-AUDIT-LOG-CONTRACT.md` | Not started | `TEST-AUTH-*`, `TEST-LET-*` | NOT_STARTED | Phase 11 |
-| AUTH-001 | `docs/12-SECURITY-CONTRACT.md` | Not started | `TEST-AUTH-SEC-001`, `TEST-AUTH-ACT-001`, `TEST-AUTH-ACT-002` | NOT_STARTED | Phase 3 |
+| AUTH-001 | `docs/12-SECURITY-CONTRACT.md` | Session login/logout, legacy credential rejection, generic reset request, token reset, admin activation secret, mandatory password activation gate | `AuthenticationContractTest`, `PasswordActivationContractTest` | VERIFIED | Phase 3 |
 | TEN-001 | `docs/08-RBAC-AND-DIVISION-SCOPE.md` | Not started | `TEST-TEN-OWN-001` | NOT_STARTED | Phase 4 |
 | TEN-002 | `docs/08-RBAC-AND-DIVISION-SCOPE.md` | Not started | Super admin switch scenario | NOT_STARTED | Phase 4 |
 | RBAC-001 | `contracts/roles-permissions.yaml` | Not started | Negative policy tests | NOT_STARTED | Phase 4 |
@@ -20,7 +20,7 @@
 | FUN-REP-01 | `docs/03-FEATURE-CATALOG.md` | Not started | Export sanitization tests | NOT_STARTED | Phase 10 |
 | FILE-001 | `docs/10-FILE-STORAGE-CONTRACT.md` | Not started | `TEST-FILE-MISS-*`, stream auth tests | NOT_STARTED | Blocked by missing `gd`/`imagick` |
 | FILE-002 | `docs/10-FILE-STORAGE-CONTRACT.md` | Not started | Upload validation tests | NOT_STARTED | Phase 8 |
-| SEC-001 | `docs/12-SECURITY-CONTRACT.md` | Not started | Login/rate-limit tests | NOT_STARTED | Phase 3 |
+| SEC-001 | `docs/12-SECURITY-CONTRACT.md` | Bcrypt password verification, inactive-account rejection, login rate limiting, session regeneration/invalidation, reset token hashing | `AuthenticationContractTest`, `PasswordActivationContractTest` | VERIFIED | Phase 3 |
 | SEC-002 | `docs/12-SECURITY-CONTRACT.md` | Not started | Attachment authorization tests | NOT_STARTED | Phase 8 |
 | SEC-004 | `contracts/requirements.yaml` | Not started | CSV formula injection tests | NOT_STARTED | Phase 10 |
 | SEC-005 | `contracts/requirements.yaml` | Not started | Origin/CORS tests | NOT_STARTED | Phase 11 |
