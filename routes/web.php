@@ -18,6 +18,9 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\PasswordActivationController;
 use App\Http\Middleware\EnsureActiveAccount;
 use App\Http\Middleware\EnsurePasswordIsActivated;
+use App\Models\IncomingLetter;
+use App\Services\DivisionContext;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -30,6 +33,9 @@ Route::get('/health', function () {
         'app' => 'SISURAT',
     ]);
 });
+
+Route::get('/login', fn () => view('auth.login'))->middleware('guest');
+Route::get('/piagam/ambil', fn () => view('piagam.claim'));
 
 Route::get('/api/v1/schools', [SchoolController::class, 'index']);
 
@@ -44,6 +50,21 @@ Route::post('/api/v1/piagam/ambil', [PublicPiagamController::class, 'claim'])->m
 Route::get('/dashboard', function () {
     return response()->json(['success' => true]);
 })->middleware(['auth', EnsurePasswordIsActivated::class]);
+
+Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated::class])->group(function () {
+    Route::get('/surat-masuk', function (Request $request, DivisionContext $divisionContext) {
+        $divisionId = $divisionContext->activeDivisionId($request, $request->user());
+
+        $letters = IncomingLetter::query()
+            ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
+            ->latest('received_date')
+            ->paginate(10);
+
+        return view('letters.incoming.index', ['letters' => $letters]);
+    });
+
+    Route::get('/surat-masuk/create', fn () => view('letters.incoming.create'));
+});
 
 Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated::class])->group(function () {
     Route::post('/api/v1/session/switch-division', [DivisionContextController::class, 'switch']);

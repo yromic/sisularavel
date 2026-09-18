@@ -32,11 +32,11 @@
 | SEC-004 | `contracts/requirements.yaml` | CSV cells beginning with `=`, `+`, `-`, or `@` are prefixed with a single quote during export | `SearchDashboardReportingContractTest` | VERIFIED | Phase 10 |
 | SEC-005 | `contracts/requirements.yaml` | Not started | Origin/CORS tests | NOT_STARTED | Phase 11 |
 | DB-001 | `docs/07-DATABASE-CONTRACT.md` | Contract migrations for 12 SISURAT tables, constraints, indexes, foreign keys, model foundations, and factories | `SchemaContractTest`, `ModelFoundationTest` | VERIFIED | Phase 2 rollback/remigration verified |
-| PERF-001 | `docs/19-PERFORMANCE-BASELINE.md` | Not started | Benchmark suite | NOT_STARTED | Phase 13 |
-| UI-001 | `docs/11-UI-UX-BEHAVIOR-CONTRACT.md` | Not started | `TEST-UI-MOB-001` | NOT_STARTED | Phase 6+ |
-| UI-002 | `docs/11-UI-UX-BEHAVIOR-CONTRACT.md` | Not started | `TEST-UI-MOB-005` | NOT_STARTED | Phase 6+ |
-| UI-003 | `docs/11-UI-UX-BEHAVIOR-CONTRACT.md` | Not started | Visual review/browser tests | NOT_STARTED | Phase 6+ |
-| UI-004 | `docs/11-UI-UX-BEHAVIOR-CONTRACT.md` | Not started | `TEST-UI-MOB-006` | NOT_STARTED | Phase 6+ |
-| UI-005 | `docs/11-UI-UX-BEHAVIOR-CONTRACT.md` | Not started | `TEST-UI-MOB-002` | NOT_STARTED | Phase 6+ |
+| PERF-001 | `docs/19-PERFORMANCE-BASELINE.md` | Performance validation report records automated suite/build status and identifies staged p95 load benchmark protocol | `PERFORMANCE-VALIDATION.md` | MANUAL_VALIDATION_REQUIRED | Requires production-like 50k-row dataset/load runner during Phase 14 |
+| UI-001 | `docs/11-UI-UX-BEHAVIOR-CONTRACT.md` | Mobile-first Blade surfaces for login, incoming-letter list/create, and public piagam claim | `MobileFirstUiContractTest` | VERIFIED_PARTIAL | Outgoing-letter and full browser visual tests remain deployment/UAT validation scope |
+| UI-002 | `docs/11-UI-UX-BEHAVIOR-CONTRACT.md` | Touch target classes and zero-hover mobile actions in rendered Blade markup | `MobileFirstUiContractTest` | VERIFIED_PARTIAL | Browser-measured CSS pixels pending manual/Playwright validation |
+| UI-003 | `docs/11-UI-UX-BEHAVIOR-CONTRACT.md` | Restrained institutional Tailwind styling with high-contrast layout primitives | `MobileFirstUiContractTest` | VERIFIED_PARTIAL | Visual review pending Phase 14/UAT |
+| UI-004 | `docs/11-UI-UX-BEHAVIOR-CONTRACT.md` | Single SVG icon component used by implemented Blade screens | `MobileFirstUiContractTest` | VERIFIED_PARTIAL | Expand icon coverage as additional screens are built |
+| UI-005 | `docs/11-UI-UX-BEHAVIOR-CONTRACT.md` | Form controls render server-side and existing JSON validation preserves field errors; full Blade rehydration pending | Existing validation tests; `MobileFirstUiContractTest` | VERIFIED_PARTIAL | Full browser form-state preservation pending |
 | UI-006 | `docs/11-UI-UX-BEHAVIOR-CONTRACT.md`, `DEC-SYS-001` | Server-side duplicate submission shield implemented for incoming letter create via idempotency middleware | `IncomingLetterWorkflowContractTest` | VERIFIED_PARTIAL | Browser/mobile button behavior deferred to UI verification |
-| UI-007 | `docs/11-UI-UX-BEHAVIOR-CONTRACT.md` | Not started | `TEST-UI-DSK-001` | NOT_STARTED | Phase 6+ |
+| UI-007 | `docs/11-UI-UX-BEHAVIOR-CONTRACT.md` | Incoming-letter desktop dense table enhancement with 8 operational columns | `MobileFirstUiContractTest` | VERIFIED_PARTIAL | Desktop browser sorting/multi-row selection pending |
