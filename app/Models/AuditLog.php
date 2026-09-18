@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use LogicException;
 
 class AuditLog extends Model
 {
@@ -23,6 +24,17 @@ class AuditLog extends Model
         'user_agent',
         'description',
     ];
+
+    protected static function booted(): void
+    {
+        static::updating(function (): never {
+            throw new LogicException('Audit logs are immutable and cannot be updated.');
+        });
+
+        static::deleting(function (): never {
+            throw new LogicException('Audit logs are immutable and cannot be deleted.');
+        });
+    }
 
     protected function casts(): array
     {

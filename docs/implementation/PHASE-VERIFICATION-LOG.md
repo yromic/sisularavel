@@ -202,3 +202,20 @@
 | `php artisan route:list --path=api/v1` | PASS: dashboard, search, and CSV export routes registered among 29 API routes |
 
 **Phase 10 verdict:** VERIFIED.
+
+## Phase 11 - Audit Logging and Operational Hardening
+
+**Date:** 2026-09-18
+
+| Command / Check | Result |
+| --- | --- |
+| `php artisan test tests/Feature/Operations/AuditOperationalHardeningContractTest.php` red | PASS: 4 tests failed for expected missing immutable audit behavior, error envelope rendering, and idempotency prune command |
+| `php artisan test tests/Feature/Operations/AuditOperationalHardeningContractTest.php --filter=redact` red | PASS: failed before all contract-sensitive audit keys were redacted |
+| `php artisan test tests/Feature/Operations/AuditOperationalHardeningContractTest.php` green | PASS: 5 tests, 23 assertions |
+| `php artisan test tests/Feature/Auth/AuthenticationContractTest.php tests/Feature/Operations/AuditOperationalHardeningContractTest.php` | PASS: 8 tests, 35 assertions |
+| `php artisan test` | PASS: 55 tests, 311 assertions |
+| `vendor\bin\pint --test` | PASS |
+
+**Debug note:** The first global exception-renderer implementation declared helper functions in `bootstrap/app.php`, which are process-global and redeclared when Laravel test applications reboot. The helpers were replaced with closure-local render helpers. A second full-suite run also caught credential failures being normalized to HTTP 422; the validation renderer now preserves controller-specified HTTP 401 for generic login rejection.
+
+**Phase 11 verdict:** VERIFIED.

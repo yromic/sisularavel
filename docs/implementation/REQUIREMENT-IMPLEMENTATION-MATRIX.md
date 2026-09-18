@@ -3,7 +3,7 @@
 | Requirement ID | Contract source | Implementation | Test IDs | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
 | SYS-001 | `contracts/requirements.yaml`, `docs/23-IMPLEMENTATION-SEQUENCE.md` | Laravel 12 baseline installed; `/health` route; local MariaDB `sisurat_dev`; Vite build | Baseline example tests, `HealthCheckTest` | VERIFIED | Laravel 12.69.2, PHP 8.2.12, `gd`, MariaDB 10.4.32 verified |
-| SYS-002 | `docs/13-AUDIT-LOG-CONTRACT.md` | Not started | `TEST-AUTH-*`, `TEST-LET-*` | NOT_STARTED | Phase 11 |
+| SYS-002 | `docs/13-AUDIT-LOG-CONTRACT.md` | Audit events persisted with actor/IP/user-agent metadata; `AuditLog` model blocks update/delete mutation; sensitive payload keys are redacted | `AuditOperationalHardeningContractTest`, existing auth/letter/file/piagam workflow tests | VERIFIED | Phase 11 hardening |
 | AUTH-001 | `docs/12-SECURITY-CONTRACT.md` | Session login/logout, legacy credential rejection, generic reset request, token reset, admin activation secret, mandatory password activation gate | `AuthenticationContractTest`, `PasswordActivationContractTest` | VERIFIED | Phase 3 |
 | TEN-001 | `docs/08-RBAC-AND-DIVISION-SCOPE.md` | Division-owned incoming letter listing/detail scoped to active division; cross-division denial with audit record; inactive account/division gate | `DivisionIsolationContractTest` | VERIFIED | Phase 4 |
 | TEN-002 | `docs/08-RBAC-AND-DIVISION-SCOPE.md` | Super admin active-division session switching without ownership transfer | `DivisionIsolationContractTest` | VERIFIED | Phase 4 |
@@ -19,6 +19,9 @@
 | FUN-DASH-01 | `docs/03-FEATURE-CATALOG.md` | Live SQL-backed scoped counts and monthly incoming/outgoing aggregates | `SearchDashboardReportingContractTest` | VERIFIED | Phase 10 |
 | FUN-SRC-01 | `docs/03-FEATURE-CATALOG.md` | Server-side scoped archive search across incoming letters, outgoing letters, and piagams | `SearchDashboardReportingContractTest` | VERIFIED | Phase 10 |
 | FUN-REP-01 | `docs/03-FEATURE-CATALOG.md` | Scoped CSV export for archival rows with spreadsheet formula sanitization | `SearchDashboardReportingContractTest` | VERIFIED | Phase 10 |
+| AUD-001 | `docs/13-AUDIT-LOG-CONTRACT.md`, `docs/23-IMPLEMENTATION-SEQUENCE.md` | Append-only audit log model, standardized event persistence service, redaction registry, and no audit update/delete endpoints | `AuditOperationalHardeningContractTest` | VERIFIED | Phase 11 |
+| ERR-001 | `docs/14-ERROR-HANDLING-CONTRACT.md`, `docs/23-IMPLEMENTATION-SEQUENCE.md` | Global JSON exception renderer for validation, auth, authorization, not-found, rate-limit, and 403 HTTP errors | `AuditOperationalHardeningContractTest`, `AuthenticationContractTest` | VERIFIED | Phase 11 |
+| NFR-001 | `docs/18-NON-FUNCTIONAL-REQUIREMENTS.md`, `docs/23-IMPLEMENTATION-SEQUENCE.md` | Shared-hosting-compatible artisan maintenance command for expired idempotency-key pruning | `AuditOperationalHardeningContractTest` | VERIFIED | Phase 11 |
 | FILE-001 | `docs/10-FILE-STORAGE-CONTRACT.md` | Private `private_documents` disk, authorized attachment preview endpoint, cross-division denial, missing attachment safe 404 | `AttachmentStorageContractTest` | VERIFIED | Phase 8 |
 | FILE-002 | `docs/10-FILE-STORAGE-CONTRACT.md` | Multipart incoming-letter attachment upload, generated UUID storage path, metadata persistence, MIME/size validation | `AttachmentStorageContractTest` | VERIFIED | Phase 8 |
 | FILE-003 | `docs/10-FILE-STORAGE-CONTRACT.md`, `DEC-FILE-003` | Durable missing attachment records remain readable; preview returns `ERR_404_ATTACHMENT`; division-admin remediation updates record to migrated | `AttachmentStorageContractTest` | VERIFIED | Phase 8 |

@@ -75,7 +75,7 @@ class AuditLogger
             'event_code' => $eventCode,
             'auditable_type' => IncomingLetter::class,
             'auditable_id' => $letter->id,
-            'new_values' => $newValues,
+            'new_values' => $this->redact($newValues),
             'ip_address' => request()?->ip() ?? '127.0.0.1',
             'user_agent' => request()?->userAgent(),
             'description' => $description,
@@ -95,7 +95,7 @@ class AuditLogger
             'event_code' => $eventCode,
             'auditable_type' => OutgoingLetter::class,
             'auditable_id' => $letter->id,
-            'new_values' => $newValues,
+            'new_values' => $this->redact($newValues),
             'ip_address' => request()?->ip() ?? '127.0.0.1',
             'user_agent' => request()?->userAgent(),
             'description' => $description,
@@ -115,7 +115,7 @@ class AuditLogger
             'event_code' => $eventCode,
             'auditable_type' => Attachment::class,
             'auditable_id' => $attachment->id,
-            'new_values' => $newValues,
+            'new_values' => $this->redact($newValues),
             'ip_address' => request()?->ip() ?? '127.0.0.1',
             'user_agent' => request()?->userAgent(),
             'description' => $description,
@@ -160,7 +160,18 @@ class AuditLogger
      */
     private function redact(array $values): array
     {
-        foreach (['password', 'password_reset_token', 'token', 'authorization', 'activation_secret'] as $key) {
+        foreach ([
+            'password',
+            'password_hash',
+            'password_salt',
+            'remember_token',
+            'session_token',
+            'authorization',
+            'credit_card',
+            'password_reset_token',
+            'token',
+            'activation_secret',
+        ] as $key) {
             if (array_key_exists($key, $values)) {
                 $values[$key] = '[REDACTED]';
             }
