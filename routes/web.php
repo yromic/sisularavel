@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\DivisionContextController;
 use App\Http\Controllers\Api\DivisionManagementController;
 use App\Http\Controllers\Api\IncomingLetterController;
+use App\Http\Controllers\Api\OutgoingLetterController;
 use App\Http\Controllers\Api\ReferenceCategoryController;
 use App\Http\Controllers\Api\SchoolController;
 use App\Http\Controllers\Api\SettingController;
@@ -45,6 +46,12 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
     Route::delete('/api/v1/surat-masuk/{incomingLetter}', [IncomingLetterController::class, 'destroy']);
     Route::post('/api/v1/surat-masuk/{incomingLetter}/restore', [IncomingLetterController::class, 'restore']);
     Route::get('/api/v1/surat-masuk/{incomingLetter}', [IncomingLetterController::class, 'show']);
+    Route::get('/api/v1/surat-keluar', [OutgoingLetterController::class, 'index']);
+    Route::post('/api/v1/surat-keluar', [OutgoingLetterController::class, 'store'])->middleware('idempotent');
+    Route::put('/api/v1/surat-keluar/{outgoingLetter}', [OutgoingLetterController::class, 'update']);
+    Route::delete('/api/v1/surat-keluar/{outgoingLetter}', [OutgoingLetterController::class, 'destroy']);
+    Route::post('/api/v1/surat-keluar/{outgoingLetter}/restore', [OutgoingLetterController::class, 'restore']);
+    Route::get('/api/v1/surat-keluar/{outgoingLetter}', [OutgoingLetterController::class, 'show']);
     Route::post('/api/v1/schools', [SchoolController::class, 'store']);
     Route::post('/api/v1/reference/pickup-categories', [ReferenceCategoryController::class, 'storePickup']);
     Route::post('/api/v1/reference/competition-categories', [ReferenceCategoryController::class, 'storeCompetition']);

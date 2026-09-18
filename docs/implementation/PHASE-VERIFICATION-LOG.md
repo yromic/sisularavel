@@ -139,3 +139,19 @@
 | `php artisan route:list --path=api/v1/surat-masuk` | PASS: list, create, show, update, delete, and restore routes registered |
 
 **Phase 6 verdict:** VERIFIED for incoming-letter metadata lifecycle, duplicate advisory, RBAC, division ownership, soft delete/restore, and server-side idempotency. Attachment upload/storage is intentionally carried by Phase 8.
+
+## Phase 7 - Outgoing Letters
+
+**Date:** 2026-09-18
+
+| Command / Check | Result |
+| --- | --- |
+| `php artisan test tests/Feature/Outgoing/OutgoingLetterWorkflowContractTest.php` red | PASS: 4 tests failed with expected 404 before outgoing routes/controllers existed |
+| `php artisan test tests/Feature/Outgoing/OutgoingLetterWorkflowContractTest.php` green | PASS: 4 tests, 18 assertions |
+| `php artisan test` | PASS: 40 tests, 224 assertions |
+| `vendor\bin\pint --test` | PASS |
+| `php artisan route:list --path=api/v1/surat-keluar` | PASS: list, create, show, update, delete, and restore routes registered |
+
+**Debug note:** The year-boundary acceptance scenario uses 2027 dates while the current system date is 2026-09-18; tests freeze time to `2027-01-10` for those scenarios so `before_or_equal:today` validation remains enforced.
+
+**Phase 7 verdict:** VERIFIED for outgoing-letter metadata lifecycle, annual division uniqueness, `letter_year` derivation/recalculation, RBAC update boundary, and create idempotency. Attachment upload/storage is intentionally carried by Phase 8.

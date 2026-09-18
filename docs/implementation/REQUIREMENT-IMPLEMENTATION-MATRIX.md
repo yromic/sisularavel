@@ -9,7 +9,7 @@
 | TEN-002 | `docs/08-RBAC-AND-DIVISION-SCOPE.md` | Super admin active-division session switching without ownership transfer | `DivisionIsolationContractTest` | VERIFIED | Phase 4 |
 | RBAC-001 | `contracts/roles-permissions.yaml` | Authenticated role checks for super-admin-only division switching and division-admin same-division activation secret boundary | `DivisionIsolationContractTest`, `PasswordActivationContractTest` | VERIFIED | Phase 4 |
 | FUN-SM-01 | `docs/04-BUSINESS-RULES.md`, `docs/07-DATABASE-CONTRACT.md` | Incoming letter scoped list/detail plus create/update/soft-delete/restore lifecycle; no unique incoming number constraint; duplicate advisory with confirmation; immutable division ownership | `IncomingLetterWorkflowContractTest`, `DivisionIsolationContractTest` | VERIFIED | Phase 6 API lifecycle; attachment binaries continue in Phase 8 |
-| FUN-SK-01 | `docs/04-BUSINESS-RULES.md`, `docs/07-DATABASE-CONTRACT.md` | Not started | `TEST-LET-OUT-001` to `003` | NOT_STARTED | Phase 7 |
+| FUN-SK-01 | `docs/04-BUSINESS-RULES.md`, `docs/07-DATABASE-CONTRACT.md` | Outgoing scoped list/detail plus create/update/delete/restore lifecycle; explicit `letter_year`; annual division uniqueness; same number allowed across divisions/years | `OutgoingLetterWorkflowContractTest` | VERIFIED | Phase 7 API lifecycle; attachment binaries continue in Phase 8 |
 | FUN-PG-01 | `docs/03-FEATURE-CATALOG.md` | Not started | `TEST-PG-001` | NOT_STARTED | Phase 9 |
 | FUN-PG-02 | `docs/03-FEATURE-CATALOG.md` | Not started | Public claim scenario | NOT_STARTED | Phase 9 |
 | FUN-REF-01 | `docs/03-FEATURE-CATALOG.md` | Public active-school search and super-admin school creation endpoint; division-scoped pickup/competition category creation | `MasterReferenceDataContractTest` | VERIFIED | Phase 5 |
@@ -21,7 +21,7 @@
 | FUN-REP-01 | `docs/03-FEATURE-CATALOG.md` | Not started | Export sanitization tests | NOT_STARTED | Phase 10 |
 | FILE-001 | `docs/10-FILE-STORAGE-CONTRACT.md` | Not started | `TEST-FILE-MISS-*`, stream auth tests | NOT_STARTED | Blocked by missing `gd`/`imagick` |
 | FILE-002 | `docs/10-FILE-STORAGE-CONTRACT.md` | Not started | Upload validation tests | NOT_STARTED | Phase 8 |
-| IDEM-001 | `docs/04-BUSINESS-RULES.md`, `DEC-SYS-001` | `Idempotency-Key` UUIDv4 route middleware, request fingerprinting, cached JSON replay, same-key/different-payload conflict, 24-hour expiration | `IncomingLetterWorkflowContractTest` | VERIFIED_PARTIAL | Verified for incoming letter create; reuse for outgoing/piagam in later phases |
+| IDEM-001 | `docs/04-BUSINESS-RULES.md`, `DEC-SYS-001` | `Idempotency-Key` UUIDv4 route middleware, request fingerprinting, cached JSON replay, same-key/different-payload conflict, 24-hour expiration | `IncomingLetterWorkflowContractTest`, `OutgoingLetterWorkflowContractTest` | VERIFIED_PARTIAL | Verified for incoming and outgoing creates; reuse for piagam in later phase |
 | SEC-001 | `docs/12-SECURITY-CONTRACT.md` | Bcrypt password verification, inactive-account rejection, login rate limiting, session regeneration/invalidation, reset token hashing | `AuthenticationContractTest`, `PasswordActivationContractTest` | VERIFIED | Phase 3 |
 | SEC-002 | `docs/12-SECURITY-CONTRACT.md` | Not started | Attachment authorization tests | NOT_STARTED | Phase 8 |
 | SEC-004 | `contracts/requirements.yaml` | Not started | CSV formula injection tests | NOT_STARTED | Phase 10 |

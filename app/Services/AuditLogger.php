@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\AuditLog;
 use App\Models\IncomingLetter;
+use App\Models\OutgoingLetter;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -71,6 +72,26 @@ class AuditLogger
             'division_id' => $letter->division_id,
             'event_code' => $eventCode,
             'auditable_type' => IncomingLetter::class,
+            'auditable_id' => $letter->id,
+            'new_values' => $newValues,
+            'ip_address' => request()?->ip() ?? '127.0.0.1',
+            'user_agent' => request()?->userAgent(),
+            'description' => $description,
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $newValues
+     */
+    public function outgoingLetterEvent(string $eventCode, User $actor, OutgoingLetter $letter, string $description, array $newValues = []): void
+    {
+        AuditLog::query()->create([
+            'user_id' => $actor->id,
+            'username' => $actor->username,
+            'role' => $actor->role,
+            'division_id' => $letter->division_id,
+            'event_code' => $eventCode,
+            'auditable_type' => OutgoingLetter::class,
             'auditable_id' => $letter->id,
             'new_values' => $newValues,
             'ip_address' => request()?->ip() ?? '127.0.0.1',

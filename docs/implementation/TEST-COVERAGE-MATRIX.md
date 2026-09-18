@@ -15,9 +15,9 @@
 | Phase 5 reference data | `docs/03-FEATURE-CATALOG.md`, `docs/23-IMPLEMENTATION-SEQUENCE.md` | `tests/Feature/Reference/MasterReferenceDataContractTest.php` | PASSED | 6 tests / 26 assertions cover school search/write boundary, category division scoping, division/settings super-admin boundary, scoped user creation, and operator denial |
 | TEST-LET-IN-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Incoming/IncomingLetterWorkflowContractTest.php` | PASSED | External number collision from different sender allowed; no incoming unique number rejection |
 | TEST-LET-IN-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Incoming/IncomingLetterWorkflowContractTest.php` | PASSED | Exact duplicate returns advisory without insert; confirmed duplicate inserts and audits |
-| TEST-LET-OUT-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Outgoing duplicate rejection test | NOT_STARTED | Phase 7 |
-| TEST-LET-OUT-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Outgoing cross-division/year allowance test | NOT_STARTED | Phase 7 |
-| TEST-LET-OUT-003 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Outgoing year recalculation test | NOT_STARTED | Phase 7 |
+| TEST-LET-OUT-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Outgoing/OutgoingLetterWorkflowContractTest.php` | PASSED | Duplicate outgoing number within same division/year returns `ERR_409_DUPLICATE_NUMBER` |
+| TEST-LET-OUT-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Outgoing/OutgoingLetterWorkflowContractTest.php` | PASSED | Same outgoing number permitted across divisions or different derived years |
+| TEST-LET-OUT-003 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Outgoing/OutgoingLetterWorkflowContractTest.php` | PASSED | Updating `tanggal_surat` recalculates `letter_year` and checks uniqueness |
 | TEST-FILE-MISS-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Missing attachment detail/404 test | NOT_STARTED | Phase 8 |
 | TEST-FILE-MISS-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Missing attachment remediation test | NOT_STARTED | Phase 8 |
 | TEST-IDEM-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Incoming/IncomingLetterWorkflowContractTest.php` | PASSED | Same incoming create payload/key replays identical JSON response with one letter and one audit |
