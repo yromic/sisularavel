@@ -12,6 +12,7 @@
 | TEST-AUTH-ACT-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Auth/PasswordActivationContractTest.php` | PASSED | Admin-issued secret displayed once in response, stored hashed, password gate enforced |
 | TEST-TEN-OWN-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Tenancy/DivisionIsolationContractTest.php` | PASSED | Cross-division route tampering denied with `ERR_403_DIVISI` and audit |
 | TEST-TEN-OWN-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Tenancy/DivisionIsolationContractTest.php` | PASSED | Super-admin context switch scopes reads without ownership mutation |
+| Phase 5 reference data | `docs/03-FEATURE-CATALOG.md`, `docs/23-IMPLEMENTATION-SEQUENCE.md` | `tests/Feature/Reference/MasterReferenceDataContractTest.php` | PASSED | 6 tests / 26 assertions cover school search/write boundary, category division scoping, division/settings super-admin boundary, scoped user creation, and operator denial |
 | TEST-LET-IN-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Incoming feature test | NOT_STARTED | Phase 6 |
 | TEST-LET-IN-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Incoming duplicate advisory feature test | NOT_STARTED | Phase 6 |
 | TEST-LET-OUT-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Outgoing duplicate rejection test | NOT_STARTED | Phase 7 |

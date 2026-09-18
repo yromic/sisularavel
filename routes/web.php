@@ -1,7 +1,12 @@
 <?php
 
 use App\Http\Controllers\Api\DivisionContextController;
+use App\Http\Controllers\Api\DivisionManagementController;
 use App\Http\Controllers\Api\IncomingLetterController;
+use App\Http\Controllers\Api\ReferenceCategoryController;
+use App\Http\Controllers\Api\SchoolController;
+use App\Http\Controllers\Api\SettingController;
+use App\Http\Controllers\Api\UserManagementController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\PasswordActivationController;
 use App\Http\Middleware\EnsureActiveAccount;
@@ -19,6 +24,8 @@ Route::get('/health', function () {
     ]);
 });
 
+Route::get('/api/v1/schools', [SchoolController::class, 'index']);
+
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->middleware('auth');
 Route::post('/forgot-password', [PasswordActivationController::class, 'forgot']);
@@ -34,4 +41,11 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
     Route::post('/api/v1/session/switch-division', [DivisionContextController::class, 'switch']);
     Route::get('/api/v1/surat-masuk', [IncomingLetterController::class, 'index']);
     Route::get('/api/v1/surat-masuk/{incomingLetter}', [IncomingLetterController::class, 'show']);
+    Route::post('/api/v1/schools', [SchoolController::class, 'store']);
+    Route::post('/api/v1/reference/pickup-categories', [ReferenceCategoryController::class, 'storePickup']);
+    Route::post('/api/v1/reference/competition-categories', [ReferenceCategoryController::class, 'storeCompetition']);
+    Route::post('/api/v1/divisions', [DivisionManagementController::class, 'store']);
+    Route::patch('/api/v1/divisions/{division}/status', [DivisionManagementController::class, 'updateStatus']);
+    Route::put('/api/v1/settings/{key}', [SettingController::class, 'update'])->where('key', '.*');
+    Route::post('/api/v1/users', [UserManagementController::class, 'store']);
 });

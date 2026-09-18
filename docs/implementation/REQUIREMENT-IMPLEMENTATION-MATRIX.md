@@ -12,9 +12,10 @@
 | FUN-SK-01 | `docs/04-BUSINESS-RULES.md`, `docs/07-DATABASE-CONTRACT.md` | Not started | `TEST-LET-OUT-001` to `003` | NOT_STARTED | Phase 7 |
 | FUN-PG-01 | `docs/03-FEATURE-CATALOG.md` | Not started | `TEST-PG-001` | NOT_STARTED | Phase 9 |
 | FUN-PG-02 | `docs/03-FEATURE-CATALOG.md` | Not started | Public claim scenario | NOT_STARTED | Phase 9 |
-| FUN-REF-01 | `docs/03-FEATURE-CATALOG.md` | Not started | NPSN/typeahead tests | NOT_STARTED | Phase 5 |
-| FUN-USR-01 | `docs/03-FEATURE-CATALOG.md` | Not started | User activation tests | NOT_STARTED | Phase 3/5 |
-| FUN-DIV-01 | `docs/03-FEATURE-CATALOG.md` | Not started | Division management tests | NOT_STARTED | Phase 5 |
+| FUN-REF-01 | `docs/03-FEATURE-CATALOG.md` | Public active-school search and super-admin school creation endpoint; division-scoped pickup/competition category creation | `MasterReferenceDataContractTest` | VERIFIED | Phase 5 |
+| FUN-USR-01 | `docs/03-FEATURE-CATALOG.md` | Division-admin same-division operator creation; cross-division and role-escalation denial; super-admin global creation path | `MasterReferenceDataContractTest`, `PasswordActivationContractTest` | VERIFIED | Phase 3/5 |
+| FUN-DIV-01 | `docs/03-FEATURE-CATALOG.md` | Super-admin division creation/status management; non-super-admin denial | `MasterReferenceDataContractTest` | VERIFIED | Phase 5 |
+| FUN-SET-01 | `docs/03-FEATURE-CATALOG.md` | Super-admin settings update endpoint with audit-safe key/value persistence | `MasterReferenceDataContractTest` | VERIFIED | Phase 5 |
 | FUN-DASH-01 | `docs/03-FEATURE-CATALOG.md` | Not started | Aggregate count tests | NOT_STARTED | Phase 10 |
 | FUN-SRC-01 | `docs/03-FEATURE-CATALOG.md` | Not started | Scoped search tests | NOT_STARTED | Phase 10 |
 | FUN-REP-01 | `docs/03-FEATURE-CATALOG.md` | Not started | Export sanitization tests | NOT_STARTED | Phase 10 |

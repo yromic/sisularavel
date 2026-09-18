@@ -6,9 +6,9 @@
 | Phase 1 - Laravel Foundation | VERIFIED | 3 | 3 tests passed | Health route, MariaDB connection, migrations, and Vite build verified | `fe9a0bb` |
 | Phase 2 - Database Schema and Relational Foundation | VERIFIED | 5 | 7 database tests passed | Schema, constraints, model foundations, rollback, and formatting verified | `d4d4394` |
 | Phase 3 - Authentication and Session Infrastructure | VERIFIED | 4 | 9 auth tests passed | Login/logout, rate limit, reset, activation, and password gate verified | `5fae78d` |
-| Phase 4 - RBAC and Division Isolation Engine | VERIFIED | 4 | 5 tenancy tests passed | Division-scoped listing, cross-division denial, super-admin context switching, inactive-account gate verified | Phase 4 checkpoint pending |
-| Phase 5 - Master and Reference Data | NOT_STARTED | 3 | 0 | Ready to start | - |
-| Phase 6 - Incoming Letters | NOT_STARTED | 5 | 0 | Waiting on Phase 5 | - |
+| Phase 4 - RBAC and Division Isolation Engine | VERIFIED | 4 | 5 tenancy tests passed | Division-scoped listing, cross-division denial, super-admin context switching, inactive-account gate verified | `01cf881` |
+| Phase 5 - Master and Reference Data | VERIFIED | 4 | 6 reference tests passed | School search/management, division categories, division status, settings, and scoped user creation verified | Committed |
+| Phase 6 - Incoming Letters | NOT_STARTED | 5 | 0 | Ready to start | - |
 | Phase 7 - Outgoing Letters | NOT_STARTED | 3 | 0 | Waiting on Phase 6 | - |
 | Phase 8 - Private File Storage and Streaming | NOT_STARTED | 5 | 0 | Waiting on Phase 7 | - |
 | Phase 9 - Piagam and Public Claim Workflows | NOT_STARTED | 3 | 0 | Waiting on Phase 8 | - |
@@ -20,4 +20,4 @@
 
 ## Resume Point
 
-Start Phase 5 Master and Reference Data from the verified RBAC and division isolation foundation.
+Start Phase 6 Incoming Letters from the verified reference-data foundation.
