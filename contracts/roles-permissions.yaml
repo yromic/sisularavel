@@ -1,0 +1,121 @@
+version: "1.3.0"
+description: "Role-based access control and capability matrix contract for SISURAT Laravel (Reconciled v1.3.0)"
+
+roles:
+  - slug: "super_admin"
+    name: "Super Administrator"
+    description: "System-wide administrative authority across all organizational divisions."
+    division_scope: "GLOBAL"
+    can_switch_division: true
+
+  - slug: "division_admin"
+    name: "Division Administrator"
+    description: "Administrative authority strictly limited to the assigned organizational division."
+    division_scope: "OWN_DIVISION"
+    can_switch_division: false
+
+  - slug: "operator"
+    name: "Division Operator"
+    description: "Data entry and retrieval operator within the assigned organizational division."
+    division_scope: "OWN_DIVISION"
+    can_switch_division: false
+
+  - slug: "guest"
+    name: "Public School / Citizen Guest"
+    description: "Unauthenticated actor accessing public certificate claim portal."
+    division_scope: "NONE"
+    can_switch_division: false
+
+capabilities:
+  # Authentication
+  - key: "auth:login"
+    roles: ["super_admin", "division_admin", "operator"]
+  - key: "auth:logout"
+    roles: ["super_admin", "division_admin", "operator"]
+
+  # Incoming Letters
+  - key: "letters:incoming:read"
+    roles: ["super_admin", "division_admin", "operator"]
+    scope_enforced: true
+  - key: "letters:incoming:create"
+    roles: ["super_admin", "division_admin", "operator"]
+    scope_enforced: true
+  - key: "letters:incoming:update"
+    roles: ["super_admin", "division_admin"]
+    scope_enforced: true
+  - key: "letters:incoming:delete"
+    roles: ["super_admin", "division_admin"]
+    scope_enforced: true
+  - key: "letters:incoming:restore"
+    roles: ["super_admin", "division_admin"]
+    scope_enforced: true
+
+  # Outgoing Letters
+  - key: "letters:outgoing:read"
+    roles: ["super_admin", "division_admin", "operator"]
+    scope_enforced: true
+  - key: "letters:outgoing:create"
+    roles: ["super_admin", "division_admin", "operator"]
+    scope_enforced: true
+  - key: "letters:outgoing:update"
+    roles: ["super_admin", "division_admin"]
+    scope_enforced: true
+  - key: "letters:outgoing:delete"
+    roles: ["super_admin", "division_admin"]
+    scope_enforced: true
+  - key: "letters:outgoing:restore"
+    roles: ["super_admin", "division_admin"]
+    scope_enforced: true
+
+  # Piagam
+  - key: "piagam:read"
+    roles: ["super_admin", "division_admin", "operator"]
+    scope_enforced: true
+  - key: "piagam:create"
+    roles: ["super_admin", "division_admin", "operator"]
+    scope_enforced: true
+  - key: "piagam:update"
+    roles: ["super_admin", "division_admin"]
+    scope_enforced: true
+  - key: "piagam:delete"
+    roles: ["super_admin", "division_admin"]
+    scope_enforced: true
+  - key: "piagam:public-claim"
+    roles: ["guest", "super_admin", "division_admin", "operator"]
+    scope_enforced: false
+
+  # Attachments
+  - key: "attachments:upload"
+    roles: ["super_admin", "division_admin", "operator"]
+    scope_enforced: true
+  - key: "attachments:stream"
+    roles: ["super_admin", "division_admin", "operator"]
+    scope_enforced: true
+
+  # Reference & Master Data
+  - key: "references:schools:read"
+    roles: ["super_admin", "division_admin", "operator", "guest"]
+    scope_enforced: false
+  - key: "references:schools:manage"
+    roles: ["super_admin"]
+    scope_enforced: false
+  - key: "references:categories:manage"
+    roles: ["super_admin", "division_admin"]
+    scope_enforced: true
+
+  # System Administration
+  - key: "users:manage"
+    roles: ["super_admin", "division_admin"]
+    scope_enforced: true
+  - key: "users:issue_activation_secret"
+    roles: ["super_admin", "division_admin"]
+    scope_enforced: true
+  - key: "divisions:manage"
+    roles: ["super_admin"]
+    scope_enforced: false
+  - key: "settings:manage"
+    roles: ["super_admin"]
+    scope_enforced: false
+  - key: "audit-logs:read"
+    roles: ["super_admin"]
+    scope_enforced: false

@@ -1,0 +1,145 @@
+version: "1.3.0"
+description: "Legacy Google Sheets to MySQL relational schema mapping contract (v1.3.0)"
+
+mappings:
+  db_divisi:
+    target_table: "divisions"
+    fields:
+      kode_divisi:
+        target_column: "code"
+        transform: "TRIM(UPPER(val))"
+      nama_divisi:
+        target_column: "name"
+        transform: "TRIM(val)"
+      status:
+        target_column: "status"
+        transform: "LOWER(TRIM(val))"
+      drive_folder_id:
+        target_column: "legacy_drive_folder_id"
+        transform: "TRIM(val)"
+
+  db_users:
+    target_table: "users"
+    fields:
+      username:
+        target_column: "username"
+        transform: "LOWER(TRIM(val))"
+      nama:
+        target_column: "name"
+        transform: "TRIM(val)"
+      email:
+        target_column: "email"
+        transform: "LOWER(TRIM(val))"
+      password:
+        target_column: "password"
+        transform: "GENERATE_RANDOM_UNUSABLE_HASH()"
+        note: "CRITICAL: Legacy plaintext/salted SHA-256 credentials are intentionally rejected. Never migrate legacy passwords."
+      must_reset_password:
+        target_column: "must_reset_password"
+        transform: "SET_CONSTANT(true)"
+        note: "Forces account activation/reset via Path A (Email) or Path B (Admin-assisted one-time secret)."
+      role:
+        target_column: "role"
+        transform: "MAP_ROLE(val)"
+      aktif:
+        target_column: "is_active"
+        transform: "COERCE_BOOLEAN(val)"
+      divisi_id:
+        target_column: "division_id"
+        transform: "LOOKUP_DIVISION_ID(val)"
+
+  ref_sekolah:
+    target_table: "schools"
+    fields:
+      nama_sekolah:
+        target_column: "name"
+        transform: "TRIM(val)"
+      npsn:
+        target_column: "npsn"
+        transform: "PAD_DIGITS(val, 8)"
+      aktif:
+        target_column: "is_active"
+        transform: "COERCE_BOOLEAN(val)"
+
+  division_surat_masuk:
+    source_pattern: "{KODE}_surat_masuk"
+    target_table: "incoming_letters"
+    fields:
+      nomor_surat:
+        target_column: "nomor_surat"
+        transform: "TRIM(val)"
+        note: "Database PK is authoritative record identifier. No unique constraint is enforced on incoming nomor_surat; external collisions are imported cleanly."
+      asal_surat:
+        target_column: "asal_surat"
+        transform: "TRIM(val)"
+      tanggal_surat:
+        target_column: "tanggal_surat"
+        transform: "PARSE_ISO_DATE(val)"
+      tanggal_diterima:
+        target_column: "tanggal_diterima"
+        transform: "PARSE_ISO_DATE(val)"
+      perihal:
+        target_column: "perihal"
+        transform: "TRIM(val)"
+      upload_file:
+        target_table: "attachments"
+        target_column: "legacy_drive_url"
+        transform: "EXTRACT_DRIVE_AND_DOWNLOAD_OR_FLAG_MISSING"
+        note: "If Drive file is 404/inaccessible, create attachment with is_missing=true, file_path=NULL, migration_status='missing_drive_file'. Never drop letter record."
+      is_deleted:
+        target_column: "deleted_at"
+        transform: "IF_TRUE_SET_TIMESTAMP"
+
+  division_surat_keluar:
+    source_pattern: "{KODE}_surat_keluar"
+    target_table: "outgoing_letters"
+    fields:
+      nomor_surat:
+        target_column: "nomor_surat"
+        transform: "TRIM(val)"
+      tanggal_surat:
+        target_column: "tanggal_surat"
+        transform: "PARSE_ISO_DATE(val)"
+      letter_year:
+        target_column: "letter_year"
+        transform: "YEAR(PARSE_ISO_DATE(tanggal_surat))"
+        note: "Explicit column required for cross-database unique constraint: UNIQUE (division_id, letter_year, nomor_surat)."
+      tanggal_share:
+        target_column: "tanggal_share"
+        transform: "PARSE_ISO_DATE(val)"
+      perihal:
+        target_column: "perihal"
+        transform: "TRIM(val)"
+      upload_file:
+        target_table: "attachments"
+        target_column: "legacy_drive_url"
+        transform: "EXTRACT_DRIVE_AND_DOWNLOAD_OR_FLAG_MISSING"
+        note: "If Drive file is 404/inaccessible, create attachment with is_missing=true, file_path=NULL, migration_status='missing_drive_file'. Never drop letter record."
+
+  division_piagam:
+    source_pattern: "{KODE}_piagam"
+    target_table: "piagams"
+    fields:
+      nama_siswa:
+        target_column: "student_name"
+        transform: "TRIM(val)"
+      npsn:
+        target_column: "school_id"
+        transform: "LOOKUP_SCHOOL_ID_BY_NPSN(val)"
+      tahun_perlombaan:
+        target_column: "competition_year"
+        transform: "CAST_INT(val)"
+      nama_pengambil:
+        target_column: "recipient_name"
+        transform: "TRIM(val)"
+      jabatan:
+        target_column: "recipient_position"
+        transform: "TRIM(val)"
+      unit_kerja:
+        target_column: "recipient_unit"
+        transform: "TRIM(val)"
+      ttd_pengambil:
+        target_table: "attachments"
+        target_column: "legacy_drive_url"
+        transform: "EXTRACT_DRIVE_AND_DOWNLOAD_OR_FLAG_MISSING"
+        note: "Durable missing representation if signature image cannot be fetched."

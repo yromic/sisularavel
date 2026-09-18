@@ -1,0 +1,220 @@
+version: "1.3.0"
+description: "Normative requirement registry for SISURAT Laravel Migration Contract Pack (v1.3.0)"
+
+requirements:
+  - id: "SYS-001"
+    category: "System"
+    title: "Application Architecture Foundation & Server Idempotency"
+    classification: "VERIFIED"
+    target_contract: "Built on Laravel ^12.0 on PHP ^8.2 (supported: PHP 8.2–8.5), MySQL 8.0/MariaDB, and server-side idempotency protection."
+    evidence_ids: ["EVID-14", "DEC-SYS-001", "DEC-TECH-002"]
+
+  - id: "SYS-002"
+    category: "System"
+    title: "Immutable Operational Audit Trail"
+    classification: "VERIFIED"
+    target_contract: "All administrative mutations and security violations logged to audit_logs."
+    evidence_ids: ["EVID-07"]
+
+  - id: "AUTH-001"
+    category: "Authentication"
+    title: "Session Authentication & Password Deprecation"
+    classification: "VERIFIED"
+    target_contract: "Bcrypt/Argon2id hashing, rejection of legacy password material, rate limiting, and structured activation paths."
+    evidence_ids: ["EVID-04", "EVID-05", "DEC-AUTH-001"]
+
+  - id: "TEN-001"
+    category: "Tenancy"
+    title: "Relational Single-Division Multi-Tenancy in v1"
+    classification: "VERIFIED"
+    target_contract: "Consolidate multi-tenancy into relational tables partitioned by division_id. Strictly single-division ownership in v1."
+    evidence_ids: ["EVID-13", "EVID-15", "DEC-TEN-001"]
+
+  - id: "TEN-002"
+    category: "Tenancy"
+    title: "Super Admin Cross-Division Scoping"
+    classification: "VERIFIED"
+    target_contract: "Super Admin must operate within an explicit active division context. Cross-division viewing does not alter ownership."
+    evidence_ids: ["EVID-14", "DEC-TEN-001"]
+
+  - id: "RBAC-001"
+    category: "Authorization"
+    title: "Three-Tier Role Hierarchy"
+    classification: "VERIFIED"
+    target_contract: "Enforce Super Admin, Division Admin, and Operator role boundaries via Laravel Policies."
+    evidence_ids: ["EVID-03", "EVID-14"]
+
+  - id: "FUN-SM-01"
+    category: "Functional"
+    title: "Incoming Letters Lifecycle & Duplicate Advisory"
+    classification: "VERIFIED"
+    target_contract: "Incoming letter CRUD; primary key identity; non-unique external letter numbers; advisory duplicate warnings."
+    evidence_ids: ["EVID-01", "EVID-09", "DEC-LET-001"]
+
+  - id: "FUN-SK-01"
+    category: "Functional"
+    title: "Outgoing Letters Lifecycle & Annual Division Uniqueness"
+    classification: "VERIFIED"
+    target_contract: "Outgoing letter CRUD with explicit letter_year column and unique constraint (division_id, letter_year, nomor_surat)."
+    evidence_ids: ["EVID-01", "EVID-09", "DEC-LET-002"]
+
+  - id: "FUN-PG-01"
+    category: "Functional"
+    title: "Piagam Certificate Management"
+    classification: "VERIFIED"
+    target_contract: "Certificate record management with school reference binding and competition classification."
+    evidence_ids: ["EVID-01", "EVID-10"]
+
+  - id: "FUN-PG-02"
+    category: "Functional"
+    title: "Public Piagam Claim Portal"
+    classification: "VERIFIED"
+    target_contract: "Self-service public portal for school guests to claim certificates and provide digital canvas signatures."
+    evidence_ids: ["EVID-10"]
+
+  - id: "FUN-REF-01"
+    category: "Functional"
+    title: "School Reference Master"
+    classification: "VERIFIED"
+    target_contract: "Unified reference catalog for schools with 8-digit unique NPSN indexing."
+    evidence_ids: ["EVID-01"]
+
+  - id: "FUN-USR-01"
+    category: "Functional"
+    title: "User Management & Controlled Activation"
+    classification: "VERIFIED"
+    target_contract: "User administration scoped to division for Division Admins; activation via email token or out-of-band credential."
+    evidence_ids: ["EVID-01", "EVID-08", "DEC-AUTH-001"]
+
+  - id: "FUN-DIV-01"
+    category: "Functional"
+    title: "Division Management"
+    classification: "VERIFIED"
+    target_contract: "Division lifecycle management with status toggle (active/inactive) and user session lockouts."
+    evidence_ids: ["EVID-01", "EVID-13"]
+
+  - id: "FUN-DASH-01"
+    category: "Functional"
+    title: "Dashboard & Analytics"
+    classification: "VERIFIED"
+    target_contract: "Live SQL aggregation for monthly letter volume and distribution."
+    evidence_ids: ["EVID-16"]
+
+  - id: "FUN-SRC-01"
+    category: "Functional"
+    title: "Advanced Archive Search"
+    classification: "VERIFIED"
+    target_contract: "Server-side search across letter numbers, subjects, origins, and dates."
+    evidence_ids: ["EVID-14"]
+
+  - id: "FUN-REP-01"
+    category: "Functional"
+    title: "Recap & Export"
+    classification: "VERIFIED"
+    target_contract: "Export periodic archival summaries to Excel and PDF with CSV injection sanitization."
+    evidence_ids: ["EVID-01"]
+
+  - id: "FILE-001"
+    category: "Storage"
+    title: "Private Attachment Storage & Missing File Handling"
+    classification: "VERIFIED"
+    target_contract: "Files stored outside web root; authorized streaming; durable database representation of missing legacy files."
+    evidence_ids: ["EVID-06", "EVID-12", "DEC-FILE-001", "DEC-FILE-003"]
+
+  - id: "FILE-002"
+    category: "Storage"
+    title: "Standard Multipart File Upload"
+    classification: "VERIFIED"
+    target_contract: "Standard HTTP multipart upload replacing legacy 72KB chunking workaround."
+    evidence_ids: ["EVID-11", "EVID-12", "DEC-FILE-002"]
+
+  - id: "SEC-001"
+    category: "Security"
+    title: "Password & Credential Security"
+    classification: "VERIFIED"
+    target_contract: "Bcrypt cost factor 12, rate-limited login, rejection of legacy weak hashes, automatic session invalidation."
+    evidence_ids: ["EVID-04", "EVID-05", "DEC-AUTH-001"]
+
+  - id: "SEC-002"
+    category: "Security"
+    title: "Document Confidentiality"
+    classification: "VERIFIED"
+    target_contract: "Rejection of public URLs; strict policy check before streaming document bytes."
+    evidence_ids: ["EVID-06"]
+
+  - id: "SEC-004"
+    category: "Security"
+    title: "Formula Injection Prevention"
+    classification: "VERIFIED"
+    target_contract: "Prepend single quote to spreadsheet cells starting with =, +, -, @ during export."
+    evidence_ids: ["EVID-01"]
+
+  - id: "SEC-005"
+    category: "Security"
+    title: "Trusted Origin Verification"
+    classification: "VERIFIED"
+    target_contract: "HTTP Origin header evaluation via Laravel CORS middleware."
+    evidence_ids: ["EVID-02"]
+
+  - id: "DB-001"
+    category: "Database"
+    title: "Relational Data Model"
+    classification: "VERIFIED"
+    target_contract: "12 normalized InnoDB tables with foreign key constraints, explicit letter_year, and UTF8MB4 charset."
+    evidence_ids: ["EVID-01", "DEC-LET-002"]
+
+  - id: "PERF-001"
+    category: "Performance"
+    title: "High-Throughput Archival Performance"
+    classification: "VERIFIED"
+    target_contract: "P95 read latency < 500ms; 5MB PDF upload duration < 3.0s."
+    evidence_ids: ["EVID-15"]
+
+  - id: "UI-001"
+    category: "UserInterface"
+    title: "Mobile-First Responsive Architecture"
+    classification: "APPROVED_TARGET_DECISION"
+    target_contract: "All primary document-entry workflows natively optimized for smartphone viewports down to 360px."
+    evidence_ids: ["DEC-UI-001"]
+
+  - id: "UI-002"
+    category: "UserInterface"
+    title: "Touch-Friendly Interactive Controls"
+    classification: "APPROVED_TARGET_DECISION"
+    target_contract: "Interactive touch targets >= 44x44px; zero dependence on mouse hover for critical actions."
+    evidence_ids: ["DEC-UI-001"]
+
+  - id: "UI-003"
+    category: "UserInterface"
+    title: "Functional Restrained Visual Design"
+    classification: "APPROVED_TARGET_DECISION"
+    target_contract: "Clean, high-contrast institutional styling free from non-functional animations and glassmorphism."
+    evidence_ids: ["DEC-UI-002"]
+
+  - id: "UI-004"
+    category: "UserInterface"
+    title: "Unified SVG Icon Library System"
+    classification: "APPROVED_TARGET_DECISION"
+    target_contract: "Adoption of a single SVG icon library with aria-labels; prohibition of emoji and platform symbols."
+    evidence_ids: ["DEC-UI-003"]
+
+  - id: "UI-005"
+    category: "UserInterface"
+    title: "Inline Validation & Form State Retention"
+    classification: "APPROVED_TARGET_DECISION"
+    target_contract: "Preserve user-entered form input on validation rejection; inline error text below field."
+    evidence_ids: ["DEC-UI-001"]
+
+  - id: "UI-006"
+    category: "UserInterface"
+    title: "Duplicate Submission Shield & Server Idempotency"
+    classification: "APPROVED_TARGET_DECISION"
+    target_contract: "Immediate submit button disabling paired with server-side Idempotency-Key validation."
+    evidence_ids: ["DEC-UI-001", "DEC-SYS-001"]
+
+  - id: "UI-007"
+    category: "UserInterface"
+    title: "First-Class Desktop Management Presentation"
+    classification: "APPROVED_TARGET_DECISION"
+    target_contract: "Dense multi-column tables, bulk review, and advanced reporting on desktop without separate business logic."
+    evidence_ids: ["DEC-UI-004"]

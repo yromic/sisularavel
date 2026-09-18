@@ -1,0 +1,89 @@
+version: "1.3.0"
+description: "Canonical status vocabularies and legacy value variants for SISURAT Laravel (v1.3.0)"
+
+vocabularies:
+  division_status:
+    target_type: "VARCHAR(20)"
+    default: "active"
+    allowed_values:
+      - value: "active"
+        description: "Division is operational; assigned users can log in and manage records"
+        legacy_variants: ["active", "ACTIVE", "Aktif", "1", "true"]
+      - value: "inactive"
+        description: "Division is deactivated; users are locked out and records are read-only"
+        legacy_variants: ["inactive", "INACTIVE", "Nonaktif", "0", "false"]
+
+  user_status:
+    target_type: "BOOLEAN"
+    default: true
+    allowed_values:
+      - value: true
+        description: "Account is active and permitted to authenticate"
+        legacy_variants: [true, "TRUE", "true", 1, "1", "aktif", "AKTIF"]
+      - value: false
+        description: "Account is suspended/deactivated"
+        legacy_variants: [false, "FALSE", "false", 0, "0", "nonaktif", ""]
+
+  school_status:
+    target_type: "BOOLEAN"
+    default: true
+    allowed_values:
+      - value: true
+        description: "School is active in the reference catalog"
+        legacy_variants: [true, "TRUE", "true", 1, "1"]
+      - value: false
+        description: "School is merged, closed, or inactive"
+        legacy_variants: [false, "FALSE", "false", 0, "0"]
+
+  role_slugs:
+    target_type: "VARCHAR(50)"
+    allowed_values:
+      - value: "super_admin"
+        legacy_variants: ["super_admin", "SUPER_ADMIN", "superadmin"]
+      - value: "division_admin"
+        legacy_variants: ["admin_divisi", "admin", "ADMIN", "administrator"]
+      - value: "operator"
+        legacy_variants: ["operator", "OPERATOR", "staff"]
+
+  attachment_migration_status:
+    target_type: "ENUM"
+    allowed_values:
+      - value: "migrated"
+        description: "File successfully downloaded from Drive, verified, and stored on private disk"
+      - value: "missing_drive_file"
+        description: "Google Drive returned HTTP 404 Not Found or file was permanently trashed"
+      - value: "inaccessible_drive_file"
+        description: "Google Drive returned HTTP 403 Forbidden due to permission restrictions"
+      - value: "download_failed"
+        description: "Network timeout or rate limit interrupted download during migration"
+      - value: "validation_rejected"
+        description: "File downloaded but failed MIME verification or checksum integrity"
+      - value: "no_attachment_expected"
+        description: "Legacy sheet row had an empty upload_file cell; no file was expected"
+
+  audit_event_codes:
+    target_type: "VARCHAR(50)"
+    allowed_values:
+      - "AUTH_LOGIN"
+      - "AUTH_LOGOUT"
+      - "AUTH_LOGIN_FAILED"
+      - "AUTH_PASSWORD_RESET"
+      - "LETTER_CREATED"
+      - "LETTER_UPDATED"
+      - "LETTER_DELETED"
+      - "LETTER_RESTORED"
+      - "ATTACHMENT_UPLOADED"
+      - "ATTACHMENT_STREAMED"
+      - "ATTACHMENT_DELETED"
+      - "PIAGAM_CREATED"
+      - "PIAGAM_CLAIMED"
+      - "PIAGAM_DELETED"
+      - "USER_CREATED"
+      - "USER_UPDATED"
+      - "USER_DEACTIVATED"
+      - "DIVISION_CREATED"
+      - "DIVISION_STATUS_CHANGED"
+      - "CONFIG_UPDATED"
+      - "SEC_CROSS_DIVISION_BLOCKED"
+      - "SEC_RATE_LIMIT_EXCEEDED"
+      - "SEC_IDEMPOTENCY_CONFLICT"
