@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\MigrateLegacySisurat;
 use App\Console\Commands\PruneExpiredIdempotencyKeys;
 use App\Http\Middleware\EnsureIdempotentMutation;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withCommands([
+        MigrateLegacySisurat::class,
         PruneExpiredIdempotencyKeys::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {

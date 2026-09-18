@@ -219,3 +219,20 @@
 **Debug note:** The first global exception-renderer implementation declared helper functions in `bootstrap/app.php`, which are process-global and redeclared when Laravel test applications reboot. The helpers were replaced with closure-local render helpers. A second full-suite run also caught credential failures being normalized to HTTP 422; the validation renderer now preserves controller-specified HTTP 401 for generic login rejection.
 
 **Phase 11 verdict:** VERIFIED.
+
+## Phase 12 - Legacy Migration Tooling
+
+**Date:** 2026-09-18
+
+| Command / Check | Result |
+| --- | --- |
+| `php artisan test tests/Feature/Migration/LegacyMigrationToolingContractTest.php` red | PASS: 3 tests failed with expected missing `sisurat:migrate-legacy` command |
+| `php artisan test tests/Feature/Migration/LegacyMigrationToolingContractTest.php` first green attempt | FAIL: valid incoming rows were quarantined by date parsing before trying the `d/m/Y` format |
+| Date parsing fix | PASS: parser now tries each approved format safely before falling back to Carbon parse |
+| `php artisan test tests/Feature/Migration/LegacyMigrationToolingContractTest.php` green | PASS: 3 tests, 29 assertions |
+| `php artisan test` | PASS: 58 tests, 340 assertions |
+| `vendor\bin\pint --test` | PASS after Pint formatting/import cleanup |
+
+**Scope note:** Phase 12 implements contract-driven JSON export ingestion against anonymized fixtures without accessing the unavailable legacy GAS repository or real legacy data. Google Drive binaries are not fetched in tests; legacy Drive links are represented as durable missing attachment records per `DEC-FILE-003`.
+
+**Phase 12 verdict:** VERIFIED.
