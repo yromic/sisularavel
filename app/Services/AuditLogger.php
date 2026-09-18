@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AuditLog;
+use App\Models\IncomingLetter;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -36,6 +37,22 @@ class AuditLogger
             'auditable_type' => User::class,
             'auditable_id' => $target->id,
             'new_values' => $this->redact($newValues),
+            'ip_address' => request()?->ip() ?? '127.0.0.1',
+            'user_agent' => request()?->userAgent(),
+            'description' => $description,
+        ]);
+    }
+
+    public function crossDivisionBlocked(User $actor, IncomingLetter $letter, string $description): void
+    {
+        AuditLog::query()->create([
+            'user_id' => $actor->id,
+            'username' => $actor->username,
+            'role' => $actor->role,
+            'division_id' => $actor->division_id,
+            'event_code' => 'SEC_CROSS_DIVISION_BLOCKED',
+            'auditable_type' => IncomingLetter::class,
+            'auditable_id' => $letter->id,
             'ip_address' => request()?->ip() ?? '127.0.0.1',
             'user_agent' => request()?->userAgent(),
             'description' => $description,

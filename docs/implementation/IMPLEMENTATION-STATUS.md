@@ -5,9 +5,9 @@
 | Phase 0 - Contract Intake and Environment Verification | VERIFIED | 3 | 3 tests passed | `gd` enabled; mandatory extension gate passed | `b284e52` |
 | Phase 1 - Laravel Foundation | VERIFIED | 3 | 3 tests passed | Health route, MariaDB connection, migrations, and Vite build verified | `fe9a0bb` |
 | Phase 2 - Database Schema and Relational Foundation | VERIFIED | 5 | 7 database tests passed | Schema, constraints, model foundations, rollback, and formatting verified | `d4d4394` |
-| Phase 3 - Authentication and Session Infrastructure | VERIFIED | 4 | 9 auth tests passed | Login/logout, rate limit, reset, activation, and password gate verified | Phase 3 checkpoint pending |
-| Phase 4 - RBAC and Division Isolation Engine | NOT_STARTED | 4 | 0 | Ready to start | - |
-| Phase 5 - Master and Reference Data | NOT_STARTED | 3 | 0 | Waiting on Phase 4 | - |
+| Phase 3 - Authentication and Session Infrastructure | VERIFIED | 4 | 9 auth tests passed | Login/logout, rate limit, reset, activation, and password gate verified | `5fae78d` |
+| Phase 4 - RBAC and Division Isolation Engine | VERIFIED | 4 | 5 tenancy tests passed | Division-scoped listing, cross-division denial, super-admin context switching, inactive-account gate verified | Phase 4 checkpoint pending |
+| Phase 5 - Master and Reference Data | NOT_STARTED | 3 | 0 | Ready to start | - |
 | Phase 6 - Incoming Letters | NOT_STARTED | 5 | 0 | Waiting on Phase 5 | - |
 | Phase 7 - Outgoing Letters | NOT_STARTED | 3 | 0 | Waiting on Phase 6 | - |
 | Phase 8 - Private File Storage and Streaming | NOT_STARTED | 5 | 0 | Waiting on Phase 7 | - |
@@ -20,4 +20,4 @@
 
 ## Resume Point
 
-Start Phase 4 RBAC and Division Isolation Engine from the verified authentication foundation.
+Start Phase 5 Master and Reference Data from the verified RBAC and division isolation foundation.

@@ -91,3 +91,17 @@
 | `php artisan route:list --path=admin/users` | PASS: activation-secret route registered |
 
 **Phase 3 verdict:** VERIFIED.
+
+## Phase 4 - RBAC and Division Isolation Engine
+
+**Date:** 2026-09-18
+
+| Command / Check | Result |
+| --- | --- |
+| `php artisan test tests/Feature/Tenancy/DivisionIsolationContractTest.php` red | PASS: failed before RBAC/tenant routes existed with expected 404s |
+| `php artisan test tests/Feature/Tenancy/DivisionIsolationContractTest.php` green | PASS: 5 tests, 16 assertions |
+| `php artisan route:list --path=api/v1` | PASS: switch-division and incoming-letter scoped routes registered |
+| `php artisan test` | PASS: 24 tests, 130 assertions |
+| `vendor\bin\pint --test` | PASS after formatting `routes/web.php` imports |
+
+**Phase 4 verdict:** VERIFIED.

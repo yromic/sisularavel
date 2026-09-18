@@ -10,6 +10,8 @@
 | TEST-AUTH-SEC-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Auth/AuthenticationContractTest.php` | PASSED | Legacy password rejected; inactive account rejected |
 | TEST-AUTH-ACT-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Auth/PasswordActivationContractTest.php` | PASSED | Hashed 64-character token stored; reset clears activation state |
 | TEST-AUTH-ACT-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Auth/PasswordActivationContractTest.php` | PASSED | Admin-issued secret displayed once in response, stored hashed, password gate enforced |
+| TEST-TEN-OWN-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Tenancy/DivisionIsolationContractTest.php` | PASSED | Cross-division route tampering denied with `ERR_403_DIVISI` and audit |
+| TEST-TEN-OWN-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | `tests/Feature/Tenancy/DivisionIsolationContractTest.php` | PASSED | Super-admin context switch scopes reads without ownership mutation |
 | TEST-LET-IN-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Incoming feature test | NOT_STARTED | Phase 6 |
 | TEST-LET-IN-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Incoming duplicate advisory feature test | NOT_STARTED | Phase 6 |
 | TEST-LET-OUT-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Outgoing duplicate rejection test | NOT_STARTED | Phase 7 |
@@ -17,8 +19,6 @@
 | TEST-LET-OUT-003 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Outgoing year recalculation test | NOT_STARTED | Phase 7 |
 | TEST-FILE-MISS-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Missing attachment detail/404 test | NOT_STARTED | Phase 8 |
 | TEST-FILE-MISS-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Missing attachment remediation test | NOT_STARTED | Phase 8 |
-| TEST-TEN-OWN-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Division ownership tamper test | NOT_STARTED | Phase 4 |
-| TEST-TEN-OWN-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Super admin ownership preservation test | NOT_STARTED | Phase 4 |
 | TEST-IDEM-001 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Idempotent replay test | NOT_STARTED | Phase 6 |
 | TEST-IDEM-002 | `docs/20-TEST-AND-ACCEPTANCE-CONTRACT.md` | Idempotency conflict test | NOT_STARTED | Phase 6 |
 | TEST-UI-MOB-001 to 006 | `examples/acceptance-scenarios.md` | Browser/responsive tests | NOT_STARTED | Phase 13 |

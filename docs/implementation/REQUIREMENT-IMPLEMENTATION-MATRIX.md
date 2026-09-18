@@ -5,9 +5,9 @@
 | SYS-001 | `contracts/requirements.yaml`, `docs/23-IMPLEMENTATION-SEQUENCE.md` | Laravel 12 baseline installed; `/health` route; local MariaDB `sisurat_dev`; Vite build | Baseline example tests, `HealthCheckTest` | VERIFIED | Laravel 12.69.2, PHP 8.2.12, `gd`, MariaDB 10.4.32 verified |
 | SYS-002 | `docs/13-AUDIT-LOG-CONTRACT.md` | Not started | `TEST-AUTH-*`, `TEST-LET-*` | NOT_STARTED | Phase 11 |
 | AUTH-001 | `docs/12-SECURITY-CONTRACT.md` | Session login/logout, legacy credential rejection, generic reset request, token reset, admin activation secret, mandatory password activation gate | `AuthenticationContractTest`, `PasswordActivationContractTest` | VERIFIED | Phase 3 |
-| TEN-001 | `docs/08-RBAC-AND-DIVISION-SCOPE.md` | Not started | `TEST-TEN-OWN-001` | NOT_STARTED | Phase 4 |
-| TEN-002 | `docs/08-RBAC-AND-DIVISION-SCOPE.md` | Not started | Super admin switch scenario | NOT_STARTED | Phase 4 |
-| RBAC-001 | `contracts/roles-permissions.yaml` | Not started | Negative policy tests | NOT_STARTED | Phase 4 |
+| TEN-001 | `docs/08-RBAC-AND-DIVISION-SCOPE.md` | Division-owned incoming letter listing/detail scoped to active division; cross-division denial with audit record; inactive account/division gate | `DivisionIsolationContractTest` | VERIFIED | Phase 4 |
+| TEN-002 | `docs/08-RBAC-AND-DIVISION-SCOPE.md` | Super admin active-division session switching without ownership transfer | `DivisionIsolationContractTest` | VERIFIED | Phase 4 |
+| RBAC-001 | `contracts/roles-permissions.yaml` | Authenticated role checks for super-admin-only division switching and division-admin same-division activation secret boundary | `DivisionIsolationContractTest`, `PasswordActivationContractTest` | VERIFIED | Phase 4 |
 | FUN-SM-01 | `docs/04-BUSINESS-RULES.md`, `docs/07-DATABASE-CONTRACT.md` | Not started | `TEST-LET-IN-001`, `TEST-LET-IN-002` | NOT_STARTED | Phase 6 |
 | FUN-SK-01 | `docs/04-BUSINESS-RULES.md`, `docs/07-DATABASE-CONTRACT.md` | Not started | `TEST-LET-OUT-001` to `003` | NOT_STARTED | Phase 7 |
 | FUN-PG-01 | `docs/03-FEATURE-CATALOG.md` | Not started | `TEST-PG-001` | NOT_STARTED | Phase 9 |

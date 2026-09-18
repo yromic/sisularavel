@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\DivisionContextController;
+use App\Http\Controllers\Api\IncomingLetterController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\PasswordActivationController;
+use App\Http\Middleware\EnsureActiveAccount;
 use App\Http\Middleware\EnsurePasswordIsActivated;
 use Illuminate\Support\Facades\Route;
 
@@ -26,3 +29,9 @@ Route::post('/admin/users/{user}/activation-secret', [PasswordActivationControll
 Route::get('/dashboard', function () {
     return response()->json(['success' => true]);
 })->middleware(['auth', EnsurePasswordIsActivated::class]);
+
+Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated::class])->group(function () {
+    Route::post('/api/v1/session/switch-division', [DivisionContextController::class, 'switch']);
+    Route::get('/api/v1/surat-masuk', [IncomingLetterController::class, 'index']);
+    Route::get('/api/v1/surat-masuk/{incomingLetter}', [IncomingLetterController::class, 'show']);
+});
