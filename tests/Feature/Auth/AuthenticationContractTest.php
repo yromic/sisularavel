@@ -96,4 +96,25 @@ class AuthenticationContractTest extends TestCase
             'event_code' => 'SEC_RATE_LIMIT_EXCEEDED',
         ]);
     }
+
+    public function test_web_form_login_redirects_to_dashboard_and_logout_redirects_to_login(): void
+    {
+        $user = User::factory()->create([
+            'username' => 'web_admin',
+            'password' => Hash::make('password'),
+        ]);
+
+        $this->post('/login', [
+            'username' => 'web_admin',
+            'password' => 'password',
+        ])
+            ->assertRedirect('/dashboard');
+
+        $this->assertAuthenticatedAs($user);
+
+        $this->post('/logout')
+            ->assertRedirect('/login');
+
+        $this->assertGuest();
+    }
 }

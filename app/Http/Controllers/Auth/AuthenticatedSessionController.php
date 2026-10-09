@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\AuditLogger;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -16,7 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AuthenticatedSessionController extends Controller
 {
-    public function store(Request $request, AuditLogger $auditLogger): JsonResponse
+    public function store(Request $request, AuditLogger $auditLogger): Response
     {
         $credentials = $request->validate([
             'username' => ['required', 'string'],
@@ -57,6 +56,10 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         if ($user->must_reset_password) {
+            if (! $request->expectsJson()) {
+                return redirect('/password/activate');
+            }
+
             return response()->json([
                 'success' => false,
                 'code' => 'ERR_PASSWORD_RESET_REQUIRED',

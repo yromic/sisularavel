@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -12,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class UserManagementController extends Controller
 {
-    public function store(Request $request): JsonResponse
+    public function store(Request $request): Response
     {
         $actor = $request->user();
         abort_unless(in_array($actor?->role, ['super_admin', 'division_admin'], true), 403);

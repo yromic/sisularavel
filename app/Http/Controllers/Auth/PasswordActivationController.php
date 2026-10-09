@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Response;
 
 class PasswordActivationController extends Controller
 {
@@ -89,7 +90,7 @@ class PasswordActivationController extends Controller
         ]);
     }
 
-    public function activate(Request $request): JsonResponse
+    public function activate(Request $request): Response
     {
         $validated = $request->validate([
             'password' => ['required', 'string', 'min:8', 'confirmed'],
