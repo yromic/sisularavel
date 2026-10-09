@@ -59,9 +59,24 @@
                             <td class="p-3">{{ $letter->letter_date->toDateString() }}</td>
                             <td class="p-3">{{ $letter->received_date->toDateString() }}</td>
                             <td class="p-3">{{ $letter->origin_agency }}</td>
-                            <td class="p-3">{{ $letter->subject }}</td>
-                            <td class="p-3"><button class="min-h-[44px] rounded-md border border-slate-300 px-3">Lihat PDF</button></td>
-                            <td class="p-3"><button class="min-h-[44px] rounded-md border border-slate-300 px-3" aria-label="Buka aksi surat {{ $letter->letter_number }}">Aksi</button></td>
+                            <td class="p-3">
+                                @if ($letter->attachments->isNotEmpty())
+                                    <a href="/api/v1/attachments/{{ $letter->attachments->first()->uuid }}/preview" target="_blank" class="inline-flex min-h-[44px] items-center rounded-md border border-slate-300 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                                        Lihat Berkas
+                                    </a>
+                                @else
+                                    <span class="text-xs text-slate-400">Tidak Ada</span>
+                                @endif
+                            </td>
+                            <td class="p-3 text-center">
+                                <form method="post" action="/api/v1/surat-masuk/{{ $letter->id }}" onsubmit="return confirm('Hapus arsip surat masuk {{ $letter->letter_number }}?')" class="inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50" title="Hapus surat masuk">
+                                        <x-icon name="trash" class="h-4 w-4" />
+                                    </button>
+                                </form>
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
