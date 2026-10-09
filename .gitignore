@@ -19,6 +19,7 @@
 /storage/*.key
 /storage/framework/lsp-*.php
 /storage/pail
+/storage/migration
 /vendor
 Homestead.json
 Homestead.yaml
