@@ -39,7 +39,7 @@ class AttachmentStorageContractTest extends TestCase
 
         $attachment = Attachment::query()->where('uuid', $attachmentUuid)->firstOrFail();
 
-        $this->assertStringStartsWith('documents/DIKDAS/2026/09/', $attachment->file_path);
+        $this->assertStringStartsWith('documents/DIKDAS/'.now()->format('Y/m').'/', $attachment->file_path);
         $this->assertFalse($attachment->is_missing);
         Storage::disk('private_documents')->assertExists($attachment->file_path);
 
