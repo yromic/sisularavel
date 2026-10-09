@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Response;
 
 class UserManagementController extends Controller
 {
@@ -48,8 +49,40 @@ class UserManagementController extends Controller
             'must_reset_password' => false,
         ]);
 
+        if (! $request->expectsJson()) {
+            return back()->with('success', "Pengguna {$user->username} berhasil ditambahkan.");
+        }
+
         return response()->json([
             'data' => $user->only(['id', 'uuid', 'username', 'name', 'email', 'role', 'division_id', 'is_active']),
         ], 201);
+    }
+
+    public function destroy(Request $request, User $user): Response
+    {
+        $actor = $request->user();
+        abort_unless(in_array($actor?->role, ['super_admin', 'division_admin'], true), 403);
+
+        if ($actor->id === $user->id) {
+            if (! $request->expectsJson()) {
+                return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
+            }
+
+            return response()->json(['success' => false, 'message' => 'Tidak dapat menghapus akun sendiri.'], 422);
+        }
+
+        if ($actor->role !== 'super_admin') {
+            if ($user->division_id !== $actor->division_id || $user->role !== 'operator') {
+                abort(403);
+            }
+        }
+
+        $user->delete();
+
+        if (! $request->expectsJson()) {
+            return back()->with('success', "Pengguna {$user->username} berhasil dihapus.");
+        }
+
+        return response()->json(['success' => true]);
     }
 }

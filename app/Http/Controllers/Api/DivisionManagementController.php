@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Division;
-use Illuminate\Http\JsonResponse;
+use App\Models\IncomingLetter;
+use App\Models\OutgoingLetter;
+use App\Models\Piagam;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Response;
 
 class DivisionManagementController extends Controller
 {
-    public function store(Request $request): JsonResponse
+    public function store(Request $request): Response
     {
         abort_unless($request->user()?->role === 'super_admin', 403);
 
@@ -27,10 +30,14 @@ class DivisionManagementController extends Controller
             'created_by_user_id' => $request->user()->id,
         ]);
 
+        if (! $request->expectsJson()) {
+            return back()->with('success', "Divisi {$division->name} ({$division->code}) berhasil ditambahkan.");
+        }
+
         return response()->json(['data' => $division], 201);
     }
 
-    public function updateStatus(Request $request, Division $division): JsonResponse
+    public function updateStatus(Request $request, Division $division): Response
     {
         abort_unless($request->user()?->role === 'super_admin', 403);
 
@@ -40,6 +47,38 @@ class DivisionManagementController extends Controller
 
         $division->update(['status' => $validated['status']]);
 
+        if (! $request->expectsJson()) {
+            return back()->with('success', "Status divisi {$division->name} diubah menjadi {$division->status}.");
+        }
+
         return response()->json(['data' => $division->refresh()]);
+    }
+
+    public function destroy(Request $request, Division $division): Response
+    {
+        abort_unless($request->user()?->role === 'super_admin', 403);
+
+        $hasData = $division->users()->exists()
+            || IncomingLetter::where('division_id', $division->id)->exists()
+            || OutgoingLetter::where('division_id', $division->id)->exists()
+            || Piagam::where('division_id', $division->id)->exists();
+
+        if ($hasData) {
+            $division->update(['status' => 'inactive']);
+
+            if (! $request->expectsJson()) {
+                return back()->with('error', "Divisi {$division->code} memiliki arsip surat/pengguna terkait, sehingga tidak dapat dihapus permanen. Status dialihkan menjadi Nonaktif.");
+            }
+
+            return response()->json(['success' => false, 'message' => 'Divisi memiliki data terkait, status dialihkan menjadi inactive.'], 422);
+        }
+
+        $division->delete();
+
+        if (! $request->expectsJson()) {
+            return back()->with('success', "Divisi {$division->code} berhasil dihapus permanen.");
+        }
+
+        return response()->json(['success' => true]);
     }
 }

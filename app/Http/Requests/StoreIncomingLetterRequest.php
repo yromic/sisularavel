@@ -35,6 +35,14 @@ class StoreIncomingLetterRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
+            'nomor_surat' => $this->nomor_surat ?? $this->letter_number,
+            'asal_surat' => $this->asal_surat ?? $this->origin_agency,
+            'perihal' => $this->perihal ?? $this->subject,
+            'tanggal_surat' => $this->tanggal_surat ?? $this->letter_date,
+            'tanggal_diterima' => $this->tanggal_diterima ?? $this->received_date,
+        ]);
+
+        $this->merge([
             'nomor_surat' => is_string($this->nomor_surat) ? trim($this->nomor_surat) : $this->nomor_surat,
             'asal_surat' => is_string($this->asal_surat) ? trim($this->asal_surat) : $this->asal_surat,
             'perihal' => is_string($this->perihal) ? trim($this->perihal) : $this->perihal,

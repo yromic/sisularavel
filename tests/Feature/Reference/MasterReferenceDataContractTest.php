@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Reference;
 
+use App\Models\CompetitionCategory;
 use App\Models\Division;
+use App\Models\PickupCategory;
 use App\Models\School;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -155,5 +157,78 @@ class MasterReferenceDataContractTest extends TestCase
                 'division_id' => $operator->division_id,
             ])
             ->assertForbidden();
+    }
+
+    public function test_super_admin_can_delete_division_with_dependency_protection(): void
+    {
+        $superAdmin = User::factory()->superAdmin()->create();
+        $emptyDivision = Division::factory()->create();
+        $divisionWithUser = Division::factory()->create();
+        User::factory()->for($divisionWithUser)->create();
+
+        // Empty division gets deleted
+        $this->actingAs($superAdmin)
+            ->deleteJson("/api/v1/divisions/{$emptyDivision->id}")
+            ->assertOk()
+            ->assertJsonPath('success', true);
+        $this->assertSoftDeleted('divisions', ['id' => $emptyDivision->id]);
+
+        // Division with user is protected and switched to inactive
+        $this->actingAs($superAdmin)
+            ->deleteJson("/api/v1/divisions/{$divisionWithUser->id}")
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+        $this->assertDatabaseHas('divisions', ['id' => $divisionWithUser->id, 'status' => 'inactive']);
+    }
+
+    public function test_user_can_be_deleted_preventing_self_deletion(): void
+    {
+        $superAdmin = User::factory()->superAdmin()->create();
+        $division = Division::factory()->create();
+        $operator = User::factory()->for($division)->create();
+
+        // Cannot delete self
+        $this->actingAs($superAdmin)
+            ->deleteJson("/api/v1/users/{$superAdmin->id}")
+            ->assertStatus(422);
+
+        // Can delete other user
+        $this->actingAs($superAdmin)
+            ->deleteJson("/api/v1/users/{$operator->id}")
+            ->assertOk()
+            ->assertJsonPath('success', true);
+        $this->assertSoftDeleted('users', ['id' => $operator->id]);
+    }
+
+    public function test_categories_and_schools_can_be_deleted(): void
+    {
+        $superAdmin = User::factory()->superAdmin()->create();
+        $division = Division::factory()->create();
+        $competitionCategory = CompetitionCategory::create([
+            'division_id' => $division->id,
+            'name' => 'Lomba Sains',
+            'is_active' => true,
+        ]);
+        $pickupCategory = PickupCategory::create([
+            'division_id' => $division->id,
+            'name' => 'Langsung',
+            'is_active' => true,
+        ]);
+        $school = School::factory()->create();
+
+        $this->actingAs($superAdmin)
+            ->deleteJson("/api/v1/reference/competition-categories/{$competitionCategory->id}")
+            ->assertOk();
+        $this->assertDatabaseMissing('competition_categories', ['id' => $competitionCategory->id]);
+
+        $this->actingAs($superAdmin)
+            ->deleteJson("/api/v1/reference/pickup-categories/{$pickupCategory->id}")
+            ->assertOk();
+        $this->assertDatabaseMissing('pickup_categories', ['id' => $pickupCategory->id]);
+
+        $this->actingAs($superAdmin)
+            ->deleteJson("/api/v1/schools/{$school->id}")
+            ->assertOk();
+        $this->assertDatabaseMissing('schools', ['id' => $school->id]);
     }
 }

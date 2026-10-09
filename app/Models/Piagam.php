@@ -36,6 +36,16 @@ class Piagam extends Model
         return $this->belongsTo(School::class);
     }
 
+    public function competitionCategory(): BelongsTo
+    {
+        return $this->belongsTo(CompetitionCategory::class);
+    }
+
+    public function pickupCategory(): BelongsTo
+    {
+        return $this->belongsTo(PickupCategory::class);
+    }
+
     public function attachments(): MorphMany
     {
         return $this->morphMany(Attachment::class, 'attachable');

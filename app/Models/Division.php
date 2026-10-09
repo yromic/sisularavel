@@ -26,4 +26,19 @@ class Division extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    public function incomingLetters(): HasMany
+    {
+        return $this->hasMany(IncomingLetter::class);
+    }
+
+    public function outgoingLetters(): HasMany
+    {
+        return $this->hasMany(OutgoingLetter::class);
+    }
+
+    public function piagams(): HasMany
+    {
+        return $this->hasMany(Piagam::class);
+    }
 }

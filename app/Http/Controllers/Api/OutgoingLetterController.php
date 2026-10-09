@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreOutgoingLetterRequest;
+use App\Models\Division;
 use App\Models\OutgoingLetter;
 use App\Services\AuditLogger;
 use App\Services\DivisionContext;
@@ -12,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Response;
 
 class OutgoingLetterController extends Controller
 {
@@ -36,10 +38,23 @@ class OutgoingLetterController extends Controller
         return response()->json(['data' => $this->resource($outgoingLetter)]);
     }
 
-    public function store(StoreOutgoingLetterRequest $request, DivisionContext $divisionContext, AuditLogger $auditLogger): JsonResponse
+    public function store(StoreOutgoingLetterRequest $request, DivisionContext $divisionContext, AuditLogger $auditLogger): Response
     {
         $user = $request->user();
         $divisionId = $divisionContext->activeDivisionId($request, $user);
+
+        if ($divisionId === null && $user->role === 'super_admin' && $request->filled('division_id')) {
+            $divisionId = (int) $request->input('division_id');
+            $request->session()->put('active_division_id', $divisionId);
+        }
+
+        if ($divisionId === null && $user->role === 'super_admin') {
+            $firstDiv = Division::where('status', 'active')->first();
+            if ($firstDiv) {
+                $divisionId = $firstDiv->id;
+                $request->session()->put('active_division_id', $divisionId);
+            }
+        }
 
         if ($divisionId === null) {
             throw new HttpResponseException(response()->json([
@@ -69,6 +84,10 @@ class OutgoingLetterController extends Controller
 
             return $letter;
         });
+
+        if (! $request->expectsJson()) {
+            return redirect('/surat-keluar')->with('success', 'Surat keluar berhasil disimpan.');
+        }
 
         return response()->json(['success' => true, 'data' => $this->resource($letter)], 201);
     }
@@ -103,7 +122,7 @@ class OutgoingLetterController extends Controller
         return response()->json(['success' => true, 'data' => $this->resource($letter)]);
     }
 
-    public function destroy(Request $request, OutgoingLetter $outgoingLetter, AuditLogger $auditLogger): JsonResponse
+    public function destroy(Request $request, OutgoingLetter $outgoingLetter, AuditLogger $auditLogger): Response
     {
         if (! $this->canManage($request, $outgoingLetter)) {
             return $this->forbiddenDivisionResponse();
@@ -115,6 +134,10 @@ class OutgoingLetterController extends Controller
 
             $auditLogger->outgoingLetterEvent('LETTER_OUTGOING_DELETED', $request->user(), $outgoingLetter, 'Outgoing letter soft deleted.');
         });
+
+        if (! $request->expectsJson()) {
+            return back()->with('success', 'Surat keluar berhasil dihapus.');
+        }
 
         return response()->json(['success' => true, 'data' => ['id' => $outgoingLetter->id, 'deleted' => true]]);
     }

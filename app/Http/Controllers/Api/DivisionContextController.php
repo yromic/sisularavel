@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Division;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class DivisionContextController extends Controller
 {
-    public function switch(Request $request): JsonResponse
+    public function switch(Request $request): Response
     {
         $user = $request->user();
 
@@ -25,6 +25,10 @@ class DivisionContextController extends Controller
             ->firstOrFail();
 
         $request->session()->put('active_division_id', $division->id);
+
+        if (! $request->expectsJson()) {
+            return back()->with('success', "Konteks divisi dialihkan ke {$division->name}.");
+        }
 
         return response()->json([
             'success' => true,
