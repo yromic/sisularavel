@@ -107,6 +107,10 @@ class PasswordActivationController extends Controller
 
         $request->session()->regenerate();
 
+        if (! $request->expectsJson()) {
+            return redirect('/dashboard')->with('success', 'Password permanen berhasil diaktifkan.');
+        }
+
         return response()->json(['success' => true]);
     }
 

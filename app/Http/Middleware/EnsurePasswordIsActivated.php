@@ -13,6 +13,10 @@ class EnsurePasswordIsActivated
         $user = $request->user();
 
         if ($user?->must_reset_password) {
+            if (! $request->expectsJson() && ! $request->is('password/activate')) {
+                return redirect('/password/activate');
+            }
+
             return response()->json([
                 'success' => false,
                 'code' => 'ERR_PASSWORD_RESET_REQUIRED',

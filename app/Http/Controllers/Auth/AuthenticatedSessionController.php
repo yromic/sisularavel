@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -64,6 +65,10 @@ class AuthenticatedSessionController extends Controller
             ], 403);
         }
 
+        if (! $request->expectsJson()) {
+            return redirect()->intended('/dashboard');
+        }
+
         return response()->json([
             'success' => true,
             'user' => [
@@ -75,11 +80,15 @@ class AuthenticatedSessionController extends Controller
         ]);
     }
 
-    public function destroy(Request $request): JsonResponse
+    public function destroy(Request $request): Response
     {
         Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        if (! $request->expectsJson()) {
+            return redirect('/login');
+        }
 
         return response()->json(['success' => true]);
     }
