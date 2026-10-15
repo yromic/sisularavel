@@ -8,6 +8,7 @@ use App\Models\IncomingLetter;
 use App\Models\OutgoingLetter;
 use App\Models\Piagam;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 class AuditLogger
@@ -46,7 +47,7 @@ class AuditLogger
         ]);
     }
 
-    public function crossDivisionBlocked(User $actor, IncomingLetter $letter, string $description): void
+    public function crossDivisionBlocked(User $actor, Model $model, string $description): void
     {
         AuditLog::query()->create([
             'user_id' => $actor->id,
@@ -54,8 +55,8 @@ class AuditLogger
             'role' => $actor->role,
             'division_id' => $actor->division_id,
             'event_code' => 'SEC_CROSS_DIVISION_BLOCKED',
-            'auditable_type' => IncomingLetter::class,
-            'auditable_id' => $letter->id,
+            'auditable_type' => $model::class,
+            'auditable_id' => $model->getKey(),
             'ip_address' => request()?->ip() ?? '127.0.0.1',
             'user_agent' => request()?->userAgent(),
             'description' => $description,

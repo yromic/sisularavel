@@ -32,6 +32,15 @@ class AuthenticatedSessionController extends Controller
                 $request
             );
 
+            if (! $request->expectsJson()) {
+                $seconds = RateLimiter::availableIn($rateLimitKey);
+                $minutes = (int) ceil(max(1, $seconds) / 60);
+
+                return back()->withInput($request->only('username'))->withErrors([
+                    'username' => "Terlalu banyak percobaan login. Silakan coba lagi dalam {$minutes} menit.",
+                ]);
+            }
+
             return response()->json([
                 'success' => false,
                 'code' => 'ERR_429_RATE_LIMIT',

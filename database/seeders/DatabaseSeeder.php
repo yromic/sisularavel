@@ -8,6 +8,7 @@ use App\Models\PickupCategory;
 use App\Models\School;
 use App\Models\Setting;
 use App\Models\User;
+use App\Models\WorkUnit;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -25,6 +26,7 @@ class DatabaseSeeder extends Seeder
         $divisions = $this->seedDivisions();
         $this->seedUsers($divisions);
         $this->seedSchools();
+        $this->seedWorkUnits();
         $this->seedCategories($divisions);
         $this->seedSettings();
     }
@@ -174,6 +176,28 @@ class DatabaseSeeder extends Seeder
             School::query()->updateOrCreate(
                 ['npsn' => $school['npsn']],
                 ['name' => $school['name'], 'is_active' => true]
+            );
+        }
+    }
+
+    private function seedWorkUnits(): void
+    {
+        $units = [
+            ['name' => 'Dinas Pendidikan, Kebudayaan, Kepemudaan dan Olahraga', 'code' => 'DISDIKBUDPORA'],
+            ['name' => 'Sekretariat Disdikbudpora', 'code' => 'SEKRETARIAT'],
+            ['name' => 'Korwilcam Bidang Pendidikan Ungaran Barat', 'code' => 'KORWIL-UNGBAR'],
+            ['name' => 'Korwilcam Bidang Pendidikan Bergas', 'code' => 'KORWIL-BERGAS'],
+            ['name' => 'Korwilcam Bidang Pendidikan Ambarawa', 'code' => 'KORWIL-AMBARAWA'],
+            ['name' => 'Korwilcam Bidang Pendidikan Bawen', 'code' => 'KORWIL-BAWEN'],
+            ['name' => 'Korwilcam Bidang Pendidikan Tengaran', 'code' => 'KORWIL-TENGARAN'],
+            ['name' => 'Kantor Kementerian Agama Kab. Semarang', 'code' => 'KEMENAG'],
+            ['name' => 'Cabang Dinas Pendidikan Wilayah I', 'code' => 'CABDIN-1'],
+        ];
+
+        foreach ($units as $unit) {
+            WorkUnit::query()->updateOrCreate(
+                ['name' => $unit['name']],
+                ['code' => $unit['code'], 'is_active' => true]
             );
         }
     }

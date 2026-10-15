@@ -2,12 +2,15 @@
 
 namespace Tests\Feature\Outgoing;
 
+use App\Models\Attachment;
 use App\Models\AuditLog;
 use App\Models\Division;
 use App\Models\OutgoingLetter;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -130,6 +133,115 @@ class OutgoingLetterWorkflowContractTest extends TestCase
 
         $this->assertDatabaseCount('outgoing_letters', 1);
         $this->assertSame(1, AuditLog::query()->where('event_code', 'LETTER_OUTGOING_CREATED')->count());
+    }
+
+    public function test_outgoing_letter_stores_attachment_on_private_disk(): void
+    {
+        Storage::fake('private_documents');
+
+        $division = Division::factory()->create(['code' => 'DIKDAS']);
+        $operator = User::factory()->for($division)->create();
+
+        $response = $this->actingAs($operator)
+            ->withHeader('Idempotency-Key', (string) Str::uuid())
+            ->postJson('/api/v1/surat-keluar', array_merge($this->validPayload([
+                'nomor_surat' => '077/SK/DIKDAS/2026',
+            ]), [
+                'attachment' => UploadedFile::fake()->create('surat-keluar.pdf', 256, 'application/pdf'),
+            ]))
+            ->assertCreated()
+            ->assertJsonPath('data.attachment.original_name', 'surat-keluar.pdf');
+
+        $attachmentUuid = $response->json('data.attachment.uuid');
+        $attachment = Attachment::query()->where('uuid', $attachmentUuid)->firstOrFail();
+
+        $this->assertFalse($attachment->is_missing);
+        $this->assertSame(OutgoingLetter::class, $attachment->attachable_type);
+        Storage::disk('private_documents')->assertExists($attachment->file_path);
+
+        $this->actingAs($operator)
+            ->get("/api/v1/attachments/{$attachment->uuid}/preview")
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_outgoing_letter_rejects_oversized_attachment(): void
+    {
+        Storage::fake('private_documents');
+
+        $division = Division::factory()->create(['code' => 'DIKDAS']);
+        $operator = User::factory()->for($division)->create();
+
+        $this->actingAs($operator)
+            ->withHeader('Idempotency-Key', (string) Str::uuid())
+            ->postJson('/api/v1/surat-keluar', array_merge($this->validPayload(), [
+                'attachment' => UploadedFile::fake()->create('huge.pdf', 15000, 'application/pdf'),
+            ]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['attachment']);
+    }
+
+    public function test_outgoing_letter_attachment_preview_denies_cross_division(): void
+    {
+        Storage::fake('private_documents');
+
+        $dikdas = Division::factory()->create(['code' => 'DIKDAS']);
+        $paud = Division::factory()->create(['code' => 'PAUD']);
+        $dikdasOperator = User::factory()->for($dikdas)->create();
+        $paudOperator = User::factory()->for($paud)->create();
+
+        $response = $this->actingAs($dikdasOperator)
+            ->withHeader('Idempotency-Key', (string) Str::uuid())
+            ->postJson('/api/v1/surat-keluar', array_merge($this->validPayload([
+                'nomor_surat' => '100/SK/DIKDAS/2026',
+            ]), [
+                'attachment' => UploadedFile::fake()->create('rahasia.pdf', 128, 'application/pdf'),
+            ]))
+            ->assertCreated();
+
+        $attachmentUuid = $response->json('data.attachment.uuid');
+
+        // Other division operator must be denied with 403
+        $this->actingAs($paudOperator)
+            ->get("/api/v1/attachments/{$attachmentUuid}/preview")
+            ->assertForbidden();
+    }
+
+    public function test_outgoing_letter_show_returns_enriched_resource_with_attachment_urls(): void
+    {
+        $division = Division::factory()->create(['code' => 'DIKDAS', 'name' => 'Bidang Pembinaan SD']);
+        $operator = User::factory()->for($division)->create(['name' => 'Budi Santoso', 'username' => 'budi_sd']);
+        $letter = $this->outgoingLetter($division, [
+            'letter_number' => '421/777/DIKDAS/2026',
+            'letter_year' => 2026,
+            'letter_date' => '2026-09-01',
+            'disseminated_date' => '2026-09-02',
+            'subject' => 'Pemberitahuan Ujian Semester',
+            'created_by_user_id' => $operator->id,
+        ]);
+
+        $letter->attachments()->create([
+            'uuid' => (string) Str::uuid(),
+            'division_id' => $division->id,
+            'file_path' => 'documents/DIKDAS/2026/09/ujian.pdf',
+            'original_name' => 'Edaran_Ujian.pdf',
+            'file_size_bytes' => 524288,
+            'mime_type' => 'application/pdf',
+            'is_missing' => false,
+            'created_by_user_id' => $operator->id,
+        ]);
+
+        $this->actingAs($operator)
+            ->getJson("/api/v1/surat-keluar/{$letter->id}")
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.nomor_surat', '421/777/DIKDAS/2026')
+            ->assertJsonPath('data.division_name', 'Bidang Pembinaan SD')
+            ->assertJsonPath('data.division_code', 'DIKDAS')
+            ->assertJsonPath('data.tanggal_surat_formatted', '01 September 2026')
+            ->assertJsonPath('data.attachment.original_name', 'Edaran_Ujian.pdf')
+            ->assertJsonPath('data.attachment.download_url', "/api/v1/attachments/{$letter->attachments->first()->uuid}/download")
+            ->assertJsonPath('data.attachment.preview_url', "/api/v1/attachments/{$letter->attachments->first()->uuid}/preview");
     }
 
     /**

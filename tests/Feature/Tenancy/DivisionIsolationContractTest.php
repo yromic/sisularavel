@@ -78,6 +78,24 @@ class DivisionIsolationContractTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_super_admin_can_switch_to_all_divisions_global_mode(): void
+    {
+        $superAdmin = User::factory()->superAdmin()->create();
+        $paud = Division::factory()->create(['code' => 'PAUD']);
+
+        // First switch to PAUD
+        $this->actingAs($superAdmin)
+            ->post('/api/v1/session/switch-division', ['division_id' => $paud->id])
+            ->assertRedirect();
+        $this->assertSame($paud->id, session('active_division_id'));
+
+        // Then switch back to global mode
+        $this->actingAs($superAdmin)
+            ->post('/api/v1/session/switch-division', ['division_id' => ''])
+            ->assertRedirect();
+        $this->assertNull(session('active_division_id'));
+    }
+
     public function test_inactive_user_or_division_cannot_access_protected_routes(): void
     {
         $inactiveDivision = Division::factory()->create(['status' => 'inactive']);

@@ -18,6 +18,10 @@ class EnsureActiveAccount
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
+            if (! $request->expectsJson()) {
+                return redirect('/login')->with('error', 'Akun Anda dinonaktifkan atau divisi kerja Anda tidak aktif.');
+            }
+
             return response()->json([
                 'success' => false,
                 'code' => 'ERR_401_INACTIVE_ACCOUNT',

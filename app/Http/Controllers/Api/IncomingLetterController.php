@@ -36,6 +36,10 @@ class IncomingLetterController extends Controller
         if (! $this->canView($request, $incomingLetter)) {
             $auditLogger->crossDivisionBlocked($request->user(), $incomingLetter, 'Unauthorized incoming letter view attempt.');
 
+            if (! $request->expectsJson()) {
+                abort(403, 'Anda tidak memiliki izin untuk mengakses data divisi ini.');
+            }
+
             return response()->json([
                 'success' => false,
                 'code' => 'ERR_403_DIVISI',
@@ -43,17 +47,11 @@ class IncomingLetterController extends Controller
             ], 403);
         }
 
+        $incomingLetter->loadMissing(['division', 'createdBy', 'attachments']);
+
         return response()->json([
-            'data' => $incomingLetter->only([
-                'id',
-                'uuid',
-                'division_id',
-                'letter_number',
-                'origin_agency',
-                'letter_date',
-                'received_date',
-                'subject',
-            ]),
+            'success' => true,
+            'data' => $this->resource($incomingLetter, $request),
         ]);
     }
 
@@ -121,7 +119,11 @@ class IncomingLetterController extends Controller
                     $letter->only(['division_id', 'letter_number', 'origin_agency', 'letter_date', 'received_date', 'subject'])
                 );
 
-                if ($request->hasFile('attachment')) {
+                if ($request->hasFile('photos') && count($request->file('photos')) > 0) {
+                    $attachment = $attachments->storeMergedPhotosAsPdf($request->file('photos'), $letter, $letter->division, $user, $letter->letter_number);
+                    $storedPath = $attachment->file_path;
+                    $letter->setRelation('attachments', collect([$attachment]));
+                } elseif ($request->hasFile('attachment')) {
                     $attachment = $attachments->storeForModel($request->file('attachment'), $letter, $letter->division, $user);
                     $storedPath = $attachment->file_path;
                     $letter->setRelation('attachments', collect([$attachment]));
@@ -146,10 +148,10 @@ class IncomingLetterController extends Controller
         ], 201);
     }
 
-    public function update(StoreIncomingLetterRequest $request, IncomingLetter $incomingLetter, AuditLogger $auditLogger): JsonResponse
+    public function update(StoreIncomingLetterRequest $request, IncomingLetter $incomingLetter, AuditLogger $auditLogger): Response
     {
         if (! $this->canManage($request, $incomingLetter)) {
-            return $this->forbiddenDivisionResponse();
+            return $this->forbiddenDivisionResponse($request);
         }
 
         $letter = DB::transaction(function () use ($request, $incomingLetter, $auditLogger): IncomingLetter {
@@ -173,13 +175,17 @@ class IncomingLetterController extends Controller
             return $incomingLetter;
         });
 
+        if (! $request->expectsJson()) {
+            return redirect('/surat-masuk/'.$incomingLetter->id)->with('success', 'Surat masuk berhasil diperbarui.');
+        }
+
         return response()->json(['success' => true, 'data' => $this->resource($letter)]);
     }
 
     public function destroy(Request $request, IncomingLetter $incomingLetter, AuditLogger $auditLogger): Response
     {
         if (! $this->canManage($request, $incomingLetter)) {
-            return $this->forbiddenDivisionResponse();
+            return $this->forbiddenDivisionResponse($request);
         }
 
         DB::transaction(function () use ($request, $incomingLetter, $auditLogger): void {
@@ -195,7 +201,7 @@ class IncomingLetterController extends Controller
         });
 
         if (! $request->expectsJson()) {
-            return back()->with('success', 'Surat masuk berhasil dihapus.');
+            return redirect('/surat-masuk')->with('success', 'Surat masuk berhasil dihapus.');
         }
 
         return response()->json(['success' => true, 'data' => ['id' => $incomingLetter->id, 'deleted' => true]]);
@@ -206,7 +212,7 @@ class IncomingLetterController extends Controller
         $letter = IncomingLetter::withTrashed()->findOrFail($incomingLetter);
 
         if (! $this->canManage($request, $letter)) {
-            return $this->forbiddenDivisionResponse();
+            return $this->forbiddenDivisionResponse($request);
         }
 
         DB::transaction(function () use ($request, $letter, $auditLogger): void {
@@ -224,10 +230,10 @@ class IncomingLetterController extends Controller
         return response()->json(['success' => true, 'data' => ['id' => $letter->id, 'deleted' => false]]);
     }
 
-    public function remediateAttachment(Request $request, IncomingLetter $incomingLetter, AttachmentStorageService $attachments, AuditLogger $auditLogger): JsonResponse
+    public function remediateAttachment(Request $request, IncomingLetter $incomingLetter, AttachmentStorageService $attachments, AuditLogger $auditLogger): Response
     {
         if (! $this->canManage($request, $incomingLetter)) {
-            return $this->forbiddenDivisionResponse();
+            return $this->forbiddenDivisionResponse($request);
         }
 
         $validated = $request->validate([
@@ -247,6 +253,10 @@ class IncomingLetterController extends Controller
             'original_name' => $attachment->original_name,
             'mime_type' => $attachment->mime_type,
         ]);
+
+        if (! $request->expectsJson()) {
+            return redirect('/surat-masuk/'.$incomingLetter->id)->with('success', 'Lampiran pengganti berhasil diunggah.');
+        }
 
         return response()->json(['success' => true, 'data' => $this->attachmentResource($attachment)]);
     }
@@ -273,8 +283,12 @@ class IncomingLetterController extends Controller
         return $user->role === 'division_admin' && $user->division_id === $incomingLetter->division_id;
     }
 
-    private function forbiddenDivisionResponse(): JsonResponse
+    private function forbiddenDivisionResponse(?Request $request = null): Response
     {
+        if ($request && ! $request->expectsJson()) {
+            abort(403, 'Anda tidak memiliki izin untuk mengakses data divisi ini.');
+        }
+
         return response()->json([
             'success' => false,
             'code' => 'ERR_403_DIVISI',
@@ -285,20 +299,35 @@ class IncomingLetterController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function resource(IncomingLetter $letter): array
+    private function resource(IncomingLetter $letter, ?Request $request = null): array
     {
+        $canManage = $request ? $this->canManage($request, $letter) : false;
+
         return [
             'id' => $letter->id,
             'uuid' => $letter->uuid,
             'division_id' => $letter->division_id,
+            'division_name' => $letter->division?->name ?? '-',
+            'division_code' => $letter->division?->code ?? '-',
+            'letter_number' => $letter->letter_number,
             'nomor_surat' => $letter->letter_number,
+            'origin_agency' => $letter->origin_agency,
             'asal_surat' => $letter->origin_agency,
+            'letter_date' => $letter->letter_date->toDateString(),
             'tanggal_surat' => $letter->letter_date->toDateString(),
+            'tanggal_surat_formatted' => $letter->letter_date->format('d F Y'),
+            'received_date' => $letter->received_date->toDateString(),
             'tanggal_diterima' => $letter->received_date->toDateString(),
+            'tanggal_diterima_formatted' => $letter->received_date->format('d F Y'),
+            'subject' => $letter->subject,
             'perihal' => $letter->subject,
+            'created_by' => $letter->createdBy ? ($letter->createdBy->name.' ('.$letter->createdBy->username.')') : 'Sistem',
+            'created_at_formatted' => $letter->created_at ? $letter->created_at->format('d/m/Y H:i').' WIB' : '-',
+            'can_edit' => $canManage,
+            'can_delete' => $canManage,
             'attachment' => $letter->relationLoaded('attachments') && $letter->attachments->isNotEmpty()
                 ? $this->attachmentResource($letter->attachments->first())
-                : null,
+                : ($letter->attachments()->exists() ? $this->attachmentResource($letter->attachments()->first()) : null),
         ];
     }
 
@@ -312,8 +341,12 @@ class IncomingLetterController extends Controller
             'original_name' => $attachment->original_name,
             'mime_type' => $attachment->mime_type,
             'file_size_bytes' => $attachment->file_size_bytes,
-            'is_missing' => $attachment->is_missing,
+            'file_size_formatted' => number_format($attachment->file_size_bytes / 1024, 1).' KB',
+            'is_missing' => (bool) $attachment->is_missing,
             'migration_status' => $attachment->migration_status,
+            'legacy_drive_url' => $attachment->legacy_drive_url,
+            'preview_url' => "/api/v1/attachments/{$attachment->uuid}/preview",
+            'download_url' => "/api/v1/attachments/{$attachment->uuid}/download",
         ];
     }
 }

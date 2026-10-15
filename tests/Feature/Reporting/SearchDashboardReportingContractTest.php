@@ -73,6 +73,122 @@ class SearchDashboardReportingContractTest extends TestCase
         $this->assertStringNotContainsString('PAUD-SECRET', $content);
     }
 
+    public function test_csv_export_can_export_each_entity_type_with_specific_columns(): void
+    {
+        $dikdas = Division::factory()->create(['code' => 'DIKDAS', 'name' => 'Bidang Dikdas']);
+        $operator = User::factory()->for($dikdas)->create(['name' => 'Staf Dikdas']);
+        $this->incomingLetter($dikdas, ['letter_number' => 'IN-SPECIFIC', 'subject' => 'Surat masuk tes']);
+        $this->outgoingLetter($dikdas, ['letter_number' => 'OUT-SPECIFIC', 'subject' => 'Surat keluar tes']);
+        $this->piagam($dikdas, 'Siswa Berprestasi');
+
+        // 1. Export type=incoming
+        $incomingCsv = $this->actingAs($operator)
+            ->get('/api/v1/reports/export.csv?type=incoming')
+            ->assertOk()
+            ->streamedContent();
+
+        $this->assertStringContainsString('Nomor Surat', $incomingCsv);
+        $this->assertStringContainsString('Asal Surat', $incomingCsv);
+        $this->assertStringContainsString('Tanggal Diterima', $incomingCsv);
+        $this->assertStringContainsString('IN-SPECIFIC', $incomingCsv);
+        $this->assertStringNotContainsString('OUT-SPECIFIC', $incomingCsv);
+        $this->assertStringNotContainsString('Siswa Berprestasi', $incomingCsv);
+
+        // 2. Export type=outgoing
+        $outgoingCsv = $this->actingAs($operator)
+            ->get('/api/v1/reports/export.csv?type=outgoing')
+            ->assertOk()
+            ->streamedContent();
+
+        $this->assertStringContainsString('Nomor Surat', $outgoingCsv);
+        $this->assertStringContainsString('Tanggal Shared', $outgoingCsv);
+        $this->assertStringContainsString('Tahun Surat', $outgoingCsv);
+        $this->assertStringContainsString('OUT-SPECIFIC', $outgoingCsv);
+        $this->assertStringNotContainsString('IN-SPECIFIC', $outgoingCsv);
+
+        // 3. Export type=piagam
+        $piagamCsv = $this->actingAs($operator)
+            ->get('/api/v1/reports/export.csv?type=piagam')
+            ->assertOk()
+            ->streamedContent();
+
+        $this->assertStringContainsString('Nama Siswa', $piagamCsv);
+        $this->assertStringContainsString('Kategori Lomba', $piagamCsv);
+        $this->assertStringContainsString('Status Pengambilan', $piagamCsv);
+        $this->assertStringContainsString('Siswa Berprestasi', $piagamCsv);
+        $this->assertStringNotContainsString('IN-SPECIFIC', $piagamCsv);
+        $this->assertStringNotContainsString('OUT-SPECIFIC', $piagamCsv);
+
+        // 4. Export type=all
+        $allCsv = $this->actingAs($operator)
+            ->get('/api/v1/reports/export.csv?type=all')
+            ->assertOk()
+            ->streamedContent();
+
+        $this->assertStringContainsString('Jenis Administrasi', $allCsv);
+        $this->assertStringContainsString('IN-SPECIFIC', $allCsv);
+        $this->assertStringContainsString('OUT-SPECIFIC', $allCsv);
+        $this->assertStringContainsString('Siswa Berprestasi', $allCsv);
+    }
+
+    public function test_csv_export_applies_date_and_year_filters(): void
+    {
+        $dikdas = Division::factory()->create(['code' => 'DIKDAS']);
+        $operator = User::factory()->for($dikdas)->create();
+        $this->incomingLetter($dikdas, ['letter_number' => 'IN-2025', 'letter_date' => '2025-05-10']);
+        $this->incomingLetter($dikdas, ['letter_number' => 'IN-2026', 'letter_date' => '2026-06-15']);
+
+        $csv2026 = $this->actingAs($operator)
+            ->get('/api/v1/reports/export.csv?type=incoming&year=2026')
+            ->assertOk()
+            ->streamedContent();
+
+        $this->assertStringContainsString('IN-2026', $csv2026);
+        $this->assertStringNotContainsString('IN-2025', $csv2026);
+    }
+
+    public function test_pdf_export_returns_pdf_and_respects_division_scoping(): void
+    {
+        [$dikdas, $paud] = [Division::factory()->create(['code' => 'DIKDAS', 'name' => 'Bidang Dikdas']), Division::factory()->create(['code' => 'PAUD', 'name' => 'Bidang PAUD'])];
+        $operator = User::factory()->for($dikdas)->create();
+        $this->incomingLetter($dikdas, ['letter_number' => 'IN-DIKDAS-PDF', 'subject' => 'Surat Dikdas']);
+        $this->incomingLetter($paud, ['letter_number' => 'IN-PAUD-SECRET', 'subject' => 'Surat PAUD Rahasia']);
+        $this->outgoingLetter($dikdas, ['letter_number' => 'OUT-DIKDAS-PDF', 'subject' => 'Edaran Dikdas']);
+        $this->piagam($dikdas, 'Juara Siswa Dikdas');
+
+        $response = $this->actingAs($operator)
+            ->get('/api/v1/reports/export.pdf?type=all');
+
+        $response->assertOk();
+        $this->assertStringContainsString('application/pdf', (string) $response->headers->get('content-type'));
+        $pdfOutput = $response->getContent();
+        $this->assertStringStartsWith('%PDF-', $pdfOutput);
+    }
+
+    public function test_pdf_export_supports_entity_types_and_filters(): void
+    {
+        $dikdas = Division::factory()->create(['code' => 'DIKDAS', 'name' => 'Bidang Dikdas']);
+        $operator = User::factory()->for($dikdas)->create();
+        $this->incomingLetter($dikdas, ['letter_number' => 'IN-FILT-2026', 'letter_date' => '2026-04-10']);
+        $this->outgoingLetter($dikdas, ['letter_number' => 'OUT-FILT-2026', 'letter_date' => '2026-04-12']);
+        $this->piagam($dikdas, 'Budi Siswa 2026');
+
+        // Test incoming only
+        $resIncoming = $this->actingAs($operator)->get('/api/v1/reports/export.pdf?type=incoming&year=2026');
+        $resIncoming->assertOk();
+        $this->assertStringContainsString('application/pdf', (string) $resIncoming->headers->get('content-type'));
+
+        // Test outgoing only
+        $resOutgoing = $this->actingAs($operator)->get('/api/v1/reports/export.pdf?type=outgoing&year=2026');
+        $resOutgoing->assertOk();
+        $this->assertStringContainsString('application/pdf', (string) $resOutgoing->headers->get('content-type'));
+
+        // Test piagam only
+        $resPiagam = $this->actingAs($operator)->get('/api/v1/reports/export.pdf?type=piagam&year=2026');
+        $resPiagam->assertOk();
+        $this->assertStringContainsString('application/pdf', (string) $resPiagam->headers->get('content-type'));
+    }
+
     /**
      * @param  array<string, mixed>  $overrides
      */

@@ -178,6 +178,43 @@ class IncomingLetterWorkflowContractTest extends TestCase
         ]);
     }
 
+    public function test_incoming_letter_show_returns_enriched_resource_with_attachment_urls(): void
+    {
+        $division = Division::factory()->create(['code' => 'DIKDAS', 'name' => 'Bidang Pembinaan SD']);
+        $operator = User::factory()->for($division)->create(['name' => 'Budi Santoso', 'username' => 'budi_sd']);
+        $letter = $this->incomingLetter($division, [
+            'letter_number' => '420/999/2026',
+            'origin_agency' => 'Kementerian Pendidikan',
+            'letter_date' => '2026-09-01',
+            'received_date' => '2026-09-02',
+            'subject' => 'Surat Koordinasi Kurikulum',
+            'created_by_user_id' => $operator->id,
+        ]);
+
+        $letter->attachments()->create([
+            'uuid' => (string) Str::uuid(),
+            'division_id' => $division->id,
+            'file_path' => 'documents/DIKDAS/2026/09/test.pdf',
+            'original_name' => 'Dokumen_Resmi.pdf',
+            'file_size_bytes' => 1048576,
+            'mime_type' => 'application/pdf',
+            'is_missing' => false,
+            'created_by_user_id' => $operator->id,
+        ]);
+
+        $this->actingAs($operator)
+            ->getJson("/api/v1/surat-masuk/{$letter->id}")
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.nomor_surat', '420/999/2026')
+            ->assertJsonPath('data.division_name', 'Bidang Pembinaan SD')
+            ->assertJsonPath('data.division_code', 'DIKDAS')
+            ->assertJsonPath('data.tanggal_surat_formatted', '01 September 2026')
+            ->assertJsonPath('data.attachment.original_name', 'Dokumen_Resmi.pdf')
+            ->assertJsonPath('data.attachment.download_url', "/api/v1/attachments/{$letter->attachments->first()->uuid}/download")
+            ->assertJsonPath('data.attachment.preview_url', "/api/v1/attachments/{$letter->attachments->first()->uuid}/preview");
+    }
+
     public function test_division_admin_soft_deletes_and_restores_own_incoming_letter(): void
     {
         $division = Division::factory()->create(['code' => 'DIKDAS']);

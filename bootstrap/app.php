@@ -26,12 +26,13 @@ return Application::configure(basePath: dirname(__DIR__))
         PruneExpiredIdempotencyKeys::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->redirectGuestsTo('/login');
         $middleware->alias([
             'idempotent' => EnsureIdempotentMutation::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $expectsSisuratJson = fn (Request $request): bool => $request->expectsJson() || str_starts_with($request->path(), 'api/');
+        $expectsSisuratJson = fn (Request $request): bool => $request->expectsJson() || ($request->is('api/*') && ! $request->acceptsHtml());
         $errorResponse = fn (string $code, string $message, int $status, array $errors = []) => response()->json([
             'success' => false,
             'code' => $code,
@@ -71,7 +72,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 );
             }
 
-            return null;
+            return redirect()->guest('/login');
         });
 
         $exceptions->render(function (AuthorizationException $e, Request $request) use ($errorResponse, $expectsSisuratJson) {

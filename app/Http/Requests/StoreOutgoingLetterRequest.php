@@ -21,6 +21,14 @@ class StoreOutgoingLetterRequest extends FormRequest
             'perihal' => ['required', 'string', 'max:1000'],
             'tanggal_surat' => ['required', 'date_format:Y-m-d', 'before_or_equal:today'],
             'tanggal_share' => ['required', 'date_format:Y-m-d', 'after_or_equal:tanggal_surat'],
+            'attachment' => [
+                'sometimes',
+                'file',
+                'max:10240',
+                'mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png',
+            ],
+            'photos' => ['sometimes', 'array', 'max:15'],
+            'photos.*' => ['file', 'image', 'max:10240'],
         ];
     }
 

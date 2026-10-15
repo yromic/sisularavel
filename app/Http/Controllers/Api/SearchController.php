@@ -69,13 +69,23 @@ class SearchController extends Controller
     {
         return Piagam::query()
             ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
-            ->where('student_name', 'like', "%{$search}%")
+            ->where(fn ($query) => $query
+                ->where('student_name', 'like', "%{$search}%")
+                ->orWhere('piagam_description', 'like', "%{$search}%")
+                ->orWhere('recipient_name', 'like', "%{$search}%")
+                ->orWhere('recipient_unit', 'like', "%{$search}%")
+                ->orWhere('school_origin', 'like', "%{$search}%")
+                ->orWhere('competition_category_name', 'like', "%{$search}%")
+                ->orWhere('pickup_category_name', 'like', "%{$search}%")
+                ->orWhereHas('school', fn ($s) => $s->where('name', 'like', "%{$search}%"))
+                ->orWhereHas('workUnit', fn ($w) => $w->where('name', 'like', "%{$search}%"))
+                ->orWhereHas('competitionCategory', fn ($c) => $c->where('name', 'like', "%{$search}%")))
             ->get()
             ->map(fn (Piagam $piagam) => [
                 'type' => 'piagam',
                 'id' => $piagam->id,
                 'division_id' => $piagam->division_id,
-                'student_name' => $piagam->student_name,
+                'student_name' => $piagam->piagam_description ?: $piagam->student_name,
             ]);
     }
 }

@@ -42,4 +42,9 @@ class OutgoingLetter extends Model
     {
         return $this->morphMany(Attachment::class, 'attachable');
     }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id')->withTrashed();
+    }
 }

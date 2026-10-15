@@ -53,6 +53,29 @@ class SchoolController extends Controller
         return response()->json(['data' => $school], 201);
     }
 
+    public function update(Request $request, School $school): Response
+    {
+        abort_unless($request->user()?->role === 'super_admin', 403);
+
+        $validated = $request->validate([
+            'npsn' => ['required', 'digits:8', 'unique:schools,npsn,'.$school->id],
+            'name' => ['required', 'string', 'max:255'],
+            'is_active' => ['sometimes', 'boolean'],
+        ]);
+
+        $school->update([
+            'npsn' => preg_replace('/\D+/', '', $validated['npsn']),
+            'name' => trim($validated['name']),
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
+        if (! $request->expectsJson()) {
+            return back()->with('success', "Data sekolah {$school->name} berhasil diperbarui.");
+        }
+
+        return response()->json(['data' => $school]);
+    }
+
     public function destroy(Request $request, School $school): Response
     {
         abort_unless($request->user()?->role === 'super_admin', 403);
@@ -70,7 +93,7 @@ class SchoolController extends Controller
         $school->delete();
 
         if (! $request->expectsJson()) {
-            return back()->with('success', "Sekolah {$school->name} berhasil dihapus.");
+            return redirect('/master/sekolah')->with('success', "Sekolah {$school->name} berhasil dihapus.");
         }
 
         return response()->json(['success' => true]);

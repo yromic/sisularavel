@@ -231,4 +231,53 @@ class MasterReferenceDataContractTest extends TestCase
             ->assertOk();
         $this->assertDatabaseMissing('schools', ['id' => $school->id]);
     }
+
+    public function test_schools_divisions_users_and_categories_can_be_updated_by_authorized_roles(): void
+    {
+        $superAdmin = User::factory()->superAdmin()->create();
+        $division = Division::factory()->create(['code' => 'TEST-DIV', 'name' => 'Nama Awal']);
+        $school = School::factory()->create(['npsn' => '12345678', 'name' => 'Sekolah Lama']);
+        $user = User::factory()->for($division)->create(['username' => 'staf_lama', 'name' => 'Nama Lama']);
+        $cat = CompetitionCategory::create(['division_id' => $division->id, 'name' => 'Kategori Lama']);
+
+        // 1. Update School
+        $this->actingAs($superAdmin)
+            ->putJson("/api/v1/schools/{$school->id}", [
+                'npsn' => '12345678',
+                'name' => 'Sekolah Baru Diperbarui',
+                'is_active' => true,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.name', 'Sekolah Baru Diperbarui');
+        $this->assertDatabaseHas('schools', ['id' => $school->id, 'name' => 'Sekolah Baru Diperbarui']);
+
+        // 2. Update Division
+        $this->actingAs($superAdmin)
+            ->putJson("/api/v1/divisions/{$division->id}", [
+                'code' => 'TEST-UPD',
+                'name' => 'Nama Divisi Baru',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.code', 'TEST-UPD');
+        $this->assertDatabaseHas('divisions', ['id' => $division->id, 'code' => 'TEST-UPD', 'name' => 'Nama Divisi Baru']);
+
+        // 3. Update User
+        $this->actingAs($superAdmin)
+            ->putJson("/api/v1/users/{$user->id}", [
+                'name' => 'Nama Pengguna Baru',
+                'email' => 'pengguna_baru@example.test',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.name', 'Nama Pengguna Baru');
+        $this->assertDatabaseHas('users', ['id' => $user->id, 'name' => 'Nama Pengguna Baru']);
+
+        // 4. Update Category
+        $this->actingAs($superAdmin)
+            ->putJson("/api/v1/reference/competition-categories/{$cat->id}", [
+                'name' => 'Kategori Baru Diperbarui',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.name', 'Kategori Baru Diperbarui');
+        $this->assertDatabaseHas('competition_categories', ['id' => $cat->id, 'name' => 'Kategori Baru Diperbarui']);
+    }
 }

@@ -15,8 +15,23 @@ class DivisionContextController extends Controller
 
         abort_unless($user?->role === 'super_admin', 403);
 
+        $divisionId = $request->input('division_id');
+
+        if (empty($divisionId) || $divisionId === 'global') {
+            $request->session()->forget('active_division_id');
+
+            if (! $request->expectsJson()) {
+                return back()->with('success', 'Konteks divisi dialihkan ke Semua Divisi (Global).');
+            }
+
+            return response()->json([
+                'success' => true,
+                'active_division_id' => null,
+            ]);
+        }
+
         $validated = $request->validate([
-            'division_id' => ['required', 'integer', 'exists:divisions,id'],
+            'division_id' => ['integer', 'exists:divisions,id'],
         ]);
 
         $division = Division::query()

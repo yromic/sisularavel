@@ -3,12 +3,17 @@
 namespace App\Console\Commands;
 
 use App\Models\Attachment;
+use App\Models\CompetitionCategory;
 use App\Models\Division;
 use App\Models\IncomingLetter;
+use App\Models\OutgoingLetter;
+use App\Models\Piagam;
+use App\Models\PickupCategory;
 use App\Models\School;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
@@ -21,7 +26,7 @@ class MigrateLegacySisurat extends Command
 
     protected $description = 'Import SISURAT legacy JSON exports into the relational schema.';
 
-    /** @var array<string, array{total:int, imported:int, quarantined:int}> */
+    /** @var array<string, array{total:int, imported:int, duplicate:int, quarantined:int, failed:int}> */
     private array $tables = [];
 
     private int $missingAttachments = 0;
@@ -46,7 +51,12 @@ class MigrateLegacySisurat extends Command
             $this->importDivisions($path);
             $this->importUsers($path);
             $this->importSchools($path);
+            $this->importCompetitionCategories($path);
+            $this->importPickupCategories($path);
             $this->importIncomingLetters($path);
+            $this->importOutgoingLetters($path);
+            $this->importPiagams($path);
+
             $this->writeReconciliationReport();
 
             if ($this->option('dry-run')) {
@@ -139,6 +149,60 @@ class MigrateLegacySisurat extends Command
         }
     }
 
+    private function importCompetitionCategories(string $path): void
+    {
+        foreach (File::glob($path.DIRECTORY_SEPARATOR.'*_ref_jenis.json') as $file) {
+            $table = pathinfo($file, PATHINFO_FILENAME);
+            $divisionCode = Str::before($table, '_ref_jenis');
+
+            foreach ($this->decodeRows($file, $table) as $row) {
+                try {
+                    $division = $this->divisionByCode($this->divisionCode($row['divisi_id'] ?? $divisionCode));
+                    $name = $this->cleanText($row['nama_jenis'] ?? $row['nama'] ?? $row['name'] ?? '');
+                    if ($name === '') {
+                        throw new \RuntimeException('Nama jenis perlombaan kosong.');
+                    }
+
+                    CompetitionCategory::query()->firstOrCreate(
+                        ['division_id' => $division->id, 'name' => $name],
+                        ['is_active' => $this->truthy($row['aktif'] ?? true)]
+                    );
+
+                    $this->imported($table);
+                } catch (Throwable $exception) {
+                    $this->quarantine($table, $row, $exception->getMessage());
+                }
+            }
+        }
+    }
+
+    private function importPickupCategories(string $path): void
+    {
+        foreach (File::glob($path.DIRECTORY_SEPARATOR.'*_ref_pengambilan.json') as $file) {
+            $table = pathinfo($file, PATHINFO_FILENAME);
+            $divisionCode = Str::before($table, '_ref_pengambilan');
+
+            foreach ($this->decodeRows($file, $table) as $row) {
+                try {
+                    $division = $this->divisionByCode($this->divisionCode($row['divisi_id'] ?? $divisionCode));
+                    $name = $this->cleanText($row['nama_pengambilan'] ?? $row['nama'] ?? $row['name'] ?? '');
+                    if ($name === '') {
+                        throw new \RuntimeException('Nama kategori pengambilan kosong.');
+                    }
+
+                    PickupCategory::query()->firstOrCreate(
+                        ['division_id' => $division->id, 'name' => $name],
+                        ['is_active' => $this->truthy($row['aktif'] ?? true)]
+                    );
+
+                    $this->imported($table);
+                } catch (Throwable $exception) {
+                    $this->quarantine($table, $row, $exception->getMessage());
+                }
+            }
+        }
+    }
+
     private function importIncomingLetters(string $path): void
     {
         foreach (File::glob($path.DIRECTORY_SEPARATOR.'*_surat_masuk.json') as $file) {
@@ -148,11 +212,12 @@ class MigrateLegacySisurat extends Command
             foreach ($this->decodeRows($file, $table) as $row) {
                 try {
                     $division = $this->divisionByCode($this->divisionCode($row['divisi_id'] ?? $divisionCode));
+                    $letterNumber = $this->cleanText($row['nomor_surat'] ?? '');
 
                     $letter = IncomingLetter::query()->create([
                         'uuid' => (string) Str::uuid(),
                         'division_id' => $division->id,
-                        'letter_number' => $this->cleanText($row['nomor_surat'] ?? ''),
+                        'letter_number' => $letterNumber,
                         'origin_agency' => $this->cleanText($row['asal_surat'] ?? ''),
                         'letter_date' => $this->date($row['tanggal_surat'] ?? null),
                         'received_date' => $this->date($row['tanggal_diterima'] ?? null),
@@ -160,7 +225,7 @@ class MigrateLegacySisurat extends Command
                     ]);
 
                     if ($this->nullableText($row['upload_file'] ?? null) !== null) {
-                        $this->recordMissingAttachment($division, $letter, (string) $row['upload_file']);
+                        $this->recordMissingAttachment($division, $letter, (string) $row['upload_file'], 'legacy-drive-file');
                     }
 
                     $this->imported($table);
@@ -171,15 +236,158 @@ class MigrateLegacySisurat extends Command
         }
     }
 
-    private function recordMissingAttachment(Division $division, IncomingLetter $letter, string $legacyUrl): void
+    private function importOutgoingLetters(string $path): void
+    {
+        foreach (File::glob($path.DIRECTORY_SEPARATOR.'*_surat_keluar.json') as $file) {
+            $table = pathinfo($file, PATHINFO_FILENAME);
+            $divisionCode = Str::before($table, '_surat_keluar');
+
+            foreach ($this->decodeRows($file, $table) as $row) {
+                try {
+                    $division = $this->divisionByCode($this->divisionCode($row['divisi_id'] ?? $divisionCode));
+                    $letterDate = $this->date($row['tanggal_surat'] ?? null);
+                    $year = (int) (Carbon::parse($letterDate)->year);
+                    $letterNumber = $this->cleanText($row['nomor_surat'] ?? '');
+
+                    if ($letterNumber === '') {
+                        throw new \RuntimeException('Nomor surat keluar tidak boleh kosong.');
+                    }
+
+                    $existing = OutgoingLetter::query()
+                        ->where('division_id', $division->id)
+                        ->where('letter_year', $year)
+                        ->where('letter_number', $letterNumber)
+                        ->first();
+
+                    if ($existing) {
+                        $this->duplicated($table);
+
+                        continue;
+                    }
+
+                    $letter = OutgoingLetter::query()->create([
+                        'uuid' => (string) Str::uuid(),
+                        'division_id' => $division->id,
+                        'letter_year' => $year,
+                        'letter_number' => $letterNumber,
+                        'letter_date' => $letterDate,
+                        'disseminated_date' => ! empty($row['tanggal_share']) ? $this->date($row['tanggal_share']) : null,
+                        'subject' => $this->cleanText($row['perihal'] ?? ''),
+                    ]);
+
+                    if ($this->nullableText($row['upload_file'] ?? null) !== null) {
+                        $this->recordMissingAttachment($division, $letter, (string) $row['upload_file'], 'legacy-outgoing-letter');
+                    }
+
+                    $this->imported($table);
+                } catch (Throwable $exception) {
+                    $this->quarantine($table, $row, $exception->getMessage());
+                }
+            }
+        }
+    }
+
+    private function importPiagams(string $path): void
+    {
+        foreach (File::glob($path.DIRECTORY_SEPARATOR.'*_piagam.json') as $file) {
+            $table = pathinfo($file, PATHINFO_FILENAME);
+            $divisionCode = Str::before($table, '_piagam');
+
+            foreach ($this->decodeRows($file, $table) as $row) {
+                try {
+                    $division = $this->divisionByCode($this->divisionCode($row['divisi_id'] ?? $divisionCode));
+                    $studentName = $this->cleanText($row['nama_siswa'] ?? '');
+                    if ($studentName === '') {
+                        throw new \RuntimeException('Nama siswa piagam tidak boleh kosong.');
+                    }
+
+                    // School resolution
+                    $npsn = ! empty($row['npsn']) ? $this->npsn($row['npsn']) : null;
+                    $schoolName = $this->cleanText($row['asal_sekolah'] ?? $row['nama_sekolah'] ?? '');
+                    $school = null;
+
+                    if ($npsn) {
+                        $school = School::query()->where('npsn', $npsn)->first();
+                    }
+                    if (! $school && $schoolName !== '') {
+                        $school = School::query()->where('name', $schoolName)->first();
+                    }
+                    if (! $school) {
+                        $school = School::query()->create([
+                            'npsn' => $npsn ?? str_pad((string) random_int(10000000, 99999999), 8, '0', STR_PAD_LEFT),
+                            'name' => $schoolName !== '' ? $schoolName : 'Sekolah Belum Terdata',
+                            'is_active' => true,
+                        ]);
+                    }
+
+                    // Competition category resolution
+                    $compCatName = $this->cleanText($row['jenis_perlombaan'] ?? $row['kategori_lomba'] ?? 'Umum');
+                    $competitionCategory = CompetitionCategory::query()->firstOrCreate(
+                        ['division_id' => $division->id, 'name' => $compCatName],
+                        ['is_active' => true]
+                    );
+
+                    // Competition year
+                    $compYear = (int) ($row['tahun_perlombaan'] ?? $row['tahun'] ?? date('Y'));
+
+                    // Pickup category resolution
+                    $pickupCatName = $this->cleanText($row['pengambilan'] ?? $row['jenis_pengambilan'] ?? '');
+                    $pickupCategory = null;
+                    if ($pickupCatName !== '') {
+                        $pickupCategory = PickupCategory::query()->firstOrCreate(
+                            ['division_id' => $division->id, 'name' => $pickupCatName],
+                            ['is_active' => true]
+                        );
+                    }
+
+                    $existing = Piagam::query()
+                        ->where('division_id', $division->id)
+                        ->where('student_name', $studentName)
+                        ->where('school_id', $school->id)
+                        ->where('competition_category_id', $competitionCategory->id)
+                        ->where('competition_year', $compYear)
+                        ->first();
+
+                    if ($existing) {
+                        $this->duplicated($table);
+
+                        continue;
+                    }
+
+                    $piagam = Piagam::query()->create([
+                        'uuid' => (string) Str::uuid(),
+                        'division_id' => $division->id,
+                        'student_name' => $studentName,
+                        'school_id' => $school->id,
+                        'competition_category_id' => $competitionCategory->id,
+                        'competition_year' => $compYear,
+                        'pickup_category_id' => $pickupCategory?->id,
+                        'recipient_name' => $this->nullableText($row['nama_pengambil'] ?? null),
+                        'recipient_position' => $this->nullableText($row['jabatan'] ?? null),
+                        'recipient_unit' => $this->nullableText($row['unit_kerja'] ?? null),
+                    ]);
+
+                    if ($this->nullableText($row['ttd_pengambil'] ?? null) !== null) {
+                        $this->recordMissingAttachment($division, $piagam, (string) $row['ttd_pengambil'], 'legacy-piagam-signature');
+                    }
+
+                    $this->imported($table);
+                } catch (Throwable $exception) {
+                    $this->quarantine($table, $row, $exception->getMessage());
+                }
+            }
+        }
+    }
+
+    private function recordMissingAttachment(Division $division, Model $attachable, string $legacyUrl, string $originalName = 'legacy-drive-file'): void
     {
         Attachment::query()->create([
             'uuid' => (string) Str::uuid(),
             'division_id' => $division->id,
-            'attachable_type' => IncomingLetter::class,
-            'attachable_id' => $letter->id,
+            'attachable_type' => get_class($attachable),
+            'attachable_id' => $attachable->getKey(),
             'file_path' => null,
-            'original_name' => 'legacy-drive-file',
+            'original_name' => $originalName,
             'file_size_bytes' => 0,
             'mime_type' => 'application/octet-stream',
             'file_hash' => null,
@@ -201,7 +409,7 @@ class MigrateLegacySisurat extends Command
         $file = $path.DIRECTORY_SEPARATOR.$table.'.json';
 
         if (! File::exists($file)) {
-            $this->tables[$table] = ['total' => 0, 'imported' => 0, 'quarantined' => 0];
+            $this->tables[$table] = ['total' => 0, 'imported' => 0, 'duplicate' => 0, 'quarantined' => 0, 'failed' => 0];
 
             return [];
         }
@@ -216,7 +424,7 @@ class MigrateLegacySisurat extends Command
     {
         $rows = json_decode(File::get($file), true, flags: JSON_THROW_ON_ERROR);
         $rows = is_array($rows) ? array_values(array_filter($rows, 'is_array')) : [];
-        $this->tables[$table] ??= ['total' => count($rows), 'imported' => 0, 'quarantined' => 0];
+        $this->tables[$table] ??= ['total' => count($rows), 'imported' => 0, 'duplicate' => 0, 'quarantined' => 0, 'failed' => 0];
 
         return $rows;
     }
@@ -226,12 +434,17 @@ class MigrateLegacySisurat extends Command
         $this->tables[$table]['imported']++;
     }
 
+    private function duplicated(string $table): void
+    {
+        $this->tables[$table]['duplicate']++;
+    }
+
     /**
      * @param  array<string, mixed>  $row
      */
     private function quarantine(string $table, array $row, string $error): void
     {
-        $this->tables[$table] ??= ['total' => 0, 'imported' => 0, 'quarantined' => 0];
+        $this->tables[$table] ??= ['total' => 0, 'imported' => 0, 'duplicate' => 0, 'quarantined' => 0, 'failed' => 0];
         $this->tables[$table]['quarantined']++;
         $this->quarantinedRows++;
 
@@ -249,6 +462,20 @@ class MigrateLegacySisurat extends Command
             'missing_attachments' => $this->missingAttachments,
             'quarantined_rows' => $this->quarantinedRows,
         ], JSON_PRETTY_PRINT));
+
+        $rows = [];
+        foreach ($this->tables as $entity => $stats) {
+            $rows[] = [
+                $entity,
+                $stats['total'] ?? 0,
+                $stats['imported'] ?? 0,
+                $stats['duplicate'] ?? 0,
+                $stats['quarantined'] ?? 0,
+                $stats['failed'] ?? 0,
+            ];
+        }
+
+        $this->table(['Entity', 'Source Count', 'Imported', 'Existing/Duplicate', 'Quarantined', 'Failed'], $rows);
     }
 
     private function divisionByCode(string $code): Division

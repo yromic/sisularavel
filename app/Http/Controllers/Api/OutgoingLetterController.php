@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreOutgoingLetterRequest;
 use App\Models\Division;
 use App\Models\OutgoingLetter;
+use App\Services\AttachmentStorageService;
 use App\Services\AuditLogger;
 use App\Services\DivisionContext;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -32,13 +33,18 @@ class OutgoingLetterController extends Controller
     public function show(Request $request, OutgoingLetter $outgoingLetter): JsonResponse
     {
         if (! $this->canView($request, $outgoingLetter)) {
-            return $this->forbiddenDivisionResponse();
+            return $this->forbiddenDivisionResponse($request);
         }
 
-        return response()->json(['data' => $this->resource($outgoingLetter)]);
+        $outgoingLetter->loadMissing(['division', 'createdBy', 'attachments']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->resource($outgoingLetter, $request),
+        ]);
     }
 
-    public function store(StoreOutgoingLetterRequest $request, DivisionContext $divisionContext, AuditLogger $auditLogger): Response
+    public function store(StoreOutgoingLetterRequest $request, DivisionContext $divisionContext, AuditLogger $auditLogger, AttachmentStorageService $attachments): Response
     {
         $user = $request->user();
         $divisionId = $divisionContext->activeDivisionId($request, $user);
@@ -65,25 +71,42 @@ class OutgoingLetterController extends Controller
 
         $letterYear = (int) $request->date('tanggal_surat')->format('Y');
         if ($this->numberExists($divisionId, $letterYear, $request->string('nomor_surat')->toString())) {
-            return $this->duplicateNumberResponse();
+            return $this->duplicateNumberResponse($request);
         }
 
-        $letter = DB::transaction(function () use ($request, $divisionId, $letterYear, $user, $auditLogger): OutgoingLetter {
-            $letter = OutgoingLetter::query()->create([
-                'uuid' => (string) Str::uuid(),
-                'division_id' => $divisionId,
-                'letter_year' => $letterYear,
-                'letter_number' => $request->string('nomor_surat')->toString(),
-                'letter_date' => $request->date('tanggal_surat')->toDateString(),
-                'disseminated_date' => $request->date('tanggal_share')->toDateString(),
-                'subject' => $request->string('perihal')->toString(),
-                'created_by_user_id' => $user->id,
-            ]);
+        $storedPath = null;
+        try {
+            $letter = DB::transaction(function () use ($request, $divisionId, $letterYear, $user, $auditLogger, $attachments, &$storedPath): OutgoingLetter {
+                $letter = OutgoingLetter::query()->create([
+                    'uuid' => (string) Str::uuid(),
+                    'division_id' => $divisionId,
+                    'letter_year' => $letterYear,
+                    'letter_number' => $request->string('nomor_surat')->toString(),
+                    'letter_date' => $request->date('tanggal_surat')->toDateString(),
+                    'disseminated_date' => $request->date('tanggal_share')->toDateString(),
+                    'subject' => $request->string('perihal')->toString(),
+                    'created_by_user_id' => $user->id,
+                ]);
 
-            $auditLogger->outgoingLetterEvent('LETTER_OUTGOING_CREATED', $user, $letter, 'Outgoing letter created.', $this->auditValues($letter));
+                $auditLogger->outgoingLetterEvent('LETTER_OUTGOING_CREATED', $user, $letter, 'Outgoing letter created.', $this->auditValues($letter));
 
-            return $letter;
-        });
+                if ($request->hasFile('photos') && count($request->file('photos')) > 0) {
+                    $attachment = $attachments->storeMergedPhotosAsPdf($request->file('photos'), $letter, $letter->division, $user, $letter->letter_number);
+                    $storedPath = $attachment->file_path;
+                    $letter->setRelation('attachments', collect([$attachment]));
+                } elseif ($request->hasFile('attachment')) {
+                    $attachment = $attachments->storeForModel($request->file('attachment'), $letter, $letter->division, $user);
+                    $storedPath = $attachment->file_path;
+                    $letter->setRelation('attachments', collect([$attachment]));
+                }
+
+                return $letter;
+            });
+        } catch (\Throwable $exception) {
+            $attachments->deleteStored($storedPath);
+
+            throw $exception;
+        }
 
         if (! $request->expectsJson()) {
             return redirect('/surat-keluar')->with('success', 'Surat keluar berhasil disimpan.');
@@ -92,32 +115,49 @@ class OutgoingLetterController extends Controller
         return response()->json(['success' => true, 'data' => $this->resource($letter)], 201);
     }
 
-    public function update(StoreOutgoingLetterRequest $request, OutgoingLetter $outgoingLetter, AuditLogger $auditLogger): JsonResponse
+    public function update(StoreOutgoingLetterRequest $request, OutgoingLetter $outgoingLetter, AuditLogger $auditLogger, AttachmentStorageService $attachments): Response
     {
         if (! $this->canManage($request, $outgoingLetter)) {
-            return $this->forbiddenDivisionResponse();
+            return $this->forbiddenDivisionResponse($request);
         }
 
         $letterYear = (int) $request->date('tanggal_surat')->format('Y');
         $letterNumber = $request->string('nomor_surat')->toString();
         if ($this->numberExists($outgoingLetter->division_id, $letterYear, $letterNumber, $outgoingLetter->id)) {
-            return $this->duplicateNumberResponse();
+            return $this->duplicateNumberResponse($request);
         }
 
-        $letter = DB::transaction(function () use ($request, $outgoingLetter, $letterYear, $letterNumber, $auditLogger): OutgoingLetter {
-            $outgoingLetter->forceFill([
-                'letter_year' => $letterYear,
-                'letter_number' => $letterNumber,
-                'letter_date' => $request->date('tanggal_surat')->toDateString(),
-                'disseminated_date' => $request->date('tanggal_share')->toDateString(),
-                'subject' => $request->string('perihal')->toString(),
-                'updated_by_user_id' => $request->user()->id,
-            ])->save();
+        $storedPath = null;
+        try {
+            $letter = DB::transaction(function () use ($request, $outgoingLetter, $letterYear, $letterNumber, $auditLogger, $attachments, &$storedPath): OutgoingLetter {
+                $outgoingLetter->forceFill([
+                    'letter_year' => $letterYear,
+                    'letter_number' => $letterNumber,
+                    'letter_date' => $request->date('tanggal_surat')->toDateString(),
+                    'disseminated_date' => $request->date('tanggal_share')->toDateString(),
+                    'subject' => $request->string('perihal')->toString(),
+                    'updated_by_user_id' => $request->user()->id,
+                ])->save();
 
-            $auditLogger->outgoingLetterEvent('LETTER_OUTGOING_UPDATED', $request->user(), $outgoingLetter, 'Outgoing letter metadata updated.', $this->auditValues($outgoingLetter));
+                $auditLogger->outgoingLetterEvent('LETTER_OUTGOING_UPDATED', $request->user(), $outgoingLetter, 'Outgoing letter metadata updated.', $this->auditValues($outgoingLetter));
 
-            return $outgoingLetter;
-        });
+                if ($request->hasFile('attachment')) {
+                    $attachment = $attachments->storeForModel($request->file('attachment'), $outgoingLetter, $outgoingLetter->division, $request->user());
+                    $storedPath = $attachment->file_path;
+                    $outgoingLetter->setRelation('attachments', collect([$attachment]));
+                }
+
+                return $outgoingLetter;
+            });
+        } catch (\Throwable $exception) {
+            $attachments->deleteStored($storedPath);
+
+            throw $exception;
+        }
+
+        if (! $request->expectsJson()) {
+            return redirect('/surat-keluar/'.$outgoingLetter->id)->with('success', 'Surat keluar berhasil diperbarui.');
+        }
 
         return response()->json(['success' => true, 'data' => $this->resource($letter)]);
     }
@@ -125,7 +165,7 @@ class OutgoingLetterController extends Controller
     public function destroy(Request $request, OutgoingLetter $outgoingLetter, AuditLogger $auditLogger): Response
     {
         if (! $this->canManage($request, $outgoingLetter)) {
-            return $this->forbiddenDivisionResponse();
+            return $this->forbiddenDivisionResponse($request);
         }
 
         DB::transaction(function () use ($request, $outgoingLetter, $auditLogger): void {
@@ -136,7 +176,7 @@ class OutgoingLetterController extends Controller
         });
 
         if (! $request->expectsJson()) {
-            return back()->with('success', 'Surat keluar berhasil dihapus.');
+            return redirect('/surat-keluar')->with('success', 'Surat keluar berhasil dihapus.');
         }
 
         return response()->json(['success' => true, 'data' => ['id' => $outgoingLetter->id, 'deleted' => true]]);
@@ -147,7 +187,7 @@ class OutgoingLetterController extends Controller
         $letter = OutgoingLetter::withTrashed()->findOrFail($outgoingLetter);
 
         if (! $this->canManage($request, $letter)) {
-            return $this->forbiddenDivisionResponse();
+            return $this->forbiddenDivisionResponse($request);
         }
 
         DB::transaction(function () use ($request, $letter, $auditLogger): void {
@@ -170,8 +210,14 @@ class OutgoingLetterController extends Controller
             ->exists();
     }
 
-    private function duplicateNumberResponse(): JsonResponse
+    private function duplicateNumberResponse(?Request $request = null): Response
     {
+        if ($request && ! $request->expectsJson()) {
+            return back()->withInput()->withErrors([
+                'nomor_surat' => 'Nomor surat keluar sudah terdaftar pada divisi dan tahun ini.',
+            ]);
+        }
+
         return response()->json([
             'success' => false,
             'code' => 'ERR_409_DUPLICATE_NUMBER',
@@ -201,8 +247,12 @@ class OutgoingLetterController extends Controller
         return $user->role === 'division_admin' && $user->division_id === $outgoingLetter->division_id;
     }
 
-    private function forbiddenDivisionResponse(): JsonResponse
+    private function forbiddenDivisionResponse(?Request $request = null): Response
     {
+        if ($request && ! $request->expectsJson()) {
+            abort(403, 'Anda tidak memiliki izin untuk mengakses data divisi ini.');
+        }
+
         return response()->json([
             'success' => false,
             'code' => 'ERR_403_DIVISI',
@@ -213,17 +263,42 @@ class OutgoingLetterController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function resource(OutgoingLetter $letter): array
+    private function resource(OutgoingLetter $letter, ?Request $request = null): array
     {
+        $canManage = $request ? $this->canManage($request, $letter) : false;
+
         return [
             'id' => $letter->id,
             'uuid' => $letter->uuid,
             'division_id' => $letter->division_id,
+            'division_name' => $letter->division?->name ?? '-',
+            'division_code' => $letter->division?->code ?? '-',
             'letter_year' => $letter->letter_year,
+            'letter_number' => $letter->letter_number,
             'nomor_surat' => $letter->letter_number,
+            'letter_date' => $letter->letter_date->toDateString(),
             'tanggal_surat' => $letter->letter_date->toDateString(),
+            'tanggal_surat_formatted' => $letter->letter_date->format('d F Y'),
+            'disseminated_date' => $letter->disseminated_date->toDateString(),
             'tanggal_share' => $letter->disseminated_date->toDateString(),
+            'tanggal_share_formatted' => $letter->disseminated_date->format('d F Y'),
+            'subject' => $letter->subject,
             'perihal' => $letter->subject,
+            'created_by' => $letter->createdBy ? ($letter->createdBy->name.' ('.$letter->createdBy->username.')') : 'Sistem',
+            'created_at_formatted' => $letter->created_at ? $letter->created_at->format('d/m/Y H:i').' WIB' : '-',
+            'can_edit' => $canManage,
+            'can_delete' => $canManage,
+            'attachment' => $letter->attachments->first() ? [
+                'uuid' => $letter->attachments->first()->uuid,
+                'original_name' => $letter->attachments->first()->original_name,
+                'file_size_bytes' => $letter->attachments->first()->file_size_bytes,
+                'file_size_formatted' => number_format($letter->attachments->first()->file_size_bytes / 1024, 1).' KB',
+                'mime_type' => $letter->attachments->first()->mime_type,
+                'is_missing' => (bool) $letter->attachments->first()->is_missing,
+                'legacy_drive_url' => $letter->attachments->first()->legacy_drive_url,
+                'preview_url' => "/api/v1/attachments/{$letter->attachments->first()->uuid}/preview",
+                'download_url' => "/api/v1/attachments/{$letter->attachments->first()->uuid}/download",
+            ] : null,
         ];
     }
 

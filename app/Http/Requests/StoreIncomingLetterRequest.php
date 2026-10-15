@@ -29,6 +29,8 @@ class StoreIncomingLetterRequest extends FormRequest
                 'max:10240',
                 'mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png',
             ],
+            'photos' => ['sometimes', 'array', 'max:15'],
+            'photos.*' => ['file', 'image', 'max:10240'],
         ];
     }
 
