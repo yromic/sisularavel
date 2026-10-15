@@ -16,15 +16,46 @@ class Piagam extends Model
         'uuid',
         'division_id',
         'student_name',
+        'piagam_description',
         'school_id',
+        'school_origin',
+        'work_unit_id',
+        'npsn',
         'competition_category_id',
+        'competition_category_name',
         'competition_year',
         'pickup_category_id',
+        'pickup_category_name',
         'recipient_name',
         'recipient_position',
         'recipient_unit',
         'created_by_user_id',
     ];
+
+    public function getSchoolDisplayNameAttribute(): string
+    {
+        return $this->school?->name ?? $this->school_origin ?? $this->recipient_unit ?? '-';
+    }
+
+    public function getPiagamDisplayNameAttribute(): string
+    {
+        return $this->piagam_description ?: $this->student_name;
+    }
+
+    public function getPickupDisplayNameAttribute(): string
+    {
+        return $this->pickup_category_name ?: ($this->pickupCategory?->name ?: 'Diambil Langsung');
+    }
+
+    public function getCompetitionDisplayNameAttribute(): string
+    {
+        return $this->competition_category_name ?: ($this->competitionCategory?->name ?: '-');
+    }
+
+    public function getUnitDisplayNameAttribute(): string
+    {
+        return $this->recipient_unit ?: ($this->workUnit?->name ?: ($this->school_origin ?: ($this->school?->name ?: '-')));
+    }
 
     public function division(): BelongsTo
     {
@@ -34,6 +65,11 @@ class Piagam extends Model
     public function school(): BelongsTo
     {
         return $this->belongsTo(School::class);
+    }
+
+    public function workUnit(): BelongsTo
+    {
+        return $this->belongsTo(WorkUnit::class);
     }
 
     public function competitionCategory(): BelongsTo
@@ -49,5 +85,10 @@ class Piagam extends Model
     public function attachments(): MorphMany
     {
         return $this->morphMany(Attachment::class, 'attachable');
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id')->withTrashed();
     }
 }
