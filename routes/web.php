@@ -182,9 +182,13 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
     Route::get('/surat-masuk', function (Request $request, DivisionContext $divisionContext) {
         $divisionId = $divisionContext->activeDivisionId($request, $request->user());
         $q = $request->string('q')->toString();
+        $status = $request->string('status', 'active')->toString();
+        $user = $request->user();
+        $canViewTrashed = in_array($user->role, ['super_admin', 'division_admin'], true);
 
         $letters = IncomingLetter::query()
             ->with(['attachments'])
+            ->when($canViewTrashed && $status === 'trashed', fn ($query) => $query->onlyTrashed())
             ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
             ->when($q !== '', fn ($query) => $query->where(function ($sub) use ($q) {
                 $sub->where('letter_number', 'like', "%{$q}%")
@@ -194,7 +198,11 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
             ->latest('received_date')
             ->paginate(10);
 
-        return view('letters.incoming.index', ['letters' => $letters]);
+        return view('letters.incoming.index', [
+            'letters' => $letters,
+            'status' => $status,
+            'canViewTrashed' => $canViewTrashed,
+        ]);
     });
 
     Route::get('/surat-masuk/create', fn () => view('letters.incoming.create'));
@@ -224,13 +232,18 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
         return view('letters.incoming.edit', ['letter' => $incomingLetter]);
     });
     Route::delete('/surat-masuk/{incomingLetter}', [IncomingLetterController::class, 'destroy']);
+    Route::post('/surat-masuk/{incomingLetter}/restore', [IncomingLetterController::class, 'restore']);
 
     Route::get('/surat-keluar', function (Request $request, DivisionContext $divisionContext) {
         $divisionId = $divisionContext->activeDivisionId($request, $request->user());
         $q = $request->string('q')->toString();
+        $status = $request->string('status', 'active')->toString();
+        $user = $request->user();
+        $canViewTrashed = in_array($user->role, ['super_admin', 'division_admin'], true);
 
         $letters = OutgoingLetter::query()
             ->with(['attachments'])
+            ->when($canViewTrashed && $status === 'trashed', fn ($query) => $query->onlyTrashed())
             ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
             ->when($q !== '', fn ($query) => $query->where(function ($sub) use ($q) {
                 $sub->where('letter_number', 'like', "%{$q}%")
@@ -239,7 +252,11 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
             ->latest('letter_date')
             ->paginate(10);
 
-        return view('letters.outgoing.index', ['letters' => $letters]);
+        return view('letters.outgoing.index', [
+            'letters' => $letters,
+            'status' => $status,
+            'canViewTrashed' => $canViewTrashed,
+        ]);
     });
 
     Route::get('/surat-keluar/create', fn () => view('letters.outgoing.create'));
@@ -269,6 +286,7 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
         return view('letters.outgoing.edit', ['letter' => $outgoingLetter]);
     });
     Route::delete('/surat-keluar/{outgoingLetter}', [OutgoingLetterController::class, 'destroy']);
+    Route::post('/surat-keluar/{outgoingLetter}/restore', [OutgoingLetterController::class, 'restore']);
 
     Route::get('/piagam', function (Request $request, DivisionContext $divisionContext) {
         $divisionId = $divisionContext->activeDivisionId($request, $request->user());

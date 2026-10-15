@@ -100,13 +100,9 @@
                                         <button type="button" onclick="openEditSchoolModal({{ json_encode($school) }})" class="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50" title="Edit Sekolah">
                                             <x-icon name="edit" class="h-4 w-4" />
                                         </button>
-                                        <form method="post" action="/api/v1/schools/{{ $school->id }}" onsubmit="return confirm('Hapus sekolah {{ $school->name }}?')" class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50" title="Hapus sekolah">
-                                                <x-icon name="trash" class="h-4 w-4" />
-                                            </button>
-                                        </form>
+                                        <button type="button" onclick="openDeleteSchoolModal('{{ $school->id }}', '{{ addslashes($school->name) }}', '{{ $school->npsn }}')" class="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50" title="Hapus sekolah">
+                                            <x-icon name="trash" class="h-4 w-4" />
+                                        </button>
                                     </div>
                                 @else
                                     <span class="text-xs text-slate-400">-</span>
@@ -156,6 +152,34 @@
                     </form>
                 </div>
             </div>
+
+            <!-- Modal Konfirmasi Hapus Sekolah (UX-007) -->
+            <div id="modal-delete-sekolah" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+                <div class="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-2xl">
+                    <div class="flex items-start gap-4">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                            <x-icon name="trash" class="h-6 w-6" />
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h3 class="text-base font-bold text-slate-900">Konfirmasi Hapus Data Sekolah</h3>
+                            <p class="mt-1 text-xs text-slate-600 leading-relaxed">
+                                Apakah Anda yakin ingin menghapus data sekolah <strong id="delete-school-name" class="text-slate-900">-</strong> (NPSN: <span id="delete-school-npsn" class="font-mono font-semibold">-</span>)?
+                            </p>
+                        </div>
+                    </div>
+                    <form id="form-delete-sekolah" method="post" action="" class="mt-6 flex items-center justify-end gap-2.5">
+                        @csrf
+                        @method('DELETE')
+                        <button type="button" onclick="closeDeleteSchoolModal()" class="min-h-[38px] rounded-md border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 hover:bg-slate-100">
+                            Batal
+                        </button>
+                        <button type="submit" class="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-md bg-rose-600 px-4 text-xs font-semibold text-white shadow-xs hover:bg-rose-700">
+                            <x-icon name="trash" class="h-4 w-4" />
+                            <span>Ya, Hapus Sekolah</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
         @endif
 
         <div class="mt-4">
@@ -176,5 +200,23 @@
         function closeEditSchoolModal() {
             document.getElementById('modal-edit-sekolah').classList.add('hidden');
         }
+
+        function openDeleteSchoolModal(id, name, npsn) {
+            document.getElementById('delete-school-name').textContent = name;
+            document.getElementById('delete-school-npsn').textContent = npsn;
+            document.getElementById('form-delete-sekolah').action = `/api/v1/schools/${id}`;
+            document.getElementById('modal-delete-sekolah').classList.remove('hidden');
+        }
+
+        function closeDeleteSchoolModal() {
+            document.getElementById('modal-delete-sekolah').classList.add('hidden');
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeEditSchoolModal();
+                closeDeleteSchoolModal();
+            }
+        });
     </script>
 </x-layouts.app>

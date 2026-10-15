@@ -86,7 +86,6 @@
                         <label for="division_id" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
                             Divisi Tujuan / Bidang Pengampu *
                         </label>
-                        <p class="text-xs text-slate-500 mt-0.5">Pilih bidang atau ketik manual jika tidak ada di daftar.</p>
                         <select name="division_id"
                                 id="division_id"
                                 onchange="handleDivisionChange(this.value)"
@@ -121,7 +120,6 @@
                         <label for="recipient_name" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
                             Nama Lengkap Pengambil *
                         </label>
-                        <p class="text-xs text-slate-500 mt-0.5">Nama orang yang menerima fisik piagam di loket.</p>
                         <input type="text"
                                name="recipient_name"
                                id="recipient_name"
@@ -136,7 +134,6 @@
                         <label for="recipient_position" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
                             Posisi / Jabatan Pengambil *
                         </label>
-                        <p class="text-xs text-slate-500 mt-0.5">Pilih atau ketik jabatan yang mewakili.</p>
                         <input list="positions_datalist"
                                name="recipient_position"
                                id="recipient_position"
@@ -159,7 +156,6 @@
                         <label for="pickup_category_id" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
                             Jenis Pengambilan *
                         </label>
-                        <p class="text-xs text-slate-500 mt-0.5">Pilih metode pengambilan atau isi manual.</p>
                         <select name="pickup_category_id"
                                 id="pickup_category_id"
                                 onchange="handlePickupCategoryChange(this.value)"
@@ -187,10 +183,34 @@
                     <!-- 5. UNIT KERJA -->
                     <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="md:col-span-2">
+                            <!-- Typeahead Autocomplete Search for Schools (UX-014) -->
+                            <div class="relative mb-2.5">
+                                <div class="flex items-center justify-between mb-1">
+                                    <label for="school_search_autocomplete" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                                        Pencarian Cepat Sekolah / NPSN (Autocomplete)
+                                    </label>
+                                    <span class="text-[10px] text-slate-400">Ketik nama sekolah atau 8 digit NPSN</span>
+                                </div>
+                                <div class="relative">
+                                    <input type="text"
+                                           id="school_search_autocomplete"
+                                           autocomplete="off"
+                                           class="min-h-[42px] w-full rounded-lg border border-slate-300 bg-white pl-9 pr-8 text-xs text-slate-900 placeholder-slate-400 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 focus:outline-hidden"
+                                           placeholder="Ketik nama sekolah (misal: SMPN 1) atau NPSN...">
+                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                        <x-icon name="search" class="h-3.5 w-3.5" />
+                                    </div>
+                                    <button type="button" id="btn-clear-school-autocomplete" onclick="clearSchoolAutocomplete()" class="hidden absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600">
+                                        <x-icon name="x" class="h-3.5 w-3.5" />
+                                    </button>
+                                </div>
+                                <!-- Dropdown hasil pencarian -->
+                                <div id="school-autocomplete-results" class="hidden absolute z-30 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg text-xs"></div>
+                            </div>
+
                             <label for="work_unit_selection" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
                                 Unit Kerja / Asal Instansi *
                             </label>
-                            <p class="text-xs text-slate-500 mt-0.5">Pilih dari master sekolah / unit dinas, atau ketik manual.</p>
                             <select name="work_unit_selection"
                                     id="work_unit_selection"
                                     onchange="handleWorkUnitSelection(this.value)"
@@ -230,10 +250,10 @@
                             </div>
                         </div>
 
-                        <!-- 6. NOMOR PUBLIK (NPSN) -->
+                        <!-- 6. NPSN SEKOLAH -->
                         <div>
                             <label for="npsn" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                                Nomor Publik (NPSN)
+                                NPSN Sekolah
                             </label>
                             <p class="text-xs text-slate-500 mt-0.5">8 digit angka (otomatis terisi jika memilih sekolah).</p>
                             <input type="text"
@@ -263,7 +283,6 @@
                         <label for="competition_category_id" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
                             Kelas Kompetisi / Kategori Perlombaan *
                         </label>
-                        <p class="text-xs text-slate-500 mt-0.5">Pilih kategori lomba dari dinas atau isi nama lomba manual.</p>
                         <select name="competition_category_id"
                                 id="competition_category_id"
                                 onchange="handleCompetitionCategoryChange(this.value)"
@@ -293,7 +312,6 @@
                         <label for="competition_year" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
                             Tahun Acara *
                         </label>
-                        <p class="text-xs text-slate-500 mt-0.5">Tahun penyelenggaraan lomba.</p>
                         <input type="number"
                                name="competition_year"
                                id="competition_year"
@@ -309,7 +327,6 @@
                         <label for="student_name" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
                             Kandidat Prestasi (Nama Siswa) *
                         </label>
-                        <p class="text-xs text-slate-500 mt-0.5">Nama siswa peraih penghargaan/piagam (atau tim peraih juara).</p>
                         <input type="text"
                                name="student_name"
                                id="student_name"
@@ -324,7 +341,6 @@
                         <label for="piagam_description" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
                             Keterangan Piagam Tambahan (Opsional)
                         </label>
-                        <p class="text-xs text-slate-500 mt-0.5">Dapat diisi peringkat juara atau rincian spesifik penghargaan.</p>
                         <input type="text"
                                name="piagam_description"
                                id="piagam_description"
@@ -689,10 +705,147 @@
         document.getElementById('pickup_category_manual_wrapper').classList.add('hidden');
         document.getElementById('competition_category_manual_wrapper').classList.add('hidden');
         document.getElementById('recipient_unit_manual_wrapper').classList.add('hidden');
+        clearSchoolAutocomplete();
+    }
+
+    let schoolSearchDebounceTimer = null;
+    let schoolSearchAbortController = null;
+
+    function clearSchoolAutocomplete() {
+        const input = document.getElementById('school_search_autocomplete');
+        const clearBtn = document.getElementById('btn-clear-school-autocomplete');
+        const dropdown = document.getElementById('school-autocomplete-results');
+        if (input) input.value = '';
+        if (clearBtn) clearBtn.classList.add('hidden');
+        if (dropdown) {
+            dropdown.innerHTML = '';
+            dropdown.classList.add('hidden');
+        }
+    }
+
+    function initSchoolAutocomplete() {
+        const input = document.getElementById('school_search_autocomplete');
+        const clearBtn = document.getElementById('btn-clear-school-autocomplete');
+        const dropdown = document.getElementById('school-autocomplete-results');
+        const select = document.getElementById('work_unit_selection');
+        const npsnInput = document.getElementById('npsn');
+
+        if (!input || !dropdown || !select) return;
+
+        input.addEventListener('input', () => {
+            const query = input.value.trim();
+            if (clearBtn) {
+                clearBtn.classList.toggle('hidden', query === '');
+            }
+
+            clearTimeout(schoolSearchDebounceTimer);
+            if (query.length < 2) {
+                dropdown.innerHTML = '';
+                dropdown.classList.add('hidden');
+                return;
+            }
+
+            schoolSearchDebounceTimer = setTimeout(async () => {
+                if (schoolSearchAbortController) {
+                    schoolSearchAbortController.abort();
+                }
+                schoolSearchAbortController = new AbortController();
+
+                try {
+                    const res = await fetch(`/api/v1/schools?search=${encodeURIComponent(query)}`, {
+                        signal: schoolSearchAbortController.signal,
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (!res.ok) return;
+                    const json = await res.json();
+                    const schools = json.data || [];
+
+                    dropdown.innerHTML = '';
+                    if (schools.length === 0) {
+                        dropdown.innerHTML = '<div class="px-3 py-2.5 text-center text-xs text-slate-400">Tidak ada sekolah yang cocok. Anda dapat memilih "Ketik Manual" di bawah jika belum terdaftar.</div>';
+                    } else {
+                        schools.forEach((s) => {
+                            const btn = document.createElement('button');
+                            btn.type = 'button';
+                            btn.className = 'w-full text-left px-3 py-2 hover:bg-emerald-50 focus:bg-emerald-50 focus:outline-hidden flex items-center justify-between border-b border-slate-100 last:border-0 transition-colors';
+                            btn.innerHTML = `
+                                <div>
+                                    <div class="font-semibold text-slate-800">${s.name}</div>
+                                    <div class="text-[10px] text-slate-500 font-mono">NPSN: ${s.npsn}</div>
+                                </div>
+                                <span class="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">Pilih</span>
+                            `;
+                            btn.addEventListener('click', () => {
+                                selectSchoolFromTypeahead(s);
+                            });
+                            dropdown.appendChild(btn);
+                        });
+                    }
+                    dropdown.classList.remove('hidden');
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.error('School autocomplete fetch error', err);
+                    }
+                }
+            }, 250);
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Support direct NPSN typing auto-sync
+        if (npsnInput) {
+            npsnInput.addEventListener('change', async () => {
+                const npsnVal = npsnInput.value.trim();
+                if (npsnVal.length >= 8) {
+                    try {
+                        const res = await fetch(`/api/v1/schools?search=${encodeURIComponent(npsnVal)}`, {
+                            headers: { 'Accept': 'application/json' }
+                        });
+                        if (res.ok) {
+                            const json = await res.json();
+                            const matched = (json.data || []).find(s => s.npsn === npsnVal);
+                            if (matched) {
+                                selectSchoolFromTypeahead(matched, false);
+                            }
+                        }
+                    } catch (e) {
+                        // Ignore
+                    }
+                }
+            });
+        }
+
+        function selectSchoolFromTypeahead(school, updateNpsn = true) {
+            input.value = `${school.name} (${school.npsn})`;
+            if (clearBtn) clearBtn.classList.remove('hidden');
+            dropdown.classList.add('hidden');
+
+            if (updateNpsn && npsnInput) {
+                npsnInput.value = school.npsn;
+            }
+
+            // Sync with select element
+            const optionValue = `school:${school.id}`;
+            let option = select.querySelector(`option[value="${optionValue}"]`);
+            if (!option) {
+                option = new Option(`${school.name} (NPSN: ${school.npsn})`, optionValue, true, true);
+                option.setAttribute('data-npsn', school.npsn);
+                option.setAttribute('data-name', school.name);
+                select.appendChild(option);
+            }
+            select.value = optionValue;
+            handleWorkUnitSelection(optionValue);
+        }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
         initSignatureCanvas();
         setupFormSubmit();
+        initSchoolAutocomplete();
     });
 </script>

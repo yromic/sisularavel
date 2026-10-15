@@ -61,17 +61,17 @@
                             <dd id="modal-field-division" class="col-span-2 text-slate-800">-</dd>
                         </div>
                         <div class="grid grid-cols-3 gap-2 border-t border-slate-100 pt-2.5">
-                            <dt class="font-medium text-slate-500">Dicatat Oleh</dt>
+                            <dt class="font-medium text-slate-600">Dicatat Oleh</dt>
                             <dd id="modal-field-created-by" class="col-span-2 text-slate-800">-</dd>
                         </div>
                         <div class="grid grid-cols-3 gap-2 border-t border-slate-100 pt-2.5">
-                            <dt class="font-medium text-slate-500">Waktu Pencatatan</dt>
-                            <dd id="modal-field-created-at" class="col-span-2 text-slate-600">-</dd>
+                            <dt class="font-medium text-slate-600">Waktu Pencatatan</dt>
+                            <dd id="modal-field-created-at" class="col-span-2 text-slate-700 font-medium">-</dd>
                         </div>
 
                         <!-- Perihal / Isi Ringkas -->
                         <div class="border-t border-slate-100 pt-3">
-                            <dt class="font-medium text-slate-500 mb-1.5">Perihal / Ringkasan</dt>
+                            <dt class="font-medium text-slate-600 mb-1.5">Perihal / Ringkasan</dt>
                             <dd id="modal-field-subject" class="rounded-lg bg-slate-50 border border-slate-200/80 p-3 text-xs leading-relaxed text-slate-800 whitespace-pre-line max-h-36 overflow-y-auto">
                                 -
                             </dd>
@@ -186,6 +186,23 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Mobile Sticky Bottom Action Bar (UX-013) -->
+            <div id="modal-mobile-sticky-bar" class="lg:hidden sticky bottom-0 z-20 flex items-center justify-between gap-3 border-t border-slate-200 bg-white/95 backdrop-blur-xs px-4 py-2.5 shadow-lg shrink-0">
+                <div class="min-w-0 flex-1">
+                    <p id="mobile-sticky-attachment-name" class="truncate text-xs font-semibold text-slate-800">Lampiran Berkas</p>
+                    <p class="text-[10px] text-slate-500">Pratinjau / Unduh Berkas</p>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <a id="mobile-sticky-btn-download" href="#" class="hidden inline-flex min-h-[36px] items-center gap-1.5 rounded-md bg-emerald-600 px-3 text-xs font-semibold text-white shadow-xs hover:bg-emerald-500">
+                        <x-icon name="download" class="h-4 w-4" />
+                        <span>Unduh</span>
+                    </a>
+                    <button type="button" onclick="closeLetterDetailModal()" class="inline-flex min-h-[36px] items-center rounded-md border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                        Tutup
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -201,6 +218,8 @@
         const contentState = document.getElementById('modal-detail-content');
         
         // Reset states
+        previousFocusedElement = document.activeElement;
+        document.addEventListener('keydown', trapDetailModalFocus);
         modal.classList.remove('hidden');
         document.body.classList.add('overflow-hidden');
         loadingState.classList.remove('hidden');
@@ -301,6 +320,18 @@
             downloadBtn.classList.remove('hidden');
             downloadBtn.classList.add('inline-flex');
 
+            const mobileStickyDownloadBtn = document.getElementById('mobile-sticky-btn-download');
+            const mobileStickyAttachmentName = document.getElementById('mobile-sticky-attachment-name');
+            if (mobileStickyDownloadBtn) {
+                mobileStickyDownloadBtn.href = downloadUrl;
+                mobileStickyDownloadBtn.setAttribute('download', att.original_name);
+                mobileStickyDownloadBtn.classList.remove('hidden');
+                mobileStickyDownloadBtn.classList.add('inline-flex');
+            }
+            if (mobileStickyAttachmentName) {
+                mobileStickyAttachmentName.textContent = att.original_name;
+            }
+
             const extBtn = document.getElementById('modal-btn-external');
             extBtn.href = previewUrl;
             extBtn.classList.remove('hidden');
@@ -332,6 +363,15 @@
         } else {
             document.getElementById('modal-attachment-name').textContent = 'Tanpa Berkas Lampiran';
             document.getElementById('modal-attachment-meta').textContent = 'Tidak ada lampiran dokumen diunggah.';
+            const mobileStickyDownloadBtn = document.getElementById('mobile-sticky-btn-download');
+            const mobileStickyAttachmentName = document.getElementById('mobile-sticky-attachment-name');
+            if (mobileStickyDownloadBtn) {
+                mobileStickyDownloadBtn.classList.add('hidden');
+                mobileStickyDownloadBtn.classList.remove('inline-flex');
+            }
+            if (mobileStickyAttachmentName) {
+                mobileStickyAttachmentName.textContent = 'Tanpa Lampiran';
+            }
             setViewerState('empty');
         }
     }
@@ -362,11 +402,40 @@
         }
     }
 
+    let previousFocusedElement = null;
+
+    function trapDetailModalFocus(e) {
+        const modal = document.getElementById('split-letter-detail-modal');
+        if (!modal || modal.classList.contains('hidden')) return;
+        if (e.key === 'Tab') {
+            const focusables = modal.querySelectorAll('button:not([disabled]), [href]:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+            const visibleFocusables = Array.from(focusables).filter(el => el.offsetParent !== null);
+            if (visibleFocusables.length === 0) return;
+            const first = visibleFocusables[0];
+            const last = visibleFocusables[visibleFocusables.length - 1];
+            if (e.shiftKey) {
+                if (document.activeElement === first) {
+                    last.focus();
+                    e.preventDefault();
+                }
+            } else {
+                if (document.activeElement === last) {
+                    first.focus();
+                    e.preventDefault();
+                }
+            }
+        }
+    }
+
     function closeLetterDetailModal() {
         const modal = document.getElementById('split-letter-detail-modal');
         modal.classList.add('hidden');
         document.body.classList.remove('overflow-hidden');
+        document.removeEventListener('keydown', trapDetailModalFocus);
         setViewerState('empty');
+        if (previousFocusedElement && typeof previousFocusedElement.focus === 'function') {
+            previousFocusedElement.focus();
+        }
     }
 
     function triggerEditFromDetail() {
@@ -399,7 +468,7 @@
         }
     }
 
-    // Keyboard shortcut ESC to close
+    // Keyboard shortcut ESC to close & Tab trap
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             const detailModal = document.getElementById('split-letter-detail-modal');

@@ -32,10 +32,36 @@
 <script>
     let pendingDeleteType = 'surat-masuk';
     let pendingDeleteId = null;
+    let previousDeleteFocusedElement = null;
+
+    function trapDeleteModalFocus(e) {
+        const modal = document.getElementById('letter-delete-modal');
+        if (!modal || modal.classList.contains('hidden')) return;
+        if (e.key === 'Tab') {
+            const focusables = modal.querySelectorAll('button:not([disabled]), [href]:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+            const visibleFocusables = Array.from(focusables).filter(el => el.offsetParent !== null);
+            if (visibleFocusables.length === 0) return;
+            const first = visibleFocusables[0];
+            const last = visibleFocusables[visibleFocusables.length - 1];
+            if (e.shiftKey) {
+                if (document.activeElement === first) {
+                    last.focus();
+                    e.preventDefault();
+                }
+            } else {
+                if (document.activeElement === last) {
+                    first.focus();
+                    e.preventDefault();
+                }
+            }
+        }
+    }
 
     function openLetterDeleteModal(type, id, letterNumber) {
         pendingDeleteType = type;
         pendingDeleteId = id;
+        previousDeleteFocusedElement = document.activeElement;
+        document.addEventListener('keydown', trapDeleteModalFocus);
         document.getElementById('delete-modal-letter-number').textContent = letterNumber || `#${id}`;
         document.getElementById('delete-modal-error').classList.add('hidden');
         document.getElementById('delete-modal-btn-confirm').disabled = false;
@@ -47,7 +73,11 @@
     function closeLetterDeleteModal() {
         document.getElementById('letter-delete-modal').classList.add('hidden');
         document.body.classList.remove('overflow-hidden');
+        document.removeEventListener('keydown', trapDeleteModalFocus);
         pendingDeleteId = null;
+        if (previousDeleteFocusedElement && typeof previousDeleteFocusedElement.focus === 'function') {
+            previousDeleteFocusedElement.focus();
+        }
     }
 
     async function executeDeleteLetter() {
@@ -70,6 +100,7 @@
             });
 
             if (res.ok) {
+                sessionStorage.setItem('sisurat_toast', JSON.stringify({ message: 'Arsip surat berhasil dipindahkan ke kotak sampah.', type: 'success' }));
                 closeLetterDeleteModal();
                 window.location.reload();
             } else {

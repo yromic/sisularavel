@@ -192,15 +192,59 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Mobile Sticky Bottom Action Bar (UX-013) -->
+            <div id="modal-piagam-mobile-sticky-bar" class="lg:hidden sticky bottom-0 z-20 flex items-center justify-between gap-3 border-t border-slate-200 bg-white/95 backdrop-blur-xs px-4 py-2.5 shadow-lg shrink-0">
+                <div class="min-w-0 flex-1">
+                    <p id="mobile-piagam-sticky-name" class="truncate text-xs font-semibold text-slate-800">Bukti Tanda Terima</p>
+                    <p class="text-[10px] text-slate-500">Tanda Tangan Digital Pengambil</p>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <a id="mobile-piagam-sticky-btn-download" href="#" class="hidden inline-flex min-h-[36px] items-center gap-1.5 rounded-md bg-emerald-700 px-3 text-xs font-semibold text-white shadow-xs hover:bg-emerald-600">
+                        <x-icon name="download" class="h-4 w-4" />
+                        <span>Unduh TTD</span>
+                    </a>
+                    <button type="button" onclick="closePiagamDetailModal()" class="inline-flex min-h-[36px] items-center rounded-md border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                        Tutup
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
     let currentPiagamDetailId = null;
+    let previousPiagamFocusedElement = null;
+
+    function trapPiagamModalFocus(e) {
+        const modal = document.getElementById('split-piagam-detail-modal');
+        if (!modal || modal.classList.contains('hidden')) return;
+        if (e.key === 'Tab') {
+            const focusables = modal.querySelectorAll('button:not([disabled]), [href]:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+            const visibleFocusables = Array.from(focusables).filter(el => el.offsetParent !== null);
+            if (visibleFocusables.length === 0) return;
+            const first = visibleFocusables[0];
+            const last = visibleFocusables[visibleFocusables.length - 1];
+            if (e.shiftKey) {
+                if (document.activeElement === first) {
+                    last.focus();
+                    e.preventDefault();
+                }
+            } else {
+                if (document.activeElement === last) {
+                    first.focus();
+                    e.preventDefault();
+                }
+            }
+        }
+    }
 
     async function openPiagamDetailModal(piagamId) {
         currentPiagamDetailId = piagamId;
+        previousPiagamFocusedElement = document.activeElement;
+        document.addEventListener('keydown', trapPiagamModalFocus);
+
         const modal = document.getElementById('split-piagam-detail-modal');
         const loading = document.getElementById('modal-piagam-loading');
         const content = document.getElementById('modal-piagam-content');
@@ -209,6 +253,7 @@
         const sigLegacy = document.getElementById('modal-piagam-sig-legacy');
         const sigEmpty = document.getElementById('modal-piagam-sig-empty');
         const btnDownload = document.getElementById('modal-piagam-btn-download');
+        const mobileStickyDownloadBtn = document.getElementById('mobile-piagam-sticky-btn-download');
         const btnExternal = document.getElementById('modal-piagam-btn-external');
         const printBtn = document.getElementById('modal-piagam-print-btn');
 
@@ -222,6 +267,7 @@
         sigLegacy.classList.add('hidden');
         sigEmpty.classList.add('hidden');
         btnDownload.classList.add('hidden');
+        if (mobileStickyDownloadBtn) mobileStickyDownloadBtn.classList.add('hidden');
         btnExternal.classList.add('hidden');
         printBtn.href = `/piagam/${piagamId}`;
 
@@ -278,6 +324,12 @@
                 btnDownload.href = data.signature.download_url;
                 btnDownload.classList.remove('hidden');
 
+                if (mobileStickyDownloadBtn) {
+                    mobileStickyDownloadBtn.href = data.signature.download_url;
+                    mobileStickyDownloadBtn.classList.remove('hidden');
+                    mobileStickyDownloadBtn.classList.add('inline-flex');
+                }
+
                 btnExternal.href = data.signature.preview_url;
                 btnExternal.classList.remove('hidden');
             } else if (data.signature && data.signature.is_missing && data.signature.legacy_drive_url) {
@@ -299,7 +351,11 @@
         if (modal) {
             modal.classList.add('hidden');
             document.body.classList.remove('overflow-hidden');
+            document.removeEventListener('keydown', trapPiagamModalFocus);
             currentPiagamDetailId = null;
+            if (previousPiagamFocusedElement && typeof previousPiagamFocusedElement.focus === 'function') {
+                previousPiagamFocusedElement.focus();
+            }
         }
     }
 

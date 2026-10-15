@@ -32,46 +32,81 @@
                 </a>
 
                 <!-- Ekspor CSV -->
-                <a id="btn-export-csv" href="/api/v1/reports/export.csv?type=incoming" class="flex min-h-[44px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs">
+                <a id="btn-export-csv" href="/api/v1/reports/export.csv?type=incoming" onclick="handleExportClick(this, 'Menyiapkan CSV...')" class="flex min-h-[44px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs">
                     <x-icon name="download" class="h-4 w-4 text-slate-500" />
                     Ekspor CSV
                 </a>
 
                 <!-- Cetak PDF -->
-                <a id="btn-export-pdf" href="/api/v1/reports/export.pdf?type=incoming" target="_blank" class="flex min-h-[44px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs">
+                <a id="btn-export-pdf" href="/api/v1/reports/export.pdf?type=incoming" target="_blank" onclick="handleExportClick(this, 'Menyiapkan PDF...')" class="flex min-h-[44px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs">
                     <x-icon name="file-text" class="h-4 w-4 text-slate-500" />
                     Cetak PDF
                 </a>
             </div>
         </header>
 
-        <!-- Segmented Tab Switcher (Touch-First & Zero Reload) -->
-        <div class="mb-4 overflow-x-auto pb-1">
-            <div class="inline-flex min-w-full sm:min-w-0 items-center rounded-lg bg-slate-100 p-1 border border-slate-200 text-xs gap-1">
-                <button type="button" id="tab-btn-masuk" onclick="switchWorkspaceTab('masuk')" class="flex items-center gap-2 rounded-md px-4 py-2.5 font-bold transition-all whitespace-nowrap bg-emerald-700 text-white shadow-xs">
-                    <x-icon name="mail" class="h-4 w-4" />
-                    <span>Surat Masuk</span>
-                    <span id="tab-count-masuk" class="rounded-full bg-emerald-800/80 px-2 py-0.5 text-[10px] font-mono text-emerald-100">{{ $totalIncoming }}</span>
-                </button>
+        <!-- Segmented Tab Switcher (Touch-First & Zero Reload) & Status Toggle -->
+        <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="overflow-x-auto pb-1">
+                <div class="inline-flex min-w-full sm:min-w-0 items-center rounded-lg bg-slate-100 p-1 border border-slate-200 text-xs gap-1">
+                    <button type="button" id="tab-btn-masuk" onclick="switchWorkspaceTab('masuk')" class="flex items-center gap-2 rounded-md px-4 py-2.5 font-bold transition-all whitespace-nowrap bg-emerald-700 text-white shadow-xs">
+                        <x-icon name="mail" class="h-4 w-4" />
+                        <span>Surat Masuk</span>
+                        <span id="tab-count-masuk" class="rounded-full bg-emerald-800/80 px-2 py-0.5 text-[10px] font-mono text-emerald-100">{{ $totalIncoming }}</span>
+                    </button>
 
-                <button type="button" id="tab-btn-keluar" onclick="switchWorkspaceTab('keluar')" class="flex items-center gap-2 rounded-md px-4 py-2.5 font-semibold text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap">
-                    <x-icon name="mail-outgoing" class="h-4 w-4" />
-                    <span>Surat Keluar</span>
-                    <span id="tab-count-keluar" class="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-mono text-slate-700">{{ $totalOutgoing }}</span>
-                </button>
+                    <button type="button" id="tab-btn-keluar" onclick="switchWorkspaceTab('keluar')" class="flex items-center gap-2 rounded-md px-4 py-2.5 font-semibold text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap">
+                        <x-icon name="mail-outgoing" class="h-4 w-4" />
+                        <span>Surat Keluar</span>
+                        <span id="tab-count-keluar" class="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-mono text-slate-700">{{ $totalOutgoing }}</span>
+                    </button>
 
-                <button type="button" id="tab-btn-piagam" onclick="switchWorkspaceTab('piagam')" class="flex items-center gap-2 rounded-md px-4 py-2.5 font-semibold text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap">
-                    <x-icon name="signature" class="h-4 w-4" />
-                    <span>Buku Ekspedisi Piagam</span>
-                    <span id="tab-count-piagam" class="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-mono text-slate-700">{{ $totalPiagam }}</span>
-                </button>
+                    <button type="button" id="tab-btn-piagam" onclick="switchWorkspaceTab('piagam')" class="flex items-center gap-2 rounded-md px-4 py-2.5 font-semibold text-slate-600 hover:text-slate-900 transition-all whitespace-nowrap">
+                        <x-icon name="signature" class="h-4 w-4" />
+                        <span>Buku Ekspedisi Piagam</span>
+                        <span id="tab-count-piagam" class="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-mono text-slate-700">{{ $totalPiagam }}</span>
+                    </button>
+                </div>
             </div>
+
+            @if ($canViewTrashed)
+                <!-- Status Toggle for Admin: Aktif vs Kotak Sampah (UX-010) -->
+                <div class="inline-flex items-center rounded-lg bg-slate-100 p-1 border border-slate-200 text-xs self-start sm:self-auto shrink-0">
+                    <a href="/persuratan?tab={{ $tab }}&status=active{{ request('q') ? '&q='.urlencode(request('q')) : '' }}{{ request('date_from') ? '&date_from='.urlencode(request('date_from')) : '' }}{{ request('date_to') ? '&date_to='.urlencode(request('date_to')) : '' }}" 
+                       class="flex items-center gap-1.5 rounded-md px-3 py-1.5 font-semibold transition-all {{ $status === 'trashed' ? 'text-slate-600 hover:text-slate-900' : 'bg-white text-slate-800 shadow-2xs font-bold' }}">
+                        <span>Arsip Aktif</span>
+                    </a>
+                    <a href="/persuratan?tab={{ $tab }}&status=trashed{{ request('q') ? '&q='.urlencode(request('q')) : '' }}{{ request('date_from') ? '&date_from='.urlencode(request('date_from')) : '' }}{{ request('date_to') ? '&date_to='.urlencode(request('date_to')) : '' }}" 
+                       class="flex items-center gap-1.5 rounded-md px-3 py-1.5 font-semibold transition-all {{ $status === 'trashed' ? 'bg-rose-600 text-white shadow-2xs font-bold' : 'text-slate-600 hover:text-rose-700' }}">
+                        <x-icon name="trash" class="h-3.5 w-3.5" />
+                        <span>Kotak Sampah</span>
+                        @php
+                            $trashedTotal = $trashedIncomingCount + $trashedOutgoingCount;
+                        @endphp
+                        @if ($trashedTotal > 0)
+                            <span class="rounded-full {{ $status === 'trashed' ? 'bg-rose-800 text-rose-100' : 'bg-rose-200 text-rose-800' }} px-1.5 py-0.2 text-[10px] font-mono font-bold">{{ $trashedTotal }}</span>
+                        @endif
+                    </a>
+                </div>
+            @endif
         </div>
+
+        @if ($status === 'trashed')
+            <!-- Trashed Notice Banner (UX-010) -->
+            <div class="mb-4 flex items-center justify-between gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-900 shadow-xs">
+                <div class="flex items-center gap-2">
+                    <x-icon name="alert-triangle" class="h-4 w-4 text-rose-600 shrink-0" />
+                    <span><strong>Mode Kotak Sampah:</strong> Menampilkan arsip yang telah dihapus sementara. Anda dapat memulihkan (restore) data kapan saja.</span>
+                </div>
+                <a href="/persuratan?tab={{ $tab }}&status=active" class="font-bold underline hover:text-rose-950 whitespace-nowrap">Kembali ke Arsip Aktif</a>
+            </div>
+        @endif
 
         <!-- Universal Filter & Search Toolbar -->
         <div class="mb-5 rounded-lg border border-slate-200 bg-white p-3.5 shadow-xs">
             <form method="get" action="/persuratan" id="workspace-search-form" class="grid grid-cols-1 gap-2.5 sm:grid-cols-4">
                 <input type="hidden" name="tab" id="form-active-tab-input" value="{{ $tab }}">
+                <input type="hidden" name="status" value="{{ $status ?? 'active' }}">
                 
                 <div class="sm:col-span-2">
                     <div class="flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-3">
@@ -88,12 +123,49 @@
                         Filter
                     </button>
                     @if (request()->hasAny(['q', 'date_from', 'date_to']))
-                        <a href="/persuratan?tab={{ $tab }}" class="min-h-[42px] flex items-center justify-center rounded-md border border-slate-300 px-2.5 text-xs text-slate-600 hover:bg-slate-100" title="Reset filter">
+                        <a href="/persuratan?tab={{ $tab }}&status={{ $status ?? 'active' }}" class="min-h-[42px] flex items-center justify-center rounded-md border border-slate-300 px-2.5 text-xs text-slate-600 hover:bg-slate-100" title="Reset filter">
                             Reset
                         </a>
                     @endif
                 </div>
             </form>
+
+            @php
+                $hasActiveFilters = request()->filled('q') || request()->filled('date_from') || request()->filled('date_to') || ($status === 'trashed');
+            @endphp
+            @if ($hasActiveFilters)
+                <!-- Active Filter Chips Bar (UX-011) -->
+                <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 text-xs">
+                    <span class="text-xs font-semibold text-slate-500">Filter Aktif:</span>
+                    @if (request()->filled('q'))
+                        <a href="/persuratan?{{ http_build_query(request()->except('q')) }}" class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200">
+                            <span>Kata Kunci: "{{ request('q') }}"</span>
+                            <span class="font-bold text-slate-400 hover:text-slate-700">&times;</span>
+                        </a>
+                    @endif
+                    @if (request()->filled('date_from'))
+                        <a href="/persuratan?{{ http_build_query(request()->except('date_from')) }}" class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200">
+                            <span>Dari: {{ date('d/m/Y', strtotime(request('date_from'))) }}</span>
+                            <span class="font-bold text-slate-400 hover:text-slate-700">&times;</span>
+                        </a>
+                    @endif
+                    @if (request()->filled('date_to'))
+                        <a href="/persuratan?{{ http_build_query(request()->except('date_to')) }}" class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200">
+                            <span>Sampai: {{ date('d/m/Y', strtotime(request('date_to'))) }}</span>
+                            <span class="font-bold text-slate-400 hover:text-slate-700">&times;</span>
+                        </a>
+                    @endif
+                    @if ($status === 'trashed')
+                        <a href="/persuratan?{{ http_build_query(array_merge(request()->except('status'), ['status' => 'active'])) }}" class="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-800 hover:bg-rose-200">
+                            <span>Status: Kotak Sampah</span>
+                            <span class="font-bold text-rose-500 hover:text-rose-800">&times;</span>
+                        </a>
+                    @endif
+                    <a href="/persuratan?tab={{ $tab }}&status=active" class="ml-auto text-xs font-semibold text-emerald-700 hover:underline">
+                        Hapus Semua Filter
+                    </a>
+                </div>
+            @endif
         </div>
 
         <!-- ============================================================== -->
@@ -108,6 +180,9 @@
                             <div>
                                 <span class="inline-block rounded-xs bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-700">Agenda #{{ $letter->id }}</span>
                                 <span class="rounded bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800 ml-1">{{ $letter->division?->code }}</span>
+                                @if ($letter->trashed())
+                                    <span class="rounded bg-rose-100 text-rose-800 px-1.5 py-0.5 text-[10px] font-bold ml-1">Terhapus</span>
+                                @endif
                             </div>
                             <span class="text-xs text-slate-400 font-medium">Terima: {{ $letter->received_date?->format('d/m/Y') }}</span>
                         </div>
@@ -120,16 +195,26 @@
                         <div class="flex items-center justify-between border-t border-slate-100 pt-2.5">
                             <span class="text-[11px] text-slate-400 font-mono">Tgl Surat: {{ $letter->letter_date?->format('d/m/Y') }}</span>
                             <div class="flex items-center gap-1.5">
-                                <button type="button" onclick="event.stopPropagation(); openLetterDetailModal('surat-masuk', {{ $letter->id }})" class="inline-flex min-h-[32px] items-center gap-1 rounded border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs">
-                                    Detail
-                                </button>
-                                @if (in_array(auth()->user()->role, ['super_admin', 'division_admin']))
-                                    <button type="button" onclick="event.stopPropagation(); openLetterFormModal('surat-masuk', 'edit', {{ json_encode($letter) }})" class="inline-flex min-h-[32px] items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 shadow-2xs">
-                                        Edit
+                                @if ($letter->trashed())
+                                    <form method="post" action="/surat-masuk/{{ $letter->id }}/restore" class="inline" onsubmit="return confirm('Pulihkan kembali surat masuk {{ $letter->letter_number }}?')">
+                                        @csrf
+                                        <button type="submit" onclick="event.stopPropagation()" class="inline-flex min-h-[32px] items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 shadow-2xs">
+                                            <x-icon name="rotate-ccw" class="h-3.5 w-3.5 text-emerald-700" />
+                                            <span>Pulihkan</span>
+                                        </button>
+                                    </form>
+                                @else
+                                    <button type="button" onclick="event.stopPropagation(); openLetterDetailModal('surat-masuk', {{ $letter->id }})" class="inline-flex min-h-[32px] items-center gap-1 rounded border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs">
+                                        Detail
                                     </button>
-                                    <button type="button" onclick="event.stopPropagation(); openLetterDeleteModal('surat-masuk', {{ $letter->id }}, '{{ addslashes($letter->letter_number) }}')" class="inline-flex min-h-[32px] items-center gap-1 rounded border border-rose-300 bg-rose-50 px-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 shadow-2xs">
-                                        Hapus
-                                    </button>
+                                    @if (in_array(auth()->user()->role, ['super_admin', 'division_admin']))
+                                        <button type="button" onclick="event.stopPropagation(); openLetterFormModal('surat-masuk', 'edit', {{ json_encode($letter) }})" class="inline-flex min-h-[32px] items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 shadow-2xs">
+                                            Edit
+                                        </button>
+                                        <button type="button" onclick="event.stopPropagation(); openLetterDeleteModal('surat-masuk', {{ $letter->id }}, '{{ addslashes($letter->letter_number) }}')" class="inline-flex min-h-[32px] items-center gap-1 rounded border border-rose-300 bg-rose-50 px-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 shadow-2xs">
+                                            Hapus
+                                        </button>
+                                    @endif
                                 @endif
                             </div>
                         </div>
@@ -161,7 +246,12 @@
                         @forelse ($incomingLetters as $letter)
                             <tr class="hover:bg-slate-50/75 cursor-pointer transition-colors" onclick="openLetterDetailModal('surat-masuk', {{ $letter->id }})">
                                 <td class="p-3 font-mono text-xs font-semibold text-slate-600">#{{ $letter->id }}</td>
-                                <td class="p-3 font-bold text-slate-900">{{ $letter->letter_number }}</td>
+                                <td class="p-3 font-bold text-slate-900">
+                                    {{ $letter->letter_number }}
+                                    @if ($letter->trashed())
+                                        <span class="rounded bg-rose-100 text-rose-800 px-1.5 py-0.5 text-[10px] font-bold ml-1">Terhapus</span>
+                                    @endif
+                                </td>
                                 <td class="p-3 text-slate-700">{{ $letter->origin_agency }}</td>
                                 <td class="p-3 text-xs text-slate-600 whitespace-nowrap">{{ $letter->letter_date?->format('d/m/Y') }}</td>
                                 <td class="p-3 text-xs text-slate-600 whitespace-nowrap">{{ $letter->received_date?->format('d/m/Y') }}</td>
@@ -175,16 +265,26 @@
                                 </td>
                                 <td class="p-3 text-center">
                                     <div class="flex items-center justify-center gap-1.5" onclick="event.stopPropagation()">
-                                        <button type="button" onclick="openLetterDetailModal('surat-masuk', {{ $letter->id }})" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-slate-300 px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs">
-                                            Detail
-                                        </button>
-                                        @if (in_array(auth()->user()->role, ['super_admin', 'division_admin']))
-                                            <button type="button" onclick="openLetterFormModal('surat-masuk', 'edit', {{ json_encode($letter) }})" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 shadow-2xs">
-                                                Edit
+                                        @if ($letter->trashed())
+                                            <form method="post" action="/surat-masuk/{{ $letter->id }}/restore" class="inline" onsubmit="return confirm('Pulihkan kembali surat masuk {{ $letter->letter_number }}?')">
+                                                @csrf
+                                                <button type="submit" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 shadow-2xs">
+                                                    <x-icon name="rotate-ccw" class="h-3.5 w-3.5 text-emerald-700" />
+                                                    <span>Pulihkan</span>
+                                                </button>
+                                            </form>
+                                        @else
+                                            <button type="button" onclick="openLetterDetailModal('surat-masuk', {{ $letter->id }})" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-slate-300 px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs">
+                                                Detail
                                             </button>
-                                            <button type="button" onclick="openLetterDeleteModal('surat-masuk', {{ $letter->id }}, '{{ addslashes($letter->letter_number) }}')" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-rose-300 bg-rose-50 px-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 shadow-2xs">
-                                                Hapus
-                                            </button>
+                                            @if (in_array(auth()->user()->role, ['super_admin', 'division_admin']))
+                                                <button type="button" onclick="openLetterFormModal('surat-masuk', 'edit', {{ json_encode($letter) }})" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 shadow-2xs">
+                                                    Edit
+                                                </button>
+                                                <button type="button" onclick="openLetterDeleteModal('surat-masuk', {{ $letter->id }}, '{{ addslashes($letter->letter_number) }}')" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-rose-300 bg-rose-50 px-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 shadow-2xs">
+                                                    Hapus
+                                                </button>
+                                            @endif
                                         @endif
                                     </div>
                                 </td>
@@ -202,7 +302,7 @@
             </div>
 
             <div class="mt-4">
-                {{ $incomingLetters->appends(['tab' => 'masuk'])->links() }}
+                {{ $incomingLetters->appends(['tab' => 'masuk', 'status' => $status, 'q' => request('q'), 'date_from' => request('date_from'), 'date_to' => request('date_to')])->links() }}
             </div>
         </div>
 
@@ -218,6 +318,9 @@
                             <div>
                                 <span class="inline-block rounded-xs bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-700">Agenda #{{ $letter->id }}</span>
                                 <span class="rounded bg-blue-50 border border-blue-200 px-1.5 py-0.5 text-[10px] font-bold text-blue-800 ml-1">{{ $letter->division?->code }}</span>
+                                @if ($letter->trashed())
+                                    <span class="rounded bg-rose-100 text-rose-800 px-1.5 py-0.5 text-[10px] font-bold ml-1">Terhapus</span>
+                                @endif
                             </div>
                             <span class="text-xs text-slate-400 font-medium">Diseminasi: {{ $letter->disseminated_date?->format('d/m/Y') }}</span>
                         </div>
@@ -230,16 +333,26 @@
                         <div class="flex items-center justify-between border-t border-slate-100 pt-2.5">
                             <span class="text-[11px] text-slate-400 font-mono">Tgl Surat: {{ $letter->letter_date?->format('d/m/Y') }}</span>
                             <div class="flex items-center gap-1.5">
-                                <button type="button" onclick="event.stopPropagation(); openLetterDetailModal('surat-keluar', {{ $letter->id }})" class="inline-flex min-h-[32px] items-center gap-1 rounded border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs">
-                                    Detail
-                                </button>
-                                @if (in_array(auth()->user()->role, ['super_admin', 'division_admin']))
-                                    <button type="button" onclick="event.stopPropagation(); openLetterFormModal('surat-keluar', 'edit', {{ json_encode($letter) }})" class="inline-flex min-h-[32px] items-center gap-1 rounded border border-blue-300 bg-blue-50 px-2.5 text-xs font-semibold text-blue-800 hover:bg-blue-100 shadow-2xs">
-                                        Edit
+                                @if ($letter->trashed())
+                                    <form method="post" action="/surat-keluar/{{ $letter->id }}/restore" class="inline" onsubmit="return confirm('Pulihkan kembali surat keluar {{ $letter->letter_number }}?')">
+                                        @csrf
+                                        <button type="submit" onclick="event.stopPropagation()" class="inline-flex min-h-[32px] items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 shadow-2xs">
+                                            <x-icon name="rotate-ccw" class="h-3.5 w-3.5 text-emerald-700" />
+                                            <span>Pulihkan</span>
+                                        </button>
+                                    </form>
+                                @else
+                                    <button type="button" onclick="event.stopPropagation(); openLetterDetailModal('surat-keluar', {{ $letter->id }})" class="inline-flex min-h-[32px] items-center gap-1 rounded border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs">
+                                        Detail
                                     </button>
-                                    <button type="button" onclick="event.stopPropagation(); openLetterDeleteModal('surat-keluar', {{ $letter->id }}, '{{ addslashes($letter->letter_number) }}')" class="inline-flex min-h-[32px] items-center gap-1 rounded border border-rose-300 bg-rose-50 px-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 shadow-2xs">
-                                        Hapus
-                                    </button>
+                                    @if (in_array(auth()->user()->role, ['super_admin', 'division_admin']))
+                                        <button type="button" onclick="event.stopPropagation(); openLetterFormModal('surat-keluar', 'edit', {{ json_encode($letter) }})" class="inline-flex min-h-[32px] items-center gap-1 rounded border border-blue-300 bg-blue-50 px-2.5 text-xs font-semibold text-blue-800 hover:bg-blue-100 shadow-2xs">
+                                            Edit
+                                        </button>
+                                        <button type="button" onclick="event.stopPropagation(); openLetterDeleteModal('surat-keluar', {{ $letter->id }}, '{{ addslashes($letter->letter_number) }}')" class="inline-flex min-h-[32px] items-center gap-1 rounded border border-rose-300 bg-rose-50 px-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 shadow-2xs">
+                                            Hapus
+                                        </button>
+                                    @endif
                                 @endif
                             </div>
                         </div>
@@ -271,7 +384,12 @@
                         @forelse ($outgoingLetters as $letter)
                             <tr class="hover:bg-slate-50/75 cursor-pointer transition-colors" onclick="openLetterDetailModal('surat-keluar', {{ $letter->id }})">
                                 <td class="p-3 font-mono text-xs font-semibold text-slate-600">#{{ $letter->id }}</td>
-                                <td class="p-3 font-bold text-slate-900">{{ $letter->letter_number }}</td>
+                                <td class="p-3 font-bold text-slate-900">
+                                    {{ $letter->letter_number }}
+                                    @if ($letter->trashed())
+                                        <span class="rounded bg-rose-100 text-rose-800 px-1.5 py-0.5 text-[10px] font-bold ml-1">Terhapus</span>
+                                    @endif
+                                </td>
                                 <td class="p-3 text-xs font-semibold text-slate-700">{{ $letter->letter_year }}</td>
                                 <td class="p-3 text-xs text-slate-600 whitespace-nowrap">{{ $letter->letter_date?->format('d/m/Y') }}</td>
                                 <td class="p-3 text-xs text-slate-600 whitespace-nowrap">{{ $letter->disseminated_date?->format('d/m/Y') }}</td>
@@ -285,16 +403,26 @@
                                 </td>
                                 <td class="p-3 text-center">
                                     <div class="flex items-center justify-center gap-1.5" onclick="event.stopPropagation()">
-                                        <button type="button" onclick="openLetterDetailModal('surat-keluar', {{ $letter->id }})" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-slate-300 px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs">
-                                            Detail
-                                        </button>
-                                        @if (in_array(auth()->user()->role, ['super_admin', 'division_admin']))
-                                            <button type="button" onclick="openLetterFormModal('surat-keluar', 'edit', {{ json_encode($letter) }})" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-blue-300 bg-blue-50 px-2.5 text-xs font-semibold text-blue-800 hover:bg-blue-100 shadow-2xs">
-                                                Edit
+                                        @if ($letter->trashed())
+                                            <form method="post" action="/surat-keluar/{{ $letter->id }}/restore" class="inline" onsubmit="return confirm('Pulihkan kembali surat keluar {{ $letter->letter_number }}?')">
+                                                @csrf
+                                                <button type="submit" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 shadow-2xs">
+                                                    <x-icon name="rotate-ccw" class="h-3.5 w-3.5 text-emerald-700" />
+                                                    <span>Pulihkan</span>
+                                                </button>
+                                            </form>
+                                        @else
+                                            <button type="button" onclick="openLetterDetailModal('surat-keluar', {{ $letter->id }})" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-slate-300 px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs">
+                                                Detail
                                             </button>
-                                            <button type="button" onclick="openLetterDeleteModal('surat-keluar', {{ $letter->id }}, '{{ addslashes($letter->letter_number) }}')" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-rose-300 bg-rose-50 px-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 shadow-2xs">
-                                                Hapus
-                                            </button>
+                                            @if (in_array(auth()->user()->role, ['super_admin', 'division_admin']))
+                                                <button type="button" onclick="openLetterFormModal('surat-keluar', 'edit', {{ json_encode($letter) }})" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-blue-300 bg-blue-50 px-2.5 text-xs font-semibold text-blue-800 hover:bg-blue-100 shadow-2xs">
+                                                    Edit
+                                                </button>
+                                                <button type="button" onclick="openLetterDeleteModal('surat-keluar', {{ $letter->id }}, '{{ addslashes($letter->letter_number) }}')" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-rose-300 bg-rose-50 px-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 shadow-2xs">
+                                                    Hapus
+                                                </button>
+                                            @endif
                                         @endif
                                     </div>
                                 </td>
@@ -312,7 +440,7 @@
             </div>
 
             <div class="mt-4">
-                {{ $outgoingLetters->appends(['tab' => 'keluar'])->links() }}
+                {{ $outgoingLetters->appends(['tab' => 'keluar', 'status' => $status, 'q' => request('q'), 'date_from' => request('date_from'), 'date_to' => request('date_to')])->links() }}
             </div>
         </div>
 

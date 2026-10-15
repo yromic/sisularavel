@@ -70,23 +70,30 @@
                                     <span class="ml-auto rounded bg-teal-500/20 px-1.5 py-0.5 text-[9px] font-bold text-teal-200 uppercase">Terpadu</span>
                                 </a>
 
+                                <!-- Sub-Register Divider & Group (UX-002: Hierarchy clarification) -->
+                                <div class="pt-2.5 pb-1 px-3 flex items-center gap-2">
+                                    <span class="h-px flex-1 bg-slate-700/60"></span>
+                                    <span class="text-[9px] font-bold tracking-wider text-slate-400 uppercase">Register Individual</span>
+                                    <span class="h-px flex-1 bg-slate-700/60"></span>
+                                </div>
+
                                 <!-- Surat Masuk -->
                                 <a href="/surat-masuk" 
-                                   class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('surat-masuk*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                   class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 pl-4 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('surat-masuk*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
                                     <x-icon name="mail" class="h-4 w-4 shrink-0 text-slate-400" />
                                     <span>Surat Masuk</span>
                                 </a>
 
                                 <!-- Surat Keluar -->
                                 <a href="/surat-keluar" 
-                                   class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('surat-keluar*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                   class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 pl-4 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('surat-keluar*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
                                     <x-icon name="send" class="h-4 w-4 shrink-0 text-slate-400" />
                                     <span>Surat Keluar</span>
                                 </a>
 
                                 <!-- Rekap Pengambilan Piagam -->
                                 <a href="/piagam" 
-                                   class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('piagam*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                   class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 pl-4 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('piagam*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
                                     <x-icon name="award" class="h-4 w-4 shrink-0 text-slate-400" />
                                     <span>Rekap Pengambilan Piagam</span>
                                 </a>
@@ -330,8 +337,85 @@
             </div>
         </div>
 
-        <!-- Accessible Drawer Management Script -->
+        <!-- Dynamic Client-Side Toast Container (UX-008) -->
+        <div id="sisurat-client-toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full px-4 pointer-events-none" aria-live="polite"></div>
+
+        <!-- Accessible Drawer & Toast Management Script -->
         <script>
+            function showToast(message, type = 'success') {
+                const container = document.getElementById('sisurat-client-toast-container');
+                if (!container) return;
+                const toast = document.createElement('div');
+                toast.className = `pointer-events-auto flex items-center gap-2.5 rounded-lg border p-3.5 text-xs font-semibold shadow-lg transition-all transform duration-300 translate-y-2 opacity-0 ${
+                    type === 'success' 
+                        ? 'border-emerald-300 bg-emerald-50 text-emerald-950' 
+                        : 'border-rose-300 bg-rose-50 text-rose-950'
+                }`;
+                toast.innerHTML = `
+                    <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'} text-[10px] font-bold">
+                        ${type === 'success' ? '✓' : '!'}
+                    </span>
+                    <span class="flex-1 leading-snug">${message}</span>
+                    <button type="button" class="text-slate-400 hover:text-slate-700 ml-1 text-base leading-none" aria-label="Tutup notifikasi">&times;</button>
+                `;
+                toast.querySelector('button').onclick = () => toast.remove();
+                container.appendChild(toast);
+                requestAnimationFrame(() => {
+                    toast.classList.remove('translate-y-2', 'opacity-0');
+                });
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-y-2');
+                    setTimeout(() => toast.remove(), 300);
+                }, 4000);
+            }
+
+            window.showToast = showToast;
+
+            // Global Export Button Loading Feedback (UX-016)
+            window.handleExportClick = function(el, loadingText = 'Menyiapkan Unduhan...') {
+                if (!el || el.dataset.exporting === 'true') return;
+                el.dataset.exporting = 'true';
+                const originalHtml = el.innerHTML;
+                el.classList.add('opacity-75', 'pointer-events-none');
+                el.innerHTML = `
+                    <svg class="animate-spin h-4 w-4 text-current shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    <span>${loadingText}</span>
+                `;
+                setTimeout(() => {
+                    el.innerHTML = originalHtml;
+                    el.classList.remove('opacity-75', 'pointer-events-none');
+                    delete el.dataset.exporting;
+                }, 2500);
+            };
+
+            // Mobile Viewport Keyboard Scroll Helper (UX-019)
+            document.addEventListener('focusin', function(e) {
+                if (window.innerWidth <= 768 && e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA')) {
+                    const modal = e.target.closest('[role="dialog"], [id*="modal"]');
+                    if (modal) {
+                        setTimeout(() => {
+                            e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 300);
+                    }
+                }
+            });
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const storedToast = sessionStorage.getItem('sisurat_toast');
+                if (storedToast) {
+                    try {
+                        const parsed = JSON.parse(storedToast);
+                        showToast(parsed.message, parsed.type || 'success');
+                    } catch (e) {
+                        showToast(storedToast, 'success');
+                    }
+                    sessionStorage.removeItem('sisurat_toast');
+                }
+            });
+
             function openMobileSidebar() {
                 const drawer = document.getElementById('mobile-sidebar-drawer');
                 const triggerBtn = document.getElementById('mobile-sidebar-toggle-btn');

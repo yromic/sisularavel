@@ -11,11 +11,11 @@
                 $queryString = http_build_query(request()->query());
             @endphp
             <div class="flex flex-wrap items-center gap-2">
-                <a href="/api/v1/reports/export.csv?{{ $queryString }}" class="flex min-h-[40px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3.5 text-xs font-semibold text-slate-800 hover:bg-slate-50 shadow-xs" title="Unduh data dalam format CSV Spreadsheet">
+                <a href="/api/v1/reports/export.csv?{{ $queryString }}" onclick="handleExportClick(this, 'Menyiapkan CSV...')" class="flex min-h-[40px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3.5 text-xs font-semibold text-slate-800 hover:bg-slate-50 shadow-xs" title="Unduh data dalam format CSV Spreadsheet">
                     <x-icon name="download" class="h-4 w-4 text-emerald-700" />
                     Unduh Rekap CSV
                 </a>
-                <a href="/api/v1/reports/export.pdf?{{ $queryString }}" target="_blank" class="flex min-h-[40px] items-center gap-1.5 rounded-md bg-emerald-700 px-3.5 text-xs font-semibold text-white hover:bg-emerald-800 shadow-xs" title="Cetak atau unduh laporan resmi format PDF">
+                <a href="/api/v1/reports/export.pdf?{{ $queryString }}" target="_blank" onclick="handleExportClick(this, 'Menyiapkan PDF...')" class="flex min-h-[40px] items-center gap-1.5 rounded-md bg-emerald-700 px-3.5 text-xs font-semibold text-white hover:bg-emerald-800 shadow-xs" title="Cetak atau unduh laporan resmi format PDF">
                     <x-icon name="file-text" class="h-4 w-4" />
                     Cetak Laporan PDF
                 </a>
@@ -62,7 +62,7 @@
             <div class="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
                 <span class="text-[11px] text-slate-500">Pencarian terpadu menyaring seluruh surat masuk, surat keluar, dan piagam.</span>
                 <div class="flex items-center gap-2">
-                    @if (request()->hasAny(['q', 'type', 'date_from', 'date_to', 'year']))
+                    @if (request()->hasAny(['q', 'type', 'date_from', 'date_to', 'year']) && (request('type') !== 'all' || request()->hasAny(['q', 'date_from', 'date_to', 'year'])))
                         <a href="/laporan" class="inline-flex min-h-[34px] items-center rounded-md border border-slate-300 px-3 text-xs font-medium text-slate-600 hover:bg-slate-50">
                             Reset Filter
                         </a>
@@ -73,6 +73,50 @@
                     </button>
                 </div>
             </div>
+
+            @php
+                $hasActiveFilters = request()->filled('q') || (request()->filled('type') && request('type') !== 'all') || request()->filled('date_from') || request()->filled('date_to');
+            @endphp
+            @if ($hasActiveFilters)
+                <!-- Active Filter Chips (UX-011) -->
+                <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 text-xs">
+                    <span class="text-xs font-semibold text-slate-500">Filter Aktif:</span>
+                    @if (request()->filled('q'))
+                        <a href="/laporan?{{ http_build_query(request()->except('q')) }}" class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200">
+                            <span>Kata Kunci: "{{ request('q') }}"</span>
+                            <span class="font-bold text-slate-400 hover:text-slate-700">&times;</span>
+                        </a>
+                    @endif
+                    @if (request()->filled('type') && request('type') !== 'all')
+                        @php
+                            $typeLabels = [
+                                'incoming' => 'Surat Masuk Saja',
+                                'outgoing' => 'Surat Keluar Saja',
+                                'piagam' => 'Piagam Penghargaan Saja',
+                            ];
+                        @endphp
+                        <a href="/laporan?{{ http_build_query(request()->except('type')) }}" class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800 hover:bg-emerald-200">
+                            <span>Jenis: {{ $typeLabels[request('type')] ?? request('type') }}</span>
+                            <span class="font-bold text-emerald-500 hover:text-emerald-800">&times;</span>
+                        </a>
+                    @endif
+                    @if (request()->filled('date_from'))
+                        <a href="/laporan?{{ http_build_query(request()->except('date_from')) }}" class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200">
+                            <span>Dari: {{ date('d/m/Y', strtotime(request('date_from'))) }}</span>
+                            <span class="font-bold text-slate-400 hover:text-slate-700">&times;</span>
+                        </a>
+                    @endif
+                    @if (request()->filled('date_to'))
+                        <a href="/laporan?{{ http_build_query(request()->except('date_to')) }}" class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200">
+                            <span>Sampai: {{ date('d/m/Y', strtotime(request('date_to'))) }}</span>
+                            <span class="font-bold text-slate-400 hover:text-slate-700">&times;</span>
+                        </a>
+                    @endif
+                    <a href="/laporan" class="ml-auto text-xs font-semibold text-emerald-700 hover:underline">
+                        Hapus Semua Filter
+                    </a>
+                </div>
+            @endif
         </form>
 
         <!-- Results Stream Toolbar & Dual-View Mode Switcher (Pure SVG, Zero OS Symbols) -->

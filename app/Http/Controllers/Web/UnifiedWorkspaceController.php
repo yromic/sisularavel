@@ -21,12 +21,19 @@ class UnifiedWorkspaceController extends Controller
         $dateFrom = $request->string('date_from')->toString();
         $dateTo = $request->string('date_to')->toString();
         $tab = $request->string('tab', 'masuk')->toString();
+        $status = $request->string('status', 'active')->toString();
+        $canViewTrashed = in_array($user->role, ['super_admin', 'division_admin'], true);
+        if (! $canViewTrashed) {
+            $status = 'active';
+        }
+
         if (! in_array($tab, ['masuk', 'keluar', 'piagam'], true)) {
             $tab = 'masuk';
         }
 
         // 1. Incoming Letters Query
         $incomingQuery = IncomingLetter::query()
+            ->when($canViewTrashed && $status === 'trashed', fn ($query) => $query->onlyTrashed())
             ->when($activeDivisionId !== null, fn ($query) => $query->where('division_id', $activeDivisionId))
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
@@ -45,6 +52,7 @@ class UnifiedWorkspaceController extends Controller
 
         // 2. Outgoing Letters Query
         $outgoingQuery = OutgoingLetter::query()
+            ->when($canViewTrashed && $status === 'trashed', fn ($query) => $query->onlyTrashed())
             ->when($activeDivisionId !== null, fn ($query) => $query->where('division_id', $activeDivisionId))
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
@@ -81,8 +89,24 @@ class UnifiedWorkspaceController extends Controller
         $totalPiagam = (clone $piagamQuery)->count();
         $piagams = $piagamQuery->paginate(15, ['*'], 'piagam_page')->withQueryString();
 
+        $trashedIncomingCount = $canViewTrashed
+            ? IncomingLetter::onlyTrashed()
+                ->when($activeDivisionId !== null, fn ($query) => $query->where('division_id', $activeDivisionId))
+                ->count()
+            : 0;
+
+        $trashedOutgoingCount = $canViewTrashed
+            ? OutgoingLetter::onlyTrashed()
+                ->when($activeDivisionId !== null, fn ($query) => $query->where('division_id', $activeDivisionId))
+                ->count()
+            : 0;
+
         return view('workspace.index', [
             'tab' => $tab,
+            'status' => $status,
+            'canViewTrashed' => $canViewTrashed,
+            'trashedIncomingCount' => $trashedIncomingCount,
+            'trashedOutgoingCount' => $trashedOutgoingCount,
             'incomingLetters' => $incomingLetters,
             'totalIncoming' => $totalIncoming,
             'outgoingLetters' => $outgoingLetters,

@@ -47,6 +47,83 @@
         </header>
 
         <!-- ============================================================ -->
+        <!-- QUICK NAVIGATION CARDS (UX-018)                              -->
+        <!-- ============================================================ -->
+        <div class="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            <!-- 1. Pusat Persuratan -->
+            <a href="/persuratan" class="group flex flex-col justify-between rounded-xl border border-[#E3E8EE] bg-white p-4 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-teal-500 hover:shadow-md">
+                <div class="flex items-start justify-between">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-50 text-[#147D73] transition-colors group-hover:bg-[#147D73] group-hover:text-white">
+                        <x-icon name="layers" class="h-5 w-5" />
+                    </div>
+                    <span class="rounded bg-teal-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-[#0F635B] border border-teal-200">Terpadu</span>
+                </div>
+                <div class="mt-3">
+                    <h3 class="font-bold text-sm text-[#17243A] group-hover:text-[#147D73] transition-colors">Pusat Persuratan</h3>
+                    <p class="mt-0.5 text-xs text-[#657184] line-clamp-1">Workspace terpadu kearsipan dinas</p>
+                </div>
+                <div class="mt-3 flex items-center gap-1 text-xs font-semibold text-[#147D73]">
+                    <span>Buka Workspace</span>
+                    <span class="transition-transform group-hover:translate-x-1">&rarr;</span>
+                </div>
+            </a>
+
+            <!-- 2. Surat Masuk -->
+            <a href="/surat-masuk" class="group flex flex-col justify-between rounded-xl border border-[#E3E8EE] bg-white p-4 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-500 hover:shadow-md">
+                <div class="flex items-start justify-between">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 transition-colors group-hover:bg-emerald-700 group-hover:text-white">
+                        <x-icon name="mail" class="h-5 w-5" />
+                    </div>
+                    <span class="text-xs font-bold text-[#657184] tabular-nums">{{ number_format($totalIncoming) }} Arsip</span>
+                </div>
+                <div class="mt-3">
+                    <h3 class="font-bold text-sm text-[#17243A] group-hover:text-emerald-700 transition-colors">Surat Masuk</h3>
+                    <p class="mt-0.5 text-xs text-[#657184] line-clamp-1">Arsip surat masuk & disposisi</p>
+                </div>
+                <div class="mt-3 flex items-center gap-1 text-xs font-semibold text-emerald-700">
+                    <span>Lihat Register</span>
+                    <span class="transition-transform group-hover:translate-x-1">&rarr;</span>
+                </div>
+            </a>
+
+            <!-- 3. Surat Keluar -->
+            <a href="/surat-keluar" class="group flex flex-col justify-between rounded-xl border border-[#E3E8EE] bg-white p-4 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-500 hover:shadow-md">
+                <div class="flex items-start justify-between">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-700 transition-colors group-hover:bg-blue-700 group-hover:text-white">
+                        <x-icon name="send" class="h-5 w-5" />
+                    </div>
+                    <span class="text-xs font-bold text-[#657184] tabular-nums">{{ number_format($totalOutgoing) }} Arsip</span>
+                </div>
+                <div class="mt-3">
+                    <h3 class="font-bold text-sm text-[#17243A] group-hover:text-blue-700 transition-colors">Surat Keluar</h3>
+                    <p class="mt-0.5 text-xs text-[#657184] line-clamp-1">Buku nomor & arsip surat keluar</p>
+                </div>
+                <div class="mt-3 flex items-center gap-1 text-xs font-semibold text-blue-700">
+                    <span>Lihat Register</span>
+                    <span class="transition-transform group-hover:translate-x-1">&rarr;</span>
+                </div>
+            </a>
+
+            <!-- 4. Pencarian Pintar -->
+            <a href="/laporan" class="group flex flex-col justify-between rounded-xl border border-[#E3E8EE] bg-white p-4 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-500 hover:shadow-md">
+                <div class="flex items-start justify-between">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-700 transition-colors group-hover:bg-amber-700 group-hover:text-white">
+                        <x-icon name="search" class="h-5 w-5" />
+                    </div>
+                    <span class="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-800 border border-amber-200">Pencarian</span>
+                </div>
+                <div class="mt-3">
+                    <h3 class="font-bold text-sm text-[#17243A] group-hover:text-amber-800 transition-colors">Pencarian Pintar</h3>
+                    <p class="mt-0.5 text-xs text-[#657184] line-clamp-1">Cari arsip & ekspor rekap resmi</p>
+                </div>
+                <div class="mt-3 flex items-center gap-1 text-xs font-semibold text-amber-700">
+                    <span>Mulai Cari</span>
+                    <span class="transition-transform group-hover:translate-x-1">&rarr;</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- ============================================================ -->
         <!-- METRIC SUMMARY TILES (INTEGRATED RATIOS, NO DUPLICATION)     -->
         <!-- ============================================================ -->
         <div class="mb-6 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
@@ -354,8 +431,12 @@
                                         @endif
                                     </p>
                                 </div>
-                                <span class="shrink-0 text-[10px] font-medium text-slate-400 whitespace-nowrap">
-                                    {{ $act->created_at->diffForHumans() }}
+                                <span class="shrink-0 text-[10px] font-medium text-slate-500 whitespace-nowrap cursor-help hover:text-slate-800 transition-colors"
+                                      title="{{ $act->created_at->format('d/m/Y H:i:s') }} WIB">
+                                    <span class="inline-flex items-center gap-1">
+                                        <x-icon name="clock" class="h-3 w-3 inline text-slate-400" />
+                                        {{ $act->created_at->diffForHumans() }}
+                                    </span>
                                 </span>
                             </div>
                         </div>

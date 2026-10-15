@@ -182,7 +182,7 @@ class OutgoingLetterController extends Controller
         return response()->json(['success' => true, 'data' => ['id' => $outgoingLetter->id, 'deleted' => true]]);
     }
 
-    public function restore(Request $request, int $outgoingLetter, AuditLogger $auditLogger): JsonResponse
+    public function restore(Request $request, int $outgoingLetter, AuditLogger $auditLogger): Response
     {
         $letter = OutgoingLetter::withTrashed()->findOrFail($outgoingLetter);
 
@@ -196,6 +196,10 @@ class OutgoingLetterController extends Controller
 
             $auditLogger->outgoingLetterEvent('LETTER_OUTGOING_RESTORED', $request->user(), $letter, 'Outgoing letter restored.');
         });
+
+        if (! $request->expectsJson()) {
+            return redirect()->back()->with('success', 'Arsip surat keluar berhasil dipulihkan.');
+        }
 
         return response()->json(['success' => true, 'data' => ['id' => $letter->id, 'deleted' => false]]);
     }

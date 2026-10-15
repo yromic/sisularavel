@@ -9,7 +9,7 @@
                     <span id="form-modal-type-badge" class="rounded bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Surat Masuk</span>
                     <h2 id="form-modal-title" class="mt-1 text-lg font-bold text-slate-900">Tambah Surat Masuk</h2>
                 </div>
-                <button type="button" onclick="closeLetterFormModal()" class="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-600" aria-label="Tutup form modal">
+                <button type="button" onclick="requestCloseLetterFormModal()" class="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-600" aria-label="Tutup form modal">
                     <x-icon name="x" class="h-5 w-5" />
                 </button>
             </div>
@@ -145,7 +145,7 @@
 
                 <!-- Footer Aksi -->
                 <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-3">
-                    <button type="button" onclick="closeLetterFormModal()" class="min-h-[40px] rounded-md border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 hover:bg-slate-100">
+                    <button type="button" onclick="requestCloseLetterFormModal()" class="min-h-[40px] rounded-md border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 hover:bg-slate-100">
                         Batal
                     </button>
                     <button type="submit" id="form-modal-btn-submit" class="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-md bg-emerald-700 px-5 text-xs font-semibold text-white shadow-xs hover:bg-emerald-800 focus:outline-hidden disabled:opacity-60 disabled:cursor-not-allowed">
@@ -175,10 +175,11 @@
         const dupBanner = document.getElementById('form-modal-duplicate-banner');
         const submitText = document.getElementById('form-modal-submit-text');
 
-        // Reset banners & states
+        // Reset banners, field errors & states
         errorBanner.classList.add('hidden');
         errorBanner.textContent = '';
         dupBanner.classList.add('hidden');
+        clearFieldErrors();
         document.getElementById('form-modal-confirm-duplicate').checked = false;
         clearModalAttachment();
         clearAllCapturedPhotos();
@@ -239,14 +240,148 @@
             }
         }
 
+        previousFormFocusedElement = document.activeElement;
+        document.addEventListener('keydown', trapFormModalFocus);
         modal.classList.remove('hidden');
         document.body.classList.add('overflow-hidden');
     }
 
+    let previousFormFocusedElement = null;
+
+    function trapFormModalFocus(e) {
+        const modal = document.getElementById('letter-form-modal');
+        if (!modal || modal.classList.contains('hidden')) return;
+        if (e.key === 'Tab') {
+            const focusables = modal.querySelectorAll('button:not([disabled]), [href]:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+            const visibleFocusables = Array.from(focusables).filter(el => el.offsetParent !== null);
+            if (visibleFocusables.length === 0) return;
+            const first = visibleFocusables[0];
+            const last = visibleFocusables[visibleFocusables.length - 1];
+            if (e.shiftKey) {
+                if (document.activeElement === first) {
+                    last.focus();
+                    e.preventDefault();
+                }
+            } else {
+                if (document.activeElement === last) {
+                    first.focus();
+                    e.preventDefault();
+                }
+            }
+        }
+    }
+
+    function isLetterFormDirty() {
+        if (capturedPhotos.length > 0) return true;
+        const fileInput = document.getElementById('form-input-attachment');
+        if (fileInput && fileInput.files && fileInput.files.length > 0) return true;
+
+        const nomor = document.getElementById('form-input-nomor')?.value?.trim() || '';
+        const perihal = document.getElementById('form-input-perihal')?.value?.trim() || '';
+        const asal = document.getElementById('form-input-asal')?.value?.trim() || '';
+
+        if (currentFormMode === 'create') {
+            if (nomor !== '' || perihal !== '' || (currentFormType === 'surat-masuk' && asal !== '')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function requestCloseLetterFormModal() {
+        if (isLetterFormDirty()) {
+            const confirmed = window.confirm('Ada draf isian surat atau foto kamera yang belum disimpan. Batalkan dan tutup formulir?');
+            if (!confirmed) {
+                return;
+            }
+        }
+        closeLetterFormModal();
+    }
+
     function closeLetterFormModal() {
+        clearFieldErrors();
+        document.removeEventListener('keydown', trapFormModalFocus);
         const modal = document.getElementById('letter-form-modal');
         modal.classList.add('hidden');
         document.body.classList.remove('overflow-hidden');
+        clearModalAttachment();
+        clearAllCapturedPhotos();
+        if (previousFormFocusedElement && typeof previousFormFocusedElement.focus === 'function') {
+            previousFormFocusedElement.focus();
+    }
+
+    function clearFieldErrors() {
+        const form = document.getElementById('letter-modal-form');
+        if (!form) return;
+
+        form.querySelectorAll('.field-error-message').forEach(el => el.remove());
+        form.querySelectorAll('input, select, textarea').forEach(input => {
+            input.classList.remove('border-rose-500', 'bg-rose-50/40', 'focus:border-rose-600', 'focus:ring-rose-500');
+            if (!input.classList.contains('border-slate-300') && !input.classList.contains('sr-only')) {
+                input.classList.add('border-slate-300');
+            }
+        });
+    }
+
+    function applyFieldErrors(errors) {
+        clearFieldErrors();
+        const form = document.getElementById('letter-modal-form');
+        if (!form || !errors) return;
+
+        let firstInvalidInput = null;
+        const fieldMapping = {
+            'nomor_surat': 'form-input-nomor',
+            'letter_number': 'form-input-nomor',
+            'asal_surat': 'form-input-asal',
+            'origin_agency': 'form-input-asal',
+            'tanggal_surat': 'form-input-tanggal-surat',
+            'letter_date': 'form-input-tanggal-surat',
+            'tanggal_diterima': 'form-input-tanggal-diterima',
+            'received_date': 'form-input-tanggal-diterima',
+            'tanggal_share': 'form-input-tanggal-share',
+            'disseminated_date': 'form-input-tanggal-share',
+            'perihal': 'form-input-perihal',
+            'subject': 'form-input-perihal',
+            'division_id': 'form-input-division',
+            'attachment': 'form-row-attachment',
+            'photos': 'form-row-attachment'
+        };
+
+        Object.entries(errors).forEach(([fieldKey, messages]) => {
+            const elementId = fieldMapping[fieldKey] || `form-input-${fieldKey}`;
+            const targetEl = document.getElementById(elementId) || form.querySelector(`[name="${fieldKey}"]`);
+
+            if (targetEl) {
+                targetEl.classList.add('border-rose-500', 'bg-rose-50/40');
+                targetEl.classList.remove('border-slate-300');
+
+                const errorMsg = document.createElement('p');
+                errorMsg.className = 'field-error-message mt-1 text-xs font-semibold text-rose-600 flex items-center gap-1';
+                errorMsg.innerHTML = `<span class="inline-block w-1.5 h-1.5 rounded-full bg-rose-600"></span> ${messages[0]}`;
+
+                if (targetEl.id === 'form-row-attachment') {
+                    targetEl.appendChild(errorMsg);
+                } else {
+                    targetEl.parentNode.appendChild(errorMsg);
+                }
+
+                const cleanUpOnInput = () => {
+                    targetEl.classList.remove('border-rose-500', 'bg-rose-50/40');
+                    targetEl.classList.add('border-slate-300');
+                    errorMsg.remove();
+                };
+                targetEl.addEventListener('input', cleanUpOnInput, { once: true });
+                targetEl.addEventListener('change', cleanUpOnInput, { once: true });
+
+                if (!firstInvalidInput) {
+                    firstInvalidInput = targetEl;
+                }
+            }
+        });
+
+        if (firstInvalidInput && typeof firstInvalidInput.focus === 'function') {
+            firstInvalidInput.focus();
+        }
     }
 
     function handleModalFilePicked(input) {
@@ -385,21 +520,26 @@
                     return;
                 }
 
-                // Success! Close modal and refresh page to show updated table
+                // Success! Close modal, set toast and refresh page to show updated table
+                const successMsg = method === 'PUT' ? 'Perubahan arsip surat berhasil disimpan.' : 'Arsip surat berhasil ditambahkan.';
+                sessionStorage.setItem('sisurat_toast', JSON.stringify({ message: data.message || successMsg, type: 'success' }));
                 closeLetterFormModal();
                 window.location.reload();
             } else {
                 errorBanner.classList.remove('hidden');
                 if (data.errors) {
+                    applyFieldErrors(data.errors);
                     const messages = Object.values(data.errors).flat().join('<br>');
                     errorBanner.innerHTML = messages;
                 } else {
+                    clearFieldErrors();
                     errorBanner.textContent = data.message || 'Gagal menyimpan surat. Periksa isian formulir.';
                 }
                 submitBtn.disabled = false;
                 submitText.textContent = originalText;
             }
         } catch (err) {
+            clearFieldErrors();
             errorBanner.classList.remove('hidden');
             errorBanner.textContent = 'Terjadi gangguan jaringan saat menghubungi server. Silakan coba kembali.';
             submitBtn.disabled = false;
@@ -407,12 +547,12 @@
         }
     });
 
-    // Close on Escape
+    // Close on Escape with dirty form guard
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             const formModal = document.getElementById('letter-form-modal');
             if (formModal && !formModal.classList.contains('hidden')) {
-                closeLetterFormModal();
+                requestCloseLetterFormModal();
             }
         }
     });

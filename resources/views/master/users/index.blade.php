@@ -220,13 +220,9 @@
                                         @endif
 
                                         @if ($user->id !== auth()->id())
-                                            <form method="post" action="/api/v1/users/{{ $user->id }}" onsubmit="return confirm('Hapus akun pengguna {{ $user->username }}? Akun akan diarsipkan dan dapat dipulihkan kapan saja.')" class="inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50" title="Hapus pengguna (Soft Delete)">
-                                                    <x-icon name="trash" class="h-4 w-4" />
-                                                </button>
-                                            </form>
+                                            <button type="button" onclick="openDeleteUserModal('{{ $user->id }}', '{{ addslashes($user->username) }}', '{{ addslashes($user->name) }}')" class="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50" title="Hapus pengguna (Soft Delete)">
+                                                <x-icon name="trash" class="h-4 w-4" />
+                                            </button>
                                         @else
                                             <span class="text-xs text-slate-400" title="Akun yang sedang aktif">(Anda)</span>
                                         @endif
@@ -339,6 +335,37 @@
             </div>
         </div>
 
+        <!-- Modal Konfirmasi Hapus Pengguna (UX-007) -->
+        <div id="modal-delete-user" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+            <div class="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-2xl">
+                <div class="flex items-start gap-4">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                        <x-icon name="trash" class="h-6 w-6" />
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <h3 class="text-base font-bold text-slate-900">Konfirmasi Hapus Pengguna</h3>
+                        <p class="mt-1 text-xs text-slate-600 leading-relaxed">
+                            Apakah Anda yakin ingin menghapus akun pengguna <strong id="delete-user-username" class="font-mono text-slate-900">-</strong> (<span id="delete-user-name">-</span>)?
+                        </p>
+                        <p class="mt-1.5 text-[11px] text-slate-500">
+                            Akun akan dipindahkan ke status arsip terhapus (soft-delete) dan dapat dipulihkan kapan saja oleh Super Admin.
+                        </p>
+                    </div>
+                </div>
+                <form id="form-delete-user" method="post" action="" class="mt-6 flex items-center justify-end gap-2.5">
+                    @csrf
+                    @method('DELETE')
+                    <button type="button" onclick="closeDeleteUserModal()" class="min-h-[38px] rounded-md border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 hover:bg-slate-100">
+                        Batal
+                    </button>
+                    <button type="submit" class="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-md bg-rose-600 px-4 text-xs font-semibold text-white shadow-xs hover:bg-rose-700">
+                        <x-icon name="trash" class="h-4 w-4" />
+                        <span>Ya, Hapus Pengguna</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
         <div class="mt-4">
             {{ $users->links() }}
         </div>
@@ -365,6 +392,17 @@
 
         function closeEditUserModal() {
             document.getElementById('modal-edit-user').classList.add('hidden');
+        }
+
+        function openDeleteUserModal(id, username, name) {
+            document.getElementById('delete-user-username').textContent = username;
+            document.getElementById('delete-user-name').textContent = name;
+            document.getElementById('form-delete-user').action = `/api/v1/users/${id}`;
+            document.getElementById('modal-delete-user').classList.remove('hidden');
+        }
+
+        function closeDeleteUserModal() {
+            document.getElementById('modal-delete-user').classList.add('hidden');
         }
 
         function openRestoreModal(userId, username, name, email) {
@@ -414,5 +452,13 @@
                 alert('Terjadi gangguan koneksi.');
             }
         }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeEditUserModal();
+                closeDeleteUserModal();
+                closeRestoreModal();
+            }
+        });
     </script>
 </x-layouts.app>

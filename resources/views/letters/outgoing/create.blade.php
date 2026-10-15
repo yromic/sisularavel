@@ -5,6 +5,16 @@
             <p class="text-sm font-semibold text-emerald-700">Surat Keluar</p>
             <h1 class="text-2xl font-semibold text-slate-900">Tambah Surat Keluar</h1>
             <p class="mt-1 text-xs text-slate-500">Nomor surat keluar unik per divisi dan tahun kalender.</p>
+            <div class="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
+                <span class="inline-flex items-center gap-1.5 rounded-md bg-slate-100 border border-slate-200 px-2.5 py-1 font-medium text-slate-700">
+                    <x-icon name="user" class="h-3.5 w-3.5 text-slate-500" />
+                    <span>Petugas: <strong>{{ auth()->user()->name }}</strong> ({{ auth()->user()->username }})</span>
+                </span>
+                <span class="inline-flex items-center gap-1.5 rounded-md bg-blue-50 border border-blue-200 px-2.5 py-1 font-semibold text-blue-800">
+                    <x-icon name="building" class="h-3.5 w-3.5 text-blue-600" />
+                    <span>Divisi: {{ auth()->user()->division?->name ?? 'Semua Divisi (Global)' }}</span>
+                </span>
+            </div>
         </header>
 
         <div id="form-error-banner" class="hidden rounded-md border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 md:col-span-2"></div>
@@ -36,13 +46,8 @@
         </label>
 
         <label class="block md:col-span-1">
-            <span class="text-sm font-medium text-slate-800">Tanggal Share / Disseminasi *</span>
+            <span class="text-sm font-medium text-slate-800">Tanggal Pengiriman / Diseminasi *</span>
             <input name="tanggal_share" id="tanggal_share" type="date" value="{{ date('Y-m-d') }}" class="mt-1 min-h-[48px] w-full rounded-md border border-slate-300 px-3 text-base focus:border-emerald-700 focus:outline-hidden" required>
-        </label>
-
-        <label class="block md:col-span-1">
-            <span class="text-sm font-medium text-slate-800">Petugas Pengunggah (Otomatis)</span>
-            <input type="text" value="{{ auth()->user()->name }} ({{ auth()->user()->username }})" readonly class="mt-1 min-h-[48px] w-full rounded-md border border-slate-200 bg-slate-100 px-3 text-sm text-slate-600 cursor-not-allowed">
         </label>
 
         <label class="block md:col-span-2">

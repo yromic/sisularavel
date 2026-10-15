@@ -122,14 +122,10 @@
                                             </button>
                                         </form>
 
-                                        <!-- Delete Division Form -->
-                                        <form method="post" action="/api/v1/divisions/{{ $division->id }}" onsubmit="return confirm('Apakah Anda yakin ingin menghapus divisi {{ $division->code }}? Divisi yang memiliki surat/pengguna akan dialihkan statusnya ke nonaktif.')" class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="min-h-[44px] rounded-md border border-rose-300 bg-rose-50 px-2.5 text-xs font-semibold text-rose-700 hover:bg-rose-100" title="Hapus divisi">
-                                                Hapus
-                                            </button>
-                                        </form>
+                                        <!-- Delete Division Button -->
+                                        <button type="button" onclick="openDeleteDivisionModal('{{ $division->id }}', '{{ addslashes($division->code) }}', '{{ addslashes($division->name) }}')" class="min-h-[44px] rounded-md border border-rose-300 bg-rose-50 px-2.5 text-xs font-semibold text-rose-700 hover:bg-rose-100" title="Hapus divisi">
+                                            Hapus
+                                        </button>
                                     </div>
                                 @else
                                     <span class="text-xs text-slate-400">-</span>
@@ -173,6 +169,37 @@
                     </form>
                 </div>
             </div>
+
+            <!-- Modal Konfirmasi Hapus Divisi (UX-007) -->
+            <div id="modal-delete-divisi" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+                <div class="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-2xl">
+                    <div class="flex items-start gap-4">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                            <x-icon name="trash" class="h-6 w-6" />
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h3 class="text-base font-bold text-slate-900">Konfirmasi Hapus Divisi</h3>
+                            <p class="mt-1 text-xs text-slate-600 leading-relaxed">
+                                Apakah Anda yakin ingin menghapus divisi <strong id="delete-division-code" class="text-slate-900">-</strong> (<span id="delete-division-name">-</span>)?
+                            </p>
+                            <p class="mt-1.5 text-[11px] text-slate-500">
+                                Divisi yang telah memiliki keterkaitan arsip surat atau pengguna akan dialihkan statusnya ke nonaktif untuk menjaga integritas data.
+                            </p>
+                        </div>
+                    </div>
+                    <form id="form-delete-divisi" method="post" action="" class="mt-6 flex items-center justify-end gap-2.5">
+                        @csrf
+                        @method('DELETE')
+                        <button type="button" onclick="closeDeleteDivisionModal()" class="min-h-[38px] rounded-md border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 hover:bg-slate-100">
+                            Batal
+                        </button>
+                        <button type="submit" class="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-md bg-rose-600 px-4 text-xs font-semibold text-white shadow-xs hover:bg-rose-700">
+                            <x-icon name="trash" class="h-4 w-4" />
+                            <span>Ya, Hapus Divisi</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
         @endif
 
         <div class="mt-4">
@@ -192,5 +219,23 @@
         function closeEditDivisionModal() {
             document.getElementById('modal-edit-divisi').classList.add('hidden');
         }
+
+        function openDeleteDivisionModal(id, code, name) {
+            document.getElementById('delete-division-code').textContent = code;
+            document.getElementById('delete-division-name').textContent = name;
+            document.getElementById('form-delete-divisi').action = `/api/v1/divisions/${id}`;
+            document.getElementById('modal-delete-divisi').classList.remove('hidden');
+        }
+
+        function closeDeleteDivisionModal() {
+            document.getElementById('modal-delete-divisi').classList.add('hidden');
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeEditDivisionModal();
+                closeDeleteDivisionModal();
+            }
+        });
     </script>
 </x-layouts.app>
