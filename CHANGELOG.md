@@ -4,6 +4,20 @@ All notable changes, version ratifications, and schema revisions to the **SISURA
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] — 2026-10-15 — Modernized UI, Digital Handover Rework, Unified Workspace & Smart Search
+
+### Added
+* **Buku Ekspedisi Digital Pengambilan Piagam:** Reworked Piagam module into single-action digital handover receipt book with touchscreen signature canvas, public counter kiosk, and master work units (`DEC-PG-001`, `PG-HANDOVER-01`, `PG-REF-FORM-01`).
+* **Multi-Photo Camera Capture & PDF Auto-Merge:** Direct sequential camera capture compiling smartphone document photos into single standard A4 PDF via DomPDF (`DEC-FILE-004`, `DOC-MULTI-PHOTO-01`).
+* **In-Place Modal CRUD & Split View Architecture:** Full in-place Create, Edit, Delete confirmation, and responsive Split Modal Document Previews for letters and certificates (`DEC-UI-005`, `DEC-UI-006`).
+* **Unified Single-Page Workspace (`/persuratan`):** Zero-reload tabbed operational desk unifying Surat Masuk, Surat Keluar, and Piagam into one seamless interface (`DEC-UI-007`, `UI-UNIFIED-WORKSPACE-01`).
+* **Smart Search Unified Stream & Dual-View Mode (`/laporan`):** Repositioned core search directly below Dashboard on sidebar; unified mixed chronological feed; pure SVG Grid vs. Dense List view switchers; zero OS unicode symbols (`DEC-UI-008`, `UI-SMART-SEARCH-01`).
+
+### Fixed
+* **Session Auth & Web Redirection:** Corrected `RedirectResponse` return types across web auth routes and preserved form state upon validation error.
+* **Master User & Reference Soft Deletions:** Added soft-delete and restore capabilities for master users and categories without foreign key violations.
+* **Storage Path Resolution:** Hardened private disk storage paths against double-nesting anomalies.
+
 ---
 
 ## [1.3.0] — 2026-09-18 — Initial Framework Baseline Changed to Laravel 12
