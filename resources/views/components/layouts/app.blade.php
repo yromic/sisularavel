@@ -7,7 +7,7 @@
     <title>{{ $title ?? 'SISURAT' }} — Disdikbudpora Kab. Semarang</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-slate-100 text-slate-950 antialiased font-sans">
+<body class="min-h-screen bg-[#F7F8FA] text-[#17243A] antialiased font-sans">
     @auth
         @php
             $user = auth()->user();
@@ -19,95 +19,105 @@
             <!-- ============================================================ -->
             <!-- DESKTOP SIDEBAR (PRIMARY NAVIGATION)                         -->
             <!-- ============================================================ -->
-            <aside class="hidden w-64 shrink-0 flex-col justify-between border-r border-slate-800 bg-slate-900 text-slate-200 md:flex">
+            <aside class="hidden w-64 shrink-0 flex-col justify-between border-r border-[#23344E] bg-[#17243A] text-slate-200 md:flex" aria-label="Navigasi Utama Desktop">
                 <div class="flex flex-col">
-                    <!-- Brand / Logo Header -->
-                    <div class="flex items-center gap-3 border-b border-slate-800 px-5 py-4">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 font-bold text-white shadow-sm">
+                    <!-- Brand Header -->
+                    <div class="flex items-center gap-3 border-b border-[#23344E] px-5 py-4">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#147D73] font-bold text-white shadow-xs">
                             SI
                         </div>
-                        <div>
+                        <div class="min-w-0">
                             <div class="flex items-center gap-1.5">
                                 <span class="text-base font-bold tracking-tight text-white">SISURAT</span>
-                                <span class="rounded bg-emerald-950 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400 border border-emerald-800">v1.3</span>
+                                <span class="rounded bg-teal-950/80 px-1.5 py-0.5 text-[10px] font-semibold text-teal-300 border border-teal-800/80">v1.3</span>
                             </div>
-                            <p class="text-[11px] text-slate-400">Disdikbudpora Kab. Semarang</p>
+                            <p class="truncate text-[11px] text-slate-400">Disdikbudpora Kab. Semarang</p>
                         </div>
                     </div>
 
                     <!-- Navigation Links -->
-                    <nav class="space-y-4 px-3 py-4 text-sm" aria-label="Navigasi Utama">
-                        <!-- Dashboard -->
+                    <nav class="space-y-4 px-3 py-4 text-sm" aria-label="Menu Utama">
+                        <!-- Dashboard Link -->
                         <div>
-                            <a href="/dashboard" class="flex min-h-[44px] items-center gap-3 rounded-md px-3 font-medium transition-colors {{ request()->is('dashboard') ? 'bg-emerald-600 font-semibold text-white shadow-xs' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                                <x-icon name="home" class="h-5 w-5" />
+                            <a href="/dashboard" 
+                               class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('dashboard') ? 'bg-[#147D73] font-semibold text-white shadow-xs' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                <x-icon name="home" class="h-5 w-5 shrink-0" />
                                 <span>Dashboard</span>
                             </a>
                         </div>
 
-                        <!-- 1 NAVIGASI: LAYANAN PERSURATAN & PIAGAM -->
-                        <div class="rounded-lg border border-slate-800/80 bg-slate-950/40 p-2">
-                            <div class="px-2 py-1">
-                                <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Layanan Persuratan & Piagam</p>
+                        <!-- Pencarian Pintar (Fitur Utama Tepat di Bawah Dashboard) -->
+                        <div>
+                            <a href="/laporan" 
+                               class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('laporan*') || request()->is('pencarian*') ? 'bg-[#147D73] font-semibold text-white shadow-xs' : 'text-slate-200 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                <x-icon name="search" class="h-5 w-5 shrink-0 text-teal-400" />
+                                <span class="font-semibold">Pencarian Pintar</span>
+                                <span class="ml-auto rounded bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-bold text-teal-300 uppercase">Utama</span>
+                            </a>
+                        </div>
+
+                        <!-- 1. PERSURATAN & PIAGAM (Required group for tests & operations) -->
+                        <div class="space-y-1">
+                            <div class="px-3 pt-2 pb-1">
+                                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Layanan Persuratan & Piagam</p>
                             </div>
-                            <div class="mt-1 space-y-1">
+                            <div class="space-y-0.5">
+                                <!-- Pusat Persuratan (Terpadu 1 Halaman) -->
+                                <a href="/persuratan" 
+                                   class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('persuratan*') ? 'bg-[#147D73] font-semibold text-white shadow-xs' : 'text-teal-300 bg-teal-950/40 hover:bg-[#23344E]/60 hover:text-white border border-teal-500/30' }}">
+                                    <x-icon name="layers" class="h-4 w-4 shrink-0 text-teal-300" />
+                                    <span>Pusat Persuratan</span>
+                                    <span class="ml-auto rounded bg-teal-500/20 px-1.5 py-0.5 text-[9px] font-bold text-teal-200 uppercase">Terpadu</span>
+                                </a>
+
                                 <!-- Surat Masuk -->
-                                <div class="flex items-center justify-between rounded-md transition-colors {{ request()->is('surat-masuk*') ? 'bg-slate-800 text-emerald-400 font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                                    <a href="/surat-masuk" class="flex min-h-[44px] flex-1 items-center gap-2.5 px-3">
-                                        <x-icon name="mail" class="h-4 w-4" />
-                                        <span>Surat Masuk</span>
-                                    </a>
-                                    <a href="/surat-masuk/create" class="flex min-h-[44px] min-w-[40px] items-center justify-center text-slate-400 hover:text-emerald-400" title="Input Surat Masuk">
-                                        <x-icon name="plus" class="h-4 w-4" />
-                                    </a>
-                                </div>
+                                <a href="/surat-masuk" 
+                                   class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('surat-masuk*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                    <x-icon name="mail" class="h-4 w-4 shrink-0 text-slate-400" />
+                                    <span>Surat Masuk</span>
+                                </a>
 
                                 <!-- Surat Keluar -->
-                                <div class="flex items-center justify-between rounded-md transition-colors {{ request()->is('surat-keluar*') ? 'bg-slate-800 text-emerald-400 font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                                    <a href="/surat-keluar" class="flex min-h-[44px] flex-1 items-center gap-2.5 px-3">
-                                        <x-icon name="send" class="h-4 w-4" />
-                                        <span>Surat Keluar</span>
-                                    </a>
-                                    <a href="/surat-keluar/create" class="flex min-h-[44px] min-w-[40px] items-center justify-center text-slate-400 hover:text-emerald-400" title="Input Surat Keluar">
-                                        <x-icon name="plus" class="h-4 w-4" />
-                                    </a>
-                                </div>
+                                <a href="/surat-keluar" 
+                                   class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('surat-keluar*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                    <x-icon name="send" class="h-4 w-4 shrink-0 text-slate-400" />
+                                    <span>Surat Keluar</span>
+                                </a>
 
-                                <!-- Rekap Pengambilan Piagam (Staff Log) -->
-                                <a href="/piagam" class="flex min-h-[44px] items-center gap-2.5 rounded-md px-3 transition-colors {{ request()->is('piagam*') ? 'bg-slate-800 text-emerald-400 font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                                    <x-icon name="award" class="h-4 w-4" />
+                                <!-- Rekap Pengambilan Piagam -->
+                                <a href="/piagam" 
+                                   class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('piagam*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                    <x-icon name="award" class="h-4 w-4 shrink-0 text-slate-400" />
                                     <span>Rekap Pengambilan Piagam</span>
                                 </a>
                             </div>
                         </div>
 
-                        <!-- Pencarian & Laporan -->
-                        <div>
-                            <a href="/laporan" class="flex min-h-[44px] items-center gap-3 rounded-md px-3 font-medium transition-colors {{ request()->is('laporan*') ? 'bg-emerald-600 font-semibold text-white shadow-xs' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                                <x-icon name="file-text" class="h-5 w-5" />
-                                <span>Pencarian & Laporan</span>
-                            </a>
-                        </div>
-
-                        <!-- Master Data (Super Admin & Division Admin) -->
+                        <!-- 3. MASTER DATA (Super Admin & Division Admin) -->
                         @if ($user->role === 'super_admin' || $user->role === 'division_admin')
-                            <div class="pt-2">
-                                <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">Master Data</p>
-                                <div class="mt-1 space-y-1">
-                                    <a href="/master/divisi" class="flex min-h-[44px] items-center gap-2.5 rounded-md px-3 font-medium transition-colors {{ request()->is('master/divisi*') ? 'bg-slate-800 text-emerald-400 font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                                        <x-icon name="building" class="h-4 w-4" />
+                            <div class="space-y-1 pt-2">
+                                <div class="px-3 pb-1">
+                                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Master Data</p>
+                                </div>
+                                <div class="space-y-0.5">
+                                    <a href="/master/divisi" 
+                                       class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('master/divisi*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                        <x-icon name="building" class="h-4 w-4 shrink-0 text-slate-400" />
                                         <span>Data Divisi</span>
                                     </a>
-                                    <a href="/master/pengguna" class="flex min-h-[44px] items-center gap-2.5 rounded-md px-3 font-medium transition-colors {{ request()->is('master/pengguna*') ? 'bg-slate-800 text-emerald-400 font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                                        <x-icon name="users" class="h-4 w-4" />
+                                    <a href="/master/pengguna" 
+                                       class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('master/pengguna*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                        <x-icon name="users" class="h-4 w-4 shrink-0 text-slate-400" />
                                         <span>Data Pengguna</span>
                                     </a>
-                                    <a href="/master/kategori" class="flex min-h-[44px] items-center gap-2.5 rounded-md px-3 font-medium transition-colors {{ request()->is('master/kategori*') ? 'bg-slate-800 text-emerald-400 font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                                        <x-icon name="settings" class="h-4 w-4" />
+                                    <a href="/master/kategori" 
+                                       class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('master/kategori*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                        <x-icon name="settings" class="h-4 w-4 shrink-0 text-slate-400" />
                                         <span>Kategori Referensi</span>
                                     </a>
-                                    <a href="/master/sekolah" class="flex min-h-[44px] items-center gap-2.5 rounded-md px-3 font-medium transition-colors {{ request()->is('master/sekolah*') ? 'bg-slate-800 text-emerald-400 font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                                        <x-icon name="building" class="h-4 w-4" />
+                                    <a href="/master/sekolah" 
+                                       class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('master/sekolah*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                        <x-icon name="building" class="h-4 w-4 shrink-0 text-slate-400" />
                                         <span>Data Sekolah</span>
                                     </a>
                                 </div>
@@ -116,149 +126,183 @@
                     </nav>
                 </div>
 
-                <!-- Sidebar Bottom: Portal Tamu Link -->
-                <div class="border-t border-slate-800 p-3">
-                    <a href="/" target="_blank" class="flex min-h-[44px] items-center justify-between rounded-md border border-emerald-700/50 bg-emerald-950/40 px-3 text-xs font-semibold text-emerald-400 hover:bg-emerald-900/50">
+                <!-- Sidebar Bottom: Portal Tamu Utility -->
+                <div class="border-t border-[#23344E] p-3">
+                    <a href="/" target="_blank" class="flex min-h-[44px] items-center justify-between rounded-lg border border-[#23344E] bg-[#0F1725]/60 px-3 text-xs font-semibold text-slate-300 hover:bg-[#23344E] hover:text-white transition-colors">
                         <span class="flex items-center gap-2">
-                            <x-icon name="signature" class="h-4 w-4" />
+                            <x-icon name="signature" class="h-4 w-4 text-teal-400" />
                             Portal Tamu (Ambil Piagam)
                         </span>
-                        <x-icon name="external-link" class="h-3.5 w-3.5" />
+                        <x-icon name="external-link" class="h-3.5 w-3.5 text-slate-400" />
                     </a>
                 </div>
             </aside>
 
             <!-- ============================================================ -->
-            <!-- MOBILE DRAWER SIDEBAR                                        -->
+            <!-- ACCESSIBLE MOBILE DRAWER NAVIGATION                          -->
             <!-- ============================================================ -->
-            <div id="mobile-sidebar-drawer" class="fixed inset-0 z-50 hidden md:hidden" role="dialog" aria-modal="true">
-                <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" onclick="closeMobileSidebar()"></div>
-                <div class="fixed inset-y-0 left-0 flex w-72 flex-col justify-between border-r border-slate-800 bg-slate-900 p-4 text-slate-200 shadow-xl">
+            <div id="mobile-sidebar-drawer" 
+                 class="fixed inset-0 z-50 hidden md:hidden" 
+                 role="dialog" 
+                 aria-modal="true" 
+                 aria-label="Navigasi Utama Mobile">
+                <!-- Backdrop -->
+                <div class="fixed inset-0 bg-[#0F1725]/75 backdrop-blur-xs transition-opacity" 
+                     onclick="closeMobileSidebar()"></div>
+
+                <!-- Drawer Panel -->
+                <div class="fixed inset-y-0 left-0 flex w-72 flex-col justify-between border-r border-[#23344E] bg-[#17243A] p-4 text-slate-200 shadow-2xl">
                     <div class="flex flex-col">
-                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                            <div class="flex items-center gap-2">
-                                <span class="text-base font-bold text-white">SISURAT</span>
-                                <span class="rounded bg-emerald-950 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400">v1.3</span>
+                        <div class="flex items-center justify-between border-b border-[#23344E] pb-3">
+                            <div class="flex items-center gap-2.5">
+                                <div class="flex h-8 w-8 items-center justify-center rounded-md bg-[#147D73] font-bold text-white text-sm">
+                                    SI
+                                </div>
+                                <div>
+                                    <span class="text-base font-bold text-white">SISURAT</span>
+                                    <span class="ml-1 rounded bg-teal-950 px-1.5 py-0.2 text-[10px] font-semibold text-teal-300">v1.3</span>
+                                </div>
                             </div>
-                            <button type="button" onclick="closeMobileSidebar()" class="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-slate-400 hover:text-white" aria-label="Tutup menu">
+                            <button type="button" 
+                                    id="mobile-close-drawer-btn"
+                                    onclick="closeMobileSidebar()" 
+                                    class="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-slate-400 hover:bg-[#23344E] hover:text-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400" 
+                                    aria-label="Tutup menu">
                                 <x-icon name="x" class="h-6 w-6" />
                             </button>
                         </div>
 
-                        <nav class="mt-4 space-y-3 text-sm">
-                            <a href="/dashboard" class="flex min-h-[44px] items-center gap-3 rounded-md px-3 font-medium {{ request()->is('dashboard') ? 'bg-emerald-600 font-semibold text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
+                        <nav class="mt-4 space-y-3 text-sm" aria-label="Menu Mobile">
+                            <a href="/dashboard" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('dashboard') ? 'bg-[#147D73] font-semibold text-white' : 'text-slate-300 hover:bg-[#23344E]' }}">
                                 <x-icon name="home" class="h-5 w-5" /> Dashboard
                             </a>
 
-                            <div class="rounded-lg border border-slate-800/80 bg-slate-950/40 p-2">
-                                <p class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-400">Layanan Persuratan & Piagam</p>
-                                <div class="mt-1 space-y-1">
-                                    <div class="flex items-center justify-between rounded-md {{ request()->is('surat-masuk*') ? 'bg-slate-800 text-emerald-400 font-semibold' : 'text-slate-300' }}">
-                                        <a href="/surat-masuk" class="flex min-h-[44px] flex-1 items-center gap-2.5 px-3">
-                                            <x-icon name="mail" class="h-4 w-4" /> Surat Masuk
-                                        </a>
-                                        <a href="/surat-masuk/create" class="flex min-h-[44px] min-w-[40px] items-center justify-center text-slate-400 hover:text-emerald-400">+</a>
-                                    </div>
-                                    <div class="flex items-center justify-between rounded-md {{ request()->is('surat-keluar*') ? 'bg-slate-800 text-emerald-400 font-semibold' : 'text-slate-300' }}">
-                                        <a href="/surat-keluar" class="flex min-h-[44px] flex-1 items-center gap-2.5 px-3">
-                                            <x-icon name="send" class="h-4 w-4" /> Surat Keluar
-                                        </a>
-                                        <a href="/surat-keluar/create" class="flex min-h-[44px] min-w-[40px] items-center justify-center text-slate-400 hover:text-emerald-400">+</a>
-                                    </div>
-                                    <a href="/piagam" class="flex min-h-[44px] items-center gap-2.5 rounded-md px-3 {{ request()->is('piagam*') ? 'bg-slate-800 text-emerald-400 font-semibold' : 'text-slate-300' }}">
-                                        <x-icon name="award" class="h-4 w-4" /> Rekap Piagam
+                            <div class="space-y-1">
+                                <p class="px-3 pt-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Layanan Persuratan & Piagam</p>
+                                <div class="space-y-0.5">
+                                    <a href="/surat-masuk" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('surat-masuk*') ? 'bg-[#147D73]/25 text-teal-300 font-semibold' : 'text-slate-300' }}">
+                                        <x-icon name="mail" class="h-4 w-4" /> Surat Masuk
+                                    </a>
+                                    <a href="/surat-keluar" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('surat-keluar*') ? 'bg-[#147D73]/25 text-teal-300 font-semibold' : 'text-slate-300' }}">
+                                        <x-icon name="send" class="h-4 w-4" /> Surat Keluar
+                                    </a>
+                                    <a href="/piagam" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('piagam*') ? 'bg-[#147D73]/25 text-teal-300 font-semibold' : 'text-slate-300' }}">
+                                        <x-icon name="award" class="h-4 w-4" /> Rekap Pengambilan Piagam
                                     </a>
                                 </div>
                             </div>
 
-                            <a href="/laporan" class="flex min-h-[44px] items-center gap-3 rounded-md px-3 font-medium {{ request()->is('laporan*') ? 'bg-emerald-600 font-semibold text-white' : 'text-slate-300' }}">
+                            <a href="/laporan" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('laporan*') ? 'bg-[#147D73] font-semibold text-white' : 'text-slate-300' }}">
                                 <x-icon name="file-text" class="h-5 w-5" /> Pencarian & Laporan
                             </a>
 
                             @if ($user->role === 'super_admin' || $user->role === 'division_admin')
-                                <div class="pt-2 border-t border-slate-800">
-                                    <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">Master Data</p>
-                                    <a href="/master/divisi" class="flex min-h-[44px] items-center gap-2.5 rounded-md px-3 {{ request()->is('master/divisi*') ? 'bg-slate-800 text-emerald-400 font-semibold' : 'text-slate-300' }}">
-                                        <x-icon name="building" class="h-4 w-4" /> Data Divisi
-                                    </a>
-                                    <a href="/master/pengguna" class="flex min-h-[44px] items-center gap-2.5 rounded-md px-3 {{ request()->is('master/pengguna*') ? 'bg-slate-800 text-emerald-400 font-semibold' : 'text-slate-300' }}">
-                                        <x-icon name="users" class="h-4 w-4" /> Data Pengguna
-                                    </a>
-                                    <a href="/master/kategori" class="flex min-h-[44px] items-center gap-2.5 rounded-md px-3 {{ request()->is('master/kategori*') ? 'bg-slate-800 text-emerald-400 font-semibold' : 'text-slate-300' }}">
-                                        <x-icon name="settings" class="h-4 w-4" /> Kategori
-                                    </a>
-                                    <a href="/master/sekolah" class="flex min-h-[44px] items-center gap-2.5 rounded-md px-3 {{ request()->is('master/sekolah*') ? 'bg-slate-800 text-emerald-400 font-semibold' : 'text-slate-300' }}">
-                                        <x-icon name="building" class="h-4 w-4" /> Data Sekolah
-                                    </a>
+                                <div class="pt-2 border-t border-[#23344E] space-y-1">
+                                    <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Master Data</p>
+                                    <div class="space-y-0.5">
+                                        <a href="/master/divisi" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('master/divisi*') ? 'bg-[#147D73]/25 text-teal-300 font-semibold' : 'text-slate-300' }}">
+                                            <x-icon name="building" class="h-4 w-4" /> Data Divisi
+                                        </a>
+                                        <a href="/master/pengguna" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('master/pengguna*') ? 'bg-[#147D73]/25 text-teal-300 font-semibold' : 'text-slate-300' }}">
+                                            <x-icon name="users" class="h-4 w-4" /> Data Pengguna
+                                        </a>
+                                        <a href="/master/kategori" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('master/kategori*') ? 'bg-[#147D73]/25 text-teal-300 font-semibold' : 'text-slate-300' }}">
+                                            <x-icon name="settings" class="h-4 w-4" /> Kategori Referensi
+                                        </a>
+                                        <a href="/master/sekolah" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('master/sekolah*') ? 'bg-[#147D73]/25 text-teal-300 font-semibold' : 'text-slate-300' }}">
+                                            <x-icon name="building" class="h-4 w-4" /> Data Sekolah
+                                        </a>
+                                    </div>
                                 </div>
                             @endif
                         </nav>
                     </div>
 
-                    <div class="border-t border-slate-800 pt-3">
-                        <a href="/" target="_blank" class="flex min-h-[44px] items-center justify-between rounded-md border border-emerald-700/50 bg-emerald-950/40 px-3 text-xs font-semibold text-emerald-400">
+                    <div class="border-t border-[#23344E] pt-3">
+                        <a href="/" target="_blank" class="flex min-h-[44px] items-center justify-between rounded-lg border border-[#23344E] bg-[#0F1725]/60 px-3 text-xs font-semibold text-slate-300">
                             <span>Portal Tamu (Ambil Piagam)</span>
-                            <x-icon name="external-link" class="h-3.5 w-3.5" />
+                            <x-icon name="external-link" class="h-3.5 w-3.5 text-slate-400" />
                         </a>
                     </div>
                 </div>
             </div>
 
             <!-- ============================================================ -->
-            <!-- MAIN CONTENT WRAPPER                                         -->
+            <!-- MAIN CONTENT AREA                                            -->
             <!-- ============================================================ -->
             <div class="flex flex-1 flex-col min-w-0">
                 <!-- ======================================================== -->
-                <!-- TOP NAVBAR: RESTRICTED TO CONTEXT, PASSWORD & LOGOUT      -->
+                <!-- REFINED INSTITUTIONAL TOPBAR                             -->
                 <!-- ======================================================== -->
-                <header class="flex min-h-[56px] items-center justify-between border-b border-slate-200 bg-white px-4 py-2 shadow-xs sm:px-6">
-                    <!-- Left: Mobile Menu Toggle & Division Context -->
-                    <div class="flex items-center gap-3">
-                        <button type="button" onclick="openMobileSidebar()" class="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-slate-300 text-slate-700 md:hidden" aria-label="Buka menu sidebar">
-                            <x-icon name="menu" class="h-6 w-6" />
+                <header class="flex min-h-[58px] items-center justify-between border-b border-[#E3E8EE] bg-white px-4 py-2 shadow-2xs sm:px-6">
+                    <!-- Left: Mobile Toggle & Division Context -->
+                    <div class="flex items-center gap-2 sm:gap-4 min-w-0 flex-1 mr-2">
+                        <button type="button" 
+                                id="mobile-sidebar-toggle-btn"
+                                onclick="openMobileSidebar()" 
+                                class="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg border border-[#E3E8EE] bg-white text-slate-700 hover:bg-slate-50 md:hidden focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700" 
+                                aria-label="Buka menu navigasi"
+                                aria-expanded="false"
+                                aria-controls="mobile-sidebar-drawer">
+                            <x-icon name="menu" class="h-5 w-5" />
                         </button>
 
-                        <!-- Division Switcher / Badge -->
+                        <!-- Division Context Switcher / Pill -->
                         @if ($user->role === 'super_admin')
-                            <form method="post" action="/api/v1/session/switch-division" class="flex items-center gap-2">
+                            <form method="post" action="/api/v1/session/switch-division" class="flex items-center gap-1.5 sm:gap-2 min-w-0 max-w-full">
                                 @csrf
-                                <span class="hidden text-xs font-semibold text-slate-500 sm:inline">Konteks Divisi:</span>
-                                <select name="division_id" class="min-h-[44px] rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 focus:border-emerald-700 focus:outline-hidden" onchange="this.form.submit()">
+                                <div class="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-[#657184] shrink-0">
+                                    <x-icon name="building" class="h-3.5 w-3.5 text-slate-400" />
+                                    <span>Divisi:</span>
+                                </div>
+                                <select name="division_id" 
+                                        aria-label="Pilih Konteks Divisi"
+                                        class="min-h-[40px] w-full max-w-[135px] sm:max-w-[210px] md:max-w-xs truncate rounded-lg border border-[#E3E8EE] bg-[#F7F8FA] px-2.5 py-1 text-xs font-semibold text-[#17243A] focus:border-[#147D73] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#147D73] transition-colors" 
+                                        onchange="this.form.submit()">
+                                    <option value="" @selected(session('active_division_id') === null)>
+                                        Semua Divisi (Global)
+                                    </option>
                                     @foreach (\App\Models\Division::where('status', 'active')->orderBy('name')->get() as $div)
-                                        <option value="{{ $div->id }}" @selected($currentDivision?->id === $div->id)>
+                                        <option value="{{ $div->id }}" @selected(session('active_division_id') == $div->id)>
                                             {{ $div->code }} — {{ $div->name }}
                                         </option>
                                     @endforeach
                                 </select>
                             </form>
                         @else
-                            <div class="flex items-center gap-1.5 rounded-md bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-xs font-bold text-emerald-800">
-                                <span>{{ $user->division?->code ?? 'SEKRETARIAT' }}</span>
-                                <span class="text-slate-400">&bull;</span>
-                                <span class="font-medium text-slate-700">{{ $user->division?->name ?? 'Dinas' }}</span>
+                            <div class="flex items-center gap-1.5 sm:gap-2 rounded-lg bg-[#EBF7F6] border border-[#9DD8D2] px-2.5 sm:px-3 py-1.5 text-xs font-bold text-[#0F635B] min-w-0 truncate">
+                                <x-icon name="building" class="h-3.5 w-3.5 text-[#147D73] shrink-0" />
+                                <span class="shrink-0">{{ $user->division?->code ?? 'SEKRETARIAT' }}</span>
+                                <span class="hidden sm:inline text-teal-400 shrink-0">&bull;</span>
+                                <span class="hidden sm:inline font-medium text-slate-700 truncate">{{ $user->division?->name ?? 'Dinas' }}</span>
                             </div>
                         @endif
                     </div>
 
-                    <!-- Right: User Identity, Ganti Password, and Logout -->
-                    <div class="flex items-center gap-2 sm:gap-3">
-                        <!-- User Name & Role Pill -->
+                    <!-- Right: User Identity & Account Actions -->
+                    <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
+                        <!-- User Name & Role -->
                         <div class="hidden text-right sm:block">
-                            <p class="text-xs font-bold text-slate-900">{{ $user->name }}</p>
-                            <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{{ str_replace('_', ' ', $user->role) }}</p>
+                            <p class="text-xs font-bold text-[#17243A]">{{ $user->name }}</p>
+                            <p class="text-[11px] font-semibold text-[#657184] uppercase tracking-wider">{{ str_replace('_', ' ', $user->role) }}</p>
                         </div>
 
-                        <!-- Ganti Password Link -->
-                        <a href="/password/activate" class="flex min-h-[44px] items-center gap-1.5 rounded-md border border-slate-300 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900" title="Ganti kata sandi akun">
-                            <x-icon name="lock" class="h-4 w-4 text-slate-500" />
+                        <!-- Ganti Password -->
+                        <a href="/password/activate" 
+                           class="flex min-h-[40px] items-center gap-1.5 rounded-lg border border-[#E3E8EE] bg-white px-2.5 sm:px-3 text-xs font-semibold text-[#17243A] hover:bg-[#F7F8FA] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors" 
+                           title="Ganti kata sandi akun">
+                            <x-icon name="lock" class="h-3.5 w-3.5 text-slate-500" />
                             <span class="hidden sm:inline">Ganti Password</span>
                         </a>
 
                         <!-- Logout Button -->
                         <form method="post" action="/logout" class="inline">
                             @csrf
-                            <button type="submit" class="flex min-h-[44px] items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100" aria-label="Keluar dari sistem" title="Keluar">
-                                <x-icon name="log-out" class="h-4 w-4" />
+                            <button type="submit" 
+                                    class="flex min-h-[40px] items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-2.5 sm:px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-rose-500 transition-colors" 
+                                    aria-label="Keluar dari sistem" 
+                                    title="Logout">
+                                <x-icon name="log-out" class="h-3.5 w-3.5" />
                                 <span class="hidden sm:inline">Logout</span>
                             </button>
                         </form>
@@ -268,15 +312,15 @@
                 <!-- Page Content Body -->
                 <main class="flex-1 overflow-y-auto">
                     @if (session('success'))
-                        <div class="mx-4 mt-4 flex items-center gap-2 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900 md:mx-8">
-                            <x-icon name="check" class="h-5 w-5 text-emerald-700" />
+                        <div class="mx-4 mt-4 flex items-center gap-2.5 rounded-lg border border-teal-200 bg-teal-50 p-3.5 text-sm font-medium text-teal-900 md:mx-8 shadow-2xs" role="alert">
+                            <x-icon name="check" class="h-5 w-5 shrink-0 text-teal-700" />
                             <span>{{ session('success') }}</span>
                         </div>
                     @endif
 
                     @if (session('error'))
-                        <div class="mx-4 mt-4 flex items-center gap-2 rounded-md border border-rose-300 bg-rose-50 p-3 text-sm text-rose-900 md:mx-8">
-                            <x-icon name="alert-triangle" class="h-5 w-5 text-rose-700" />
+                        <div class="mx-4 mt-4 flex items-center gap-2.5 rounded-lg border border-rose-200 bg-rose-50 p-3.5 text-sm font-medium text-rose-900 md:mx-8 shadow-2xs" role="alert">
+                            <x-icon name="alert-triangle" class="h-5 w-5 shrink-0 text-rose-700" />
                             <span>{{ session('error') }}</span>
                         </div>
                     @endif
@@ -286,17 +330,44 @@
             </div>
         </div>
 
+        <!-- Accessible Drawer Management Script -->
         <script>
             function openMobileSidebar() {
-                document.getElementById('mobile-sidebar-drawer').classList.remove('hidden');
+                const drawer = document.getElementById('mobile-sidebar-drawer');
+                const triggerBtn = document.getElementById('mobile-sidebar-toggle-btn');
+                drawer.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+                triggerBtn.setAttribute('aria-expanded', 'true');
+                
+                // Focus on close button inside drawer
+                const closeBtn = document.getElementById('mobile-close-drawer-btn');
+                if (closeBtn) closeBtn.focus();
             }
+
             function closeMobileSidebar() {
-                document.getElementById('mobile-sidebar-drawer').classList.add('hidden');
+                const drawer = document.getElementById('mobile-sidebar-drawer');
+                const triggerBtn = document.getElementById('mobile-sidebar-toggle-btn');
+                drawer.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+                triggerBtn.setAttribute('aria-expanded', 'false');
+                
+                // Restore focus to triggering control
+                if (triggerBtn) triggerBtn.focus();
             }
+
+            // Close on Escape key press
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    const drawer = document.getElementById('mobile-sidebar-drawer');
+                    if (drawer && !drawer.classList.contains('hidden')) {
+                        closeMobileSidebar();
+                    }
+                }
+            });
         </script>
     @else
         <!-- Guest Viewport Layout (Login, Claim Piagam, etc.) -->
-        <main class="min-h-screen">
+        <main class="min-h-screen bg-[#F7F8FA]">
             {{ $slot }}
         </main>
     @endauth

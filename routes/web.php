@@ -16,8 +16,10 @@ use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\UserManagementController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\PasswordActivationController;
+use App\Http\Controllers\Web\UnifiedWorkspaceController;
 use App\Http\Middleware\EnsureActiveAccount;
 use App\Http\Middleware\EnsurePasswordIsActivated;
+use App\Models\AuditLog;
 use App\Models\CompetitionCategory;
 use App\Models\Division;
 use App\Models\IncomingLetter;
@@ -26,8 +28,12 @@ use App\Models\Piagam;
 use App\Models\PickupCategory;
 use App\Models\School;
 use App\Models\User;
+use App\Models\WorkUnit;
+use App\Services\AuditLogger;
 use App\Services\DivisionContext;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -43,9 +49,23 @@ Route::get('/health', function () {
     ]);
 });
 
-Route::get('/login', fn () => view('auth.login'))->middleware('guest');
-Route::get('/piagam/ambil', fn () => view('piagam.claim'));
-Route::get('/password/activate', fn () => view('auth.activate'))->middleware('auth');
+Route::get('/login', fn () => view('auth.login'))->middleware('guest')->name('login');
+Route::get('/piagam/ambil', function () {
+    $schools = School::query()->where('is_active', true)->orderBy('name')->get(['id', 'npsn', 'name']);
+    $divisions = Division::query()->where('status', 'active')->orderBy('id')->get(['id', 'code', 'name']);
+    $workUnits = WorkUnit::query()->where('is_active', true)->orderBy('name')->get(['id', 'code', 'name']);
+    $pickupCategories = PickupCategory::query()->where('is_active', true)->orderBy('name')->get(['id', 'division_id', 'name']);
+    $competitionCategories = CompetitionCategory::query()->where('is_active', true)->orderBy('name')->get(['id', 'division_id', 'name']);
+
+    return view('piagam.claim', [
+        'schools' => $schools,
+        'divisions' => $divisions,
+        'workUnits' => $workUnits,
+        'pickupCategories' => $pickupCategories,
+        'competitionCategories' => $competitionCategories,
+    ]);
+})->name('piagam.ambil');
+Route::get('/password/activate', fn () => view('auth.activate'))->middleware('auth')->name('password.activate');
 
 Route::get('/api/v1/schools', [SchoolController::class, 'index']);
 Route::get('/api/v1/public/piagams', function (Request $request) {
@@ -99,21 +119,78 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
         $scopedPiagam = Piagam::query()
             ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId));
 
+        $totalIncoming = (clone $scopedIncoming)->count();
+        $totalOutgoing = (clone $scopedOutgoing)->count();
+        $totalPiagam = (clone $scopedPiagam)->count();
+        $totalRekap = $totalIncoming + $totalOutgoing + $totalPiagam;
+
+        $percentIncoming = $totalRekap > 0 ? round(($totalIncoming / $totalRekap) * 100, 1) : 0;
+        $percentOutgoing = $totalRekap > 0 ? round(($totalOutgoing / $totalRekap) * 100, 1) : 0;
+        $percentPiagam = $totalRekap > 0 ? round(($totalPiagam / $totalRekap) * 100, 1) : 0;
+
+        // Division Summary Matrix (for Super Admin)
+        $divisionMatrix = $user->role === 'super_admin'
+            ? Division::query()->withCount(['incomingLetters', 'outgoingLetters', 'piagams'])->orderBy('name')->get()
+            : collect();
+
+        // 6-Month Trend Data
+        $months = collect(range(5, 0))->map(fn ($i) => now()->subMonths($i)->format('Y-m'));
+        $monthlyIncoming = (clone $scopedIncoming)
+            ->where('letter_date', '>=', now()->subMonths(6)->startOfMonth())
+            ->get()
+            ->groupBy(fn ($l) => $l->letter_date ? $l->letter_date->format('Y-m') : '')
+            ->map->count();
+        $monthlyOutgoing = (clone $scopedOutgoing)
+            ->where('letter_date', '>=', now()->subMonths(6)->startOfMonth())
+            ->get()
+            ->groupBy(fn ($l) => $l->letter_date ? $l->letter_date->format('Y-m') : '')
+            ->map->count();
+
+        $trendData = $months->map(fn ($m) => [
+            'month' => $m,
+            'label' => Carbon::createFromFormat('Y-m', $m)->format('M Y'),
+            'incoming' => $monthlyIncoming->get($m, 0),
+            'outgoing' => $monthlyOutgoing->get($m, 0),
+        ]);
+
+        // Recent Audit Activity Log
+        $recentActivities = AuditLog::query()
+            ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
+            ->latest('id')
+            ->limit(8)
+            ->get();
+
         return view('dashboard', [
             'activeDivision' => $activeDivision,
-            'totalIncoming' => (clone $scopedIncoming)->count(),
-            'totalOutgoing' => (clone $scopedOutgoing)->count(),
-            'totalPiagam' => (clone $scopedPiagam)->count(),
+            'totalIncoming' => $totalIncoming,
+            'totalOutgoing' => $totalOutgoing,
+            'totalPiagam' => $totalPiagam,
+            'totalRekap' => $totalRekap,
+            'percentIncoming' => $percentIncoming,
+            'percentOutgoing' => $percentOutgoing,
+            'percentPiagam' => $percentPiagam,
+            'divisionMatrix' => $divisionMatrix,
+            'trendData' => $trendData,
+            'recentActivities' => $recentActivities,
             'recentIncoming' => (clone $scopedIncoming)->latest('received_date')->limit(5)->get(),
             'recentOutgoing' => (clone $scopedOutgoing)->latest('letter_date')->limit(5)->get(),
         ]);
     });
 
+    Route::get('/persuratan', [UnifiedWorkspaceController::class, 'index'])->name('persuratan.index');
+
     Route::get('/surat-masuk', function (Request $request, DivisionContext $divisionContext) {
         $divisionId = $divisionContext->activeDivisionId($request, $request->user());
+        $q = $request->string('q')->toString();
 
         $letters = IncomingLetter::query()
+            ->with(['attachments'])
             ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
+            ->when($q !== '', fn ($query) => $query->where(function ($sub) use ($q) {
+                $sub->where('letter_number', 'like', "%{$q}%")
+                    ->orWhere('origin_agency', 'like', "%{$q}%")
+                    ->orWhere('subject', 'like', "%{$q}%");
+            }))
             ->latest('received_date')
             ->paginate(10);
 
@@ -122,11 +199,38 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
 
     Route::get('/surat-masuk/create', fn () => view('letters.incoming.create'));
 
+    Route::get('/surat-masuk/{incomingLetter}', function (Request $request, IncomingLetter $incomingLetter) {
+        $user = $request->user();
+        if ($user->role !== 'super_admin' && $incomingLetter->division_id !== $user->division_id) {
+            abort(403, 'Anda tidak memiliki izin untuk mengakses data divisi ini.');
+        }
+
+        $incomingLetter->load(['division', 'createdBy', 'attachments']);
+
+        return view('letters.incoming.show', ['letter' => $incomingLetter]);
+    });
+
+    Route::get('/surat-masuk/{incomingLetter}/edit', function (Request $request, IncomingLetter $incomingLetter) {
+        $user = $request->user();
+        if (! in_array($user->role, ['super_admin', 'division_admin'], true)) {
+            abort(403, 'Operator tidak memiliki wewenang untuk mengubah arsip surat.');
+        }
+        if ($user->role !== 'super_admin' && $incomingLetter->division_id !== $user->division_id) {
+            abort(403, 'Anda tidak memiliki izin untuk mengakses data divisi ini.');
+        }
+
+        $incomingLetter->load(['division', 'createdBy', 'attachments']);
+
+        return view('letters.incoming.edit', ['letter' => $incomingLetter]);
+    });
+    Route::delete('/surat-masuk/{incomingLetter}', [IncomingLetterController::class, 'destroy']);
+
     Route::get('/surat-keluar', function (Request $request, DivisionContext $divisionContext) {
         $divisionId = $divisionContext->activeDivisionId($request, $request->user());
         $q = $request->string('q')->toString();
 
         $letters = OutgoingLetter::query()
+            ->with(['attachments'])
             ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
             ->when($q !== '', fn ($query) => $query->where(function ($sub) use ($q) {
                 $sub->where('letter_number', 'like', "%{$q}%")
@@ -140,19 +244,53 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
 
     Route::get('/surat-keluar/create', fn () => view('letters.outgoing.create'));
 
+    Route::get('/surat-keluar/{outgoingLetter}', function (Request $request, OutgoingLetter $outgoingLetter) {
+        $user = $request->user();
+        if ($user->role !== 'super_admin' && $outgoingLetter->division_id !== $user->division_id) {
+            abort(403, 'Anda tidak memiliki izin untuk mengakses data divisi ini.');
+        }
+
+        $outgoingLetter->load(['division', 'createdBy', 'attachments']);
+
+        return view('letters.outgoing.show', ['letter' => $outgoingLetter]);
+    });
+
+    Route::get('/surat-keluar/{outgoingLetter}/edit', function (Request $request, OutgoingLetter $outgoingLetter) {
+        $user = $request->user();
+        if (! in_array($user->role, ['super_admin', 'division_admin'], true)) {
+            abort(403, 'Operator tidak memiliki wewenang untuk mengubah arsip surat.');
+        }
+        if ($user->role !== 'super_admin' && $outgoingLetter->division_id !== $user->division_id) {
+            abort(403, 'Anda tidak memiliki izin untuk mengakses data divisi ini.');
+        }
+
+        $outgoingLetter->load(['division', 'createdBy', 'attachments']);
+
+        return view('letters.outgoing.edit', ['letter' => $outgoingLetter]);
+    });
+    Route::delete('/surat-keluar/{outgoingLetter}', [OutgoingLetterController::class, 'destroy']);
+
     Route::get('/piagam', function (Request $request, DivisionContext $divisionContext) {
         $divisionId = $divisionContext->activeDivisionId($request, $request->user());
         $q = $request->string('q')->toString();
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
 
         $piagams = Piagam::query()
-            ->with(['school', 'competitionCategory', 'pickupCategory'])
+            ->with(['school', 'competitionCategory', 'pickupCategory', 'attachments', 'division'])
             ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
+            ->when($dateFrom, fn ($query) => $query->whereDate('created_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($query) => $query->whereDate('created_at', '<=', $dateTo))
             ->when($q !== '', fn ($query) => $query->where(function ($sub) use ($q) {
                 $sub->where('student_name', 'like', "%{$q}%")
+                    ->orWhere('piagam_description', 'like', "%{$q}%")
+                    ->orWhere('recipient_name', 'like', "%{$q}%")
+                    ->orWhere('school_origin', 'like', "%{$q}%")
                     ->orWhereHas('school', fn ($s) => $s->where('name', 'like', "%{$q}%"));
             }))
             ->latest('id')
-            ->paginate(10);
+            ->paginate(15)
+            ->withQueryString();
 
         return view('piagam.index', ['piagams' => $piagams]);
     });
@@ -169,6 +307,21 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
             'schools' => $schools,
             'competitionCategories' => $competitionCategories,
         ]);
+    });
+
+    Route::get('/piagam/{piagam}', function (Request $request, Piagam $piagam, PiagamController $controller, AuditLogger $auditLogger) {
+        if ($request->expectsJson()) {
+            return $controller->show($request, $piagam, $auditLogger);
+        }
+
+        $user = $request->user();
+        if ($user->role !== 'super_admin' && $piagam->division_id !== $user->division_id) {
+            abort(403, 'Anda tidak memiliki izin untuk mengakses data divisi ini.');
+        }
+
+        $piagam->load(['division', 'school', 'workUnit', 'competitionCategory', 'pickupCategory', 'createdBy', 'attachments']);
+
+        return view('piagam.show', ['piagam' => $piagam]);
     });
 
     Route::get('/master/divisi', function (Request $request) {
@@ -194,18 +347,41 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
 
     Route::get('/master/pengguna', function (Request $request, DivisionContext $divisionContext) {
         $user = $request->user();
-        $divisionId = $divisionContext->activeDivisionId($request, $user);
+        abort_unless(in_array($user?->role, ['super_admin', 'division_admin'], true), 403, 'Operator tidak memiliki izin mengakses manajemen pengguna.');
 
-        $users = User::query()
+        $divisionId = $divisionContext->activeDivisionId($request, $user);
+        $status = $request->query('status', 'active');
+        $isTrashed = $status === 'trashed';
+
+        $baseQuery = $isTrashed ? User::onlyTrashed() : User::query();
+
+        $users = $baseQuery
             ->with('division')
             ->when($user->role !== 'super_admin', fn ($query) => $query->where('division_id', $user->division_id))
             ->when($user->role === 'super_admin' && $divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
-            ->orderBy('username')
-            ->paginate(15);
+            ->orderBy($isTrashed ? 'deleted_at' : 'username', $isTrashed ? 'desc' : 'asc')
+            ->paginate(15)
+            ->withQueryString();
+
+        $activeCount = User::query()
+            ->when($user->role !== 'super_admin', fn ($query) => $query->where('division_id', $user->division_id))
+            ->when($user->role === 'super_admin' && $divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
+            ->count();
+
+        $trashedCount = User::onlyTrashed()
+            ->when($user->role !== 'super_admin', fn ($query) => $query->where('division_id', $user->division_id))
+            ->when($user->role === 'super_admin' && $divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
+            ->count();
 
         $divisions = Division::query()->where('status', 'active')->orderBy('name')->get();
 
-        return view('master.users.index', ['users' => $users, 'divisions' => $divisions]);
+        return view('master.users.index', [
+            'users' => $users,
+            'divisions' => $divisions,
+            'status' => $status,
+            'activeCount' => $activeCount,
+            'trashedCount' => $trashedCount,
+        ]);
     });
 
     Route::get('/master/kategori', function (Request $request, DivisionContext $divisionContext) {
@@ -221,41 +397,169 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
             ->where('is_active', true)
             ->get();
 
+        $workUnits = WorkUnit::query()->orderBy('name')->get();
+
         return view('master.categories.index', [
             'competitionCategories' => $competitionCategories,
             'pickupCategories' => $pickupCategories,
+            'workUnits' => $workUnits,
         ]);
     });
+
+    Route::delete('/master/divisi/{division}', [DivisionManagementController::class, 'destroy']);
+    Route::delete('/master/sekolah/{school}', [SchoolController::class, 'destroy']);
+    Route::post('/master/pengguna/{id}/restore', [UserManagementController::class, 'restore']);
+    Route::delete('/master/pengguna/{user}', [UserManagementController::class, 'destroy']);
+    Route::delete('/master/kategori/lomba/{category}', [ReferenceCategoryController::class, 'destroyCompetition']);
+    Route::delete('/master/kategori/pengambilan/{category}', [ReferenceCategoryController::class, 'destroyPickup']);
+    Route::delete('/master/kategori/unit-kerja/{workUnit}', [ReferenceCategoryController::class, 'destroyWorkUnit']);
 
     Route::get('/laporan', function (Request $request, DivisionContext $divisionContext) {
         $divisionId = $divisionContext->activeDivisionId($request, $request->user());
         $q = $request->string('q')->toString();
+        $type = $request->string('type', 'all')->toString();
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $year = $request->input('year');
 
-        $incoming = IncomingLetter::query()
+        $incomingQuery = IncomingLetter::query()
+            ->with(['attachments', 'division'])
             ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
+            ->when($dateFrom, fn ($query) => $query->whereDate('letter_date', '>=', $dateFrom))
+            ->when($dateTo, fn ($query) => $query->whereDate('letter_date', '<=', $dateTo))
+            ->when($year, fn ($query) => $query->whereYear('letter_date', $year))
             ->when($q !== '', fn ($query) => $query->where(function ($sub) use ($q) {
                 $sub->where('letter_number', 'like', "%{$q}%")
                     ->orWhere('origin_agency', 'like', "%{$q}%")
                     ->orWhere('subject', 'like', "%{$q}%");
             }))
-            ->latest('received_date')
-            ->limit(10)
-            ->get();
+            ->latest('received_date');
 
-        $outgoing = OutgoingLetter::query()
+        $outgoingQuery = OutgoingLetter::query()
+            ->with(['attachments', 'division'])
             ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
+            ->when($dateFrom, fn ($query) => $query->whereDate('letter_date', '>=', $dateFrom))
+            ->when($dateTo, fn ($query) => $query->whereDate('letter_date', '<=', $dateTo))
+            ->when($year, fn ($query) => $query->where('letter_year', $year))
             ->when($q !== '', fn ($query) => $query->where(function ($sub) use ($q) {
                 $sub->where('letter_number', 'like', "%{$q}%")
                     ->orWhere('subject', 'like', "%{$q}%");
             }))
-            ->latest('letter_date')
-            ->limit(10)
-            ->get();
+            ->latest('letter_date');
+
+        $piagamQuery = Piagam::query()
+            ->with(['school', 'competitionCategory', 'pickupCategory', 'division'])
+            ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
+            ->when($dateFrom, fn ($query) => $query->whereDate('created_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($query) => $query->whereDate('created_at', '<=', $dateTo))
+            ->when($year, fn ($query) => $query->where('competition_year', $year))
+            ->when($q !== '', fn ($query) => $query->where(function ($sub) use ($q) {
+                $sub->where('student_name', 'like', "%{$q}%")
+                    ->orWhere('recipient_name', 'like', "%{$q}%")
+                    ->orWhere('recipient_unit', 'like', "%{$q}%")
+                    ->orWhere('school_origin', 'like', "%{$q}%")
+                    ->orWhere('piagam_description', 'like', "%{$q}%")
+                    ->orWhere('competition_category_name', 'like', "%{$q}%")
+                    ->orWhereHas('school', fn ($s) => $s->where('name', 'like', "%{$q}%"));
+            }))
+            ->latest('id');
+
+        $incomingStream = in_array($type, ['all', 'incoming'], true)
+            ? (clone $incomingQuery)->get()->map(fn ($item) => [
+                'raw_id' => $item->id,
+                'doc_type' => 'incoming_letter',
+                'modal_type' => 'surat-masuk',
+                'type_label' => 'Surat Masuk',
+                'badge_class' => 'bg-emerald-100 text-emerald-800 border border-emerald-300',
+                'icon_name' => 'mail',
+                'title' => $item->letter_number,
+                'origin_or_party' => $item->origin_agency,
+                'subject' => $item->subject,
+                'date_raw' => $item->received_date ?? $item->letter_date ?? $item->created_at,
+                'date_formatted' => $item->received_date ? $item->received_date->format('d/m/Y') : ($item->letter_date ? $item->letter_date->format('d/m/Y') : '-'),
+                'has_attachment' => $item->attachments->isNotEmpty(),
+                'extra_info' => 'Agenda #'.$item->id,
+                'division_code' => $item->division?->code ?? '-',
+            ])
+            : collect();
+
+        $outgoingStream = in_array($type, ['all', 'outgoing'], true)
+            ? (clone $outgoingQuery)->get()->map(fn ($item) => [
+                'raw_id' => $item->id,
+                'doc_type' => 'outgoing_letter',
+                'modal_type' => 'surat-keluar',
+                'type_label' => 'Surat Keluar',
+                'badge_class' => 'bg-blue-100 text-blue-800 border border-blue-300',
+                'icon_name' => 'send',
+                'title' => $item->letter_number,
+                'origin_or_party' => 'Diseminasi (Tahun '.$item->letter_year.')',
+                'subject' => $item->subject,
+                'date_raw' => $item->letter_date ?? $item->created_at,
+                'date_formatted' => $item->letter_date ? $item->letter_date->format('d/m/Y') : '-',
+                'has_attachment' => $item->attachments->isNotEmpty(),
+                'extra_info' => 'Tahun '.$item->letter_year,
+                'division_code' => $item->division?->code ?? '-',
+            ])
+            : collect();
+
+        $piagamStream = in_array($type, ['all', 'piagam'], true)
+            ? (clone $piagamQuery)->get()->map(fn ($item) => [
+                'raw_id' => $item->id,
+                'doc_type' => 'piagam',
+                'modal_type' => 'piagam',
+                'type_label' => 'Piagam Penghargaan',
+                'badge_class' => 'bg-teal-100 text-teal-800 border border-teal-300',
+                'icon_name' => 'award',
+                'title' => $item->piagam_description ?: $item->student_name,
+                'origin_or_party' => $item->unit_display_name ?: ($item->school?->name ?? $item->school_origin ?? '-'),
+                'subject' => ($item->recipient_name ? 'Penerima: '.$item->recipient_name.' ('.($item->recipient_position ?? 'Perwakilan').') — ' : '').$item->competition_display_name,
+                'date_raw' => $item->created_at,
+                'date_formatted' => $item->created_at->format('d/m/Y H:i'),
+                'has_attachment' => $item->attachments->isNotEmpty(),
+                'extra_info' => 'Resi #'.$item->id,
+                'division_code' => $item->division?->code ?? '-',
+            ])
+            : collect();
+
+        $merged = collect()
+            ->merge($incomingStream)
+            ->merge($outgoingStream)
+            ->merge($piagamStream)
+            ->sortByDesc('date_raw')
+            ->values();
+
+        $perPage = 18;
+        $page = (int) $request->input('page', 1);
+        $totalResults = $merged->count();
+        $sliced = $merged->slice(($page - 1) * $perPage, $perPage)->values();
+        $unifiedResults = new LengthAwarePaginator($sliced, $totalResults, $perPage, $page, [
+            'path' => $request->url(),
+            'query' => $request->query(),
+        ]);
+
+        $incoming = in_array($type, ['all', 'incoming'], true)
+            ? ($type === 'all' ? $incomingQuery->paginate(8, ['*'], 'incoming_page')->withQueryString() : $incomingQuery->paginate(15)->withQueryString())
+            : collect();
+
+        $outgoing = in_array($type, ['all', 'outgoing'], true)
+            ? ($type === 'all' ? $outgoingQuery->paginate(8, ['*'], 'outgoing_page')->withQueryString() : $outgoingQuery->paginate(15)->withQueryString())
+            : collect();
+
+        $piagams = in_array($type, ['all', 'piagam'], true)
+            ? ($type === 'all' ? $piagamQuery->paginate(8, ['*'], 'piagam_page')->withQueryString() : $piagamQuery->paginate(15)->withQueryString())
+            : collect();
 
         return view('reports.index', [
             'q' => $q,
+            'type' => $type,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'year' => $year,
+            'unifiedResults' => $unifiedResults,
+            'totalResults' => $totalResults,
             'incoming' => $incoming,
             'outgoing' => $outgoing,
+            'piagams' => $piagams,
         ]);
     });
 });
@@ -276,21 +580,33 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
     Route::post('/api/v1/surat-keluar/{outgoingLetter}/restore', [OutgoingLetterController::class, 'restore']);
     Route::get('/api/v1/surat-keluar/{outgoingLetter}', [OutgoingLetterController::class, 'show']);
     Route::get('/api/v1/attachments/{uuid}/preview', [AttachmentController::class, 'preview']);
+    Route::get('/api/v1/attachments/{uuid}/download', [AttachmentController::class, 'download']);
     Route::post('/api/v1/schools', [SchoolController::class, 'store']);
+    Route::put('/api/v1/schools/{school}', [SchoolController::class, 'update']);
     Route::delete('/api/v1/schools/{school}', [SchoolController::class, 'destroy']);
     Route::post('/api/v1/reference/pickup-categories', [ReferenceCategoryController::class, 'storePickup']);
+    Route::put('/api/v1/reference/pickup-categories/{category}', [ReferenceCategoryController::class, 'updatePickup']);
     Route::delete('/api/v1/reference/pickup-categories/{category}', [ReferenceCategoryController::class, 'destroyPickup']);
     Route::post('/api/v1/reference/competition-categories', [ReferenceCategoryController::class, 'storeCompetition']);
+    Route::put('/api/v1/reference/competition-categories/{category}', [ReferenceCategoryController::class, 'updateCompetition']);
     Route::delete('/api/v1/reference/competition-categories/{category}', [ReferenceCategoryController::class, 'destroyCompetition']);
+    Route::post('/api/v1/reference/work-units', [ReferenceCategoryController::class, 'storeWorkUnit']);
+    Route::put('/api/v1/reference/work-units/{workUnit}', [ReferenceCategoryController::class, 'updateWorkUnit']);
+    Route::delete('/api/v1/reference/work-units/{workUnit}', [ReferenceCategoryController::class, 'destroyWorkUnit']);
     Route::post('/api/v1/divisions', [DivisionManagementController::class, 'store']);
+    Route::put('/api/v1/divisions/{division}', [DivisionManagementController::class, 'update']);
     Route::patch('/api/v1/divisions/{division}/status', [DivisionManagementController::class, 'updateStatus']);
     Route::delete('/api/v1/divisions/{division}', [DivisionManagementController::class, 'destroy']);
     Route::put('/api/v1/settings/{key}', [SettingController::class, 'update'])->where('key', '.*');
     Route::post('/api/v1/users', [UserManagementController::class, 'store']);
+    Route::put('/api/v1/users/{user}', [UserManagementController::class, 'update']);
+    Route::post('/api/v1/users/{id}/restore', [UserManagementController::class, 'restore']);
     Route::delete('/api/v1/users/{user}', [UserManagementController::class, 'destroy']);
     Route::get('/api/v1/piagam', [PiagamController::class, 'index']);
+    Route::get('/api/v1/piagam/{piagam}', [PiagamController::class, 'show']);
     Route::post('/api/v1/piagam', [PiagamController::class, 'store'])->middleware('idempotent');
     Route::get('/api/v1/dashboard', [DashboardController::class, 'show']);
     Route::get('/api/v1/search', [SearchController::class, 'index']);
     Route::get('/api/v1/reports/export.csv', [ReportExportController::class, 'csv']);
+    Route::get('/api/v1/reports/export.pdf', [ReportExportController::class, 'pdf']);
 });
