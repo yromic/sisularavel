@@ -46,7 +46,20 @@ class AttachmentStorageContractTest extends TestCase
         $this->actingAs($operator)
             ->get("/api/v1/attachments/{$attachment->uuid}/preview")
             ->assertOk()
-            ->assertHeader('content-type', 'application/pdf');
+            ->assertHeader('content-type', 'application/pdf')
+            ->assertHeader('content-disposition', 'inline; filename="scan.pdf"');
+
+        $this->actingAs($operator)
+            ->get("/api/v1/attachments/{$attachment->uuid}/download")
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf')
+            ->assertHeader('content-disposition', 'attachment; filename="scan.pdf"');
+
+        $this->actingAs($operator)
+            ->get("/api/v1/attachments/{$attachment->uuid}/preview?download=1")
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf')
+            ->assertHeader('content-disposition', 'attachment; filename="scan.pdf"');
     }
 
     public function test_attachment_preview_denies_cross_division_and_missing_legacy_file_is_safe_404(): void
