@@ -7,11 +7,38 @@
                 <p class="mt-2 text-sm text-slate-600">Gunakan akun resmi sesuai divisi kerja aktif.</p>
             </div>
 
+            @if ($errors->any())
+                <div class="mb-4 rounded-md border border-rose-300 bg-rose-50 p-3.5 text-sm text-rose-800" role="alert">
+                    <div class="flex items-center gap-2">
+                        <x-icon name="alert-triangle" class="h-4 w-4 shrink-0 text-rose-600" />
+                        <p class="font-medium">{{ $errors->first() }}</p>
+                    </div>
+                </div>
+            @endif
+
+            @if (session('error'))
+                <div class="mb-4 rounded-md border border-rose-300 bg-rose-50 p-3.5 text-sm text-rose-800" role="alert">
+                    <div class="flex items-center gap-2">
+                        <x-icon name="alert-triangle" class="h-4 w-4 shrink-0 text-rose-600" />
+                        <p class="font-medium">{{ session('error') }}</p>
+                    </div>
+                </div>
+            @endif
+
+            @if (session('success'))
+                <div class="mb-4 rounded-md border border-emerald-300 bg-emerald-50 p-3.5 text-sm text-emerald-800" role="status">
+                    <div class="flex items-center gap-2">
+                        <x-icon name="check" class="h-4 w-4 shrink-0 text-emerald-600" />
+                        <p class="font-medium">{{ session('success') }}</p>
+                    </div>
+                </div>
+            @endif
+
             <form method="post" action="/login" class="space-y-4">
                 @csrf
                 <label class="block">
                     <span class="text-sm font-medium text-slate-800">Username</span>
-                    <input name="username" autocomplete="username" autocapitalize="none" autocorrect="off" class="mt-1 min-h-[48px] w-full rounded-md border border-slate-300 px-3 text-base focus:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-100">
+                    <input name="username" value="{{ old('username') }}" autocomplete="username" autocapitalize="none" autocorrect="off" class="mt-1 min-h-[48px] w-full rounded-md border border-slate-300 px-3 text-base focus:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-100" required>
                 </label>
 
                 <label class="block">
