@@ -62,6 +62,82 @@
             </div>
         @endif
 
+        <!-- HERO CARD: ARSIP & CADANGAN RAMAH DINAS (SPREADSHEET-FIRST & GOOGLE DRIVE) -->
+        <div class="mb-6 rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50/90 via-teal-50/50 to-white p-5 md:p-6 shadow-sm">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div class="max-w-2xl">
+                    <div class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 border border-emerald-300 mb-2">
+                        <x-icon name="check" class="h-3.5 w-3.5 text-emerald-600" />
+                        <span>Format Ramah Pengguna (Human-Readable Archive)</span>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900 md:text-xl">
+                        Cadangan Data Dinas (Spreadsheet Excel & Google Drive)
+                    </h2>
+                    <p class="text-xs text-slate-600 md:text-sm mt-1">
+                        Unduh salinan lengkap data persuratan dan buku ekspedisi piagam dalam berkas Excel (.xls). Setiap baris dilengkapi <strong class="text-slate-800">tautan langsung Google Drive</strong> yang dapat langsung diklik untuk melihat atau mencetak berkas asli tanpa hambatan izin akses.
+                    </p>
+                    
+                    <!-- Sync status pill & counter -->
+                    <div class="mt-3.5 flex flex-wrap items-center gap-2.5 text-xs">
+                        <span class="inline-flex items-center gap-1.5 font-semibold text-slate-700 bg-white/90 border border-slate-200 rounded-lg px-2.5 py-1">
+                            <x-icon name="cloud" class="h-4 w-4 text-sky-600" />
+                            <span>Google Drive: <strong>{{ $remoteConfig['has_refresh_token'] ? 'Terhubung ke Akun Dinas' : 'Belum Terhubung' }}</strong></span>
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 font-semibold text-slate-700 bg-white/90 border border-slate-200 rounded-lg px-2.5 py-1">
+                            <span>Berkas di Cloud: <strong>{{ $syncStats['synced_files'] ?? 0 }} / {{ $syncStats['total_files'] ?? 0 }} berkas ({{ $syncStats['percentage'] ?? 0 }}%)</strong></span>
+                        </span>
+                        @if (($syncStats['pending_files'] ?? 0) === 0 && ($syncStats['total_files'] ?? 0) > 0)
+                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md border border-emerald-200">
+                                <x-icon name="check" class="h-3 w-3" />
+                                100% Tersinkron
+                            </span>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-2.5 shrink-0">
+                    <!-- Tombol Unduh Excel Utama -->
+                    <a href="{{ route('admin.backups.spreadsheet') }}" 
+                       class="inline-flex min-h-[48px] items-center justify-center gap-2.5 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs md:text-sm font-bold text-white shadow-md hover:bg-emerald-700 hover:shadow-lg transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-600">
+                        <x-icon name="download" class="h-5 w-5 text-emerald-100 shrink-0" />
+                        <span class="text-left">
+                            <span>Unduh Rekap Excel (.xls)</span>
+                            <span class="block text-[10px] font-normal text-emerald-100">Lengkap Link Google Drive</span>
+                        </span>
+                    </a>
+
+                    <!-- Tombol Buka Folder Google Drive -->
+                    @if ($driveFolderUrl)
+                        <a href="{{ $driveFolderUrl }}" 
+                           target="_blank" 
+                           rel="noopener noreferrer" 
+                           class="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-sky-300 bg-white px-4 py-2.5 text-xs font-bold text-sky-800 shadow-xs hover:bg-sky-50 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-sky-600">
+                            <x-icon name="external-link" class="h-4 w-4 text-sky-600 shrink-0" />
+                            <span class="text-left">
+                                <span>Buka Google Drive</span>
+                                <span class="block text-[10px] font-normal text-sky-600">Lihat File & TTD Asli</span>
+                            </span>
+                        </a>
+                    @endif
+
+                    <!-- Tombol Sinkronisasi Manual jika ada berkas tertunda -->
+                    @if (($syncStats['pending_files'] ?? 0) > 0)
+                        <form method="POST" action="{{ route('admin.backups.sync-drive') }}" class="inline">
+                            @csrf
+                            <button type="submit" 
+                                    class="w-full inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-xs font-bold text-amber-800 shadow-xs hover:bg-amber-100 transition-colors">
+                                <x-icon name="refresh-cw" class="h-4 w-4 text-amber-600 shrink-0" />
+                                <span class="text-left">
+                                    <span>Sinkronkan ke Cloud</span>
+                                    <span class="block text-[10px] font-normal text-amber-600">({{ $syncStats['pending_files'] }} tertunda)</span>
+                                </span>
+                            </button>
+                        </form>
+                    @endif
+                </div>
+            </div>
+        </div>
+
         <!-- Quick Metrics Overview Grid -->
         <div class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
             <!-- 1. Storage Hosting SSD -->
@@ -202,8 +278,8 @@
         <div class="rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden">
             <div class="px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-slate-50/50">
                 <div>
-                    <h2 class="text-base font-bold text-slate-900">Riwayat Pencadangan (Backup Runs)</h2>
-                    <p class="text-xs text-slate-500">Daftar arsip cadangan terenkripsi yang tercatat di sistem.</p>
+                    <h2 class="text-base font-bold text-slate-900">Riwayat Pencadangan Teknis (Disaster Recovery Safeguard)</h2>
+                    <p class="text-xs text-slate-500">Daftar arsip cadangan biner terenkripsi AES-256-GCM dan SQL dump untuk pemulihan darurat sistem oleh developer.</p>
                 </div>
                 <div class="flex items-center gap-2 text-xs text-slate-600">
                     <span>Total Selesai: <strong class="text-emerald-700 font-bold">{{ $stats['total_completed'] }}</strong></span>

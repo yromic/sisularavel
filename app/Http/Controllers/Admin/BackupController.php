@@ -5,20 +5,26 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\BackupRun;
 use App\Services\AuditLogger;
+use App\Services\Backup\AttachmentDriveSyncService;
 use App\Services\Backup\BackupOrchestrator;
 use App\Services\Backup\BackupPreflightService;
 use App\Services\Backup\BackupRetentionService;
+use App\Services\Backup\SpreadsheetBackupService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BackupController extends Controller
 {
     /**
      * Display the backup and disaster recovery dashboard.
      */
-    public function index(Request $request, BackupPreflightService $preflight)
-    {
+    public function index(
+        Request $request,
+        BackupPreflightService $preflight,
+        AttachmentDriveSyncService $driveSync
+    ) {
         abort_unless($request->user()?->role === 'super_admin', 403, 'Akses terbatas untuk Super Admin.');
 
         // 1. Evaluate storage metrics
@@ -87,11 +93,18 @@ class BackupController extends Controller
             ->paginate(15)
             ->withQueryString();
 
+        $syncStats = $driveSync->getSyncStats();
+        $driveFolderUrl = ! empty($remoteConfig['folder_id'])
+            ? "https://drive.google.com/drive/folders/{$remoteConfig['folder_id']}"
+            : null;
+
         if ($request->wantsJson()) {
             return response()->json([
                 'storage' => $storageMetrics,
                 'remote' => $remoteConfig,
                 'stats' => $stats,
+                'sync_stats' => $syncStats,
+                'drive_folder_url' => $driveFolderUrl,
                 'backups' => $backups,
             ]);
         }
@@ -101,6 +114,8 @@ class BackupController extends Controller
             'remoteConfig' => $remoteConfig,
             'lastRemoteRun' => $lastRemoteRun,
             'stats' => $stats,
+            'syncStats' => $syncStats,
+            'driveFolderUrl' => $driveFolderUrl,
             'backups' => $backups,
         ]);
     }
@@ -229,6 +244,64 @@ class BackupController extends Controller
 
         $mbReclaimed = round($result['reclaimed_bytes'] / (1024 * 1024), 2);
         $msg = "Pembersihan retensi selesai: {$result['pruned_count']} arsip lama berhasil dihapus ({$mbReclaimed} MB ruang disk dibebaskan).";
+
+        return redirect()->route('admin.backups.index')->with('success', $msg);
+    }
+
+    /**
+     * Download multi-sheet Excel spreadsheet with direct Google Drive links.
+     */
+    public function downloadSpreadsheet(
+        Request $request,
+        SpreadsheetBackupService $spreadsheetService,
+        AuditLogger $auditLogger
+    ): StreamedResponse {
+        abort_unless($request->user()?->role === 'super_admin', 403, 'Akses terbatas untuk Super Admin.');
+
+        $auditLogger->userEvent(
+            'BACKUP_SPREADSHEET_DOWNLOADED',
+            $request->user(),
+            $request->user(),
+            'Mengunduh rekapitulasi cadangan spreadsheet Excel (.xls) ber-link Google Drive.'
+        );
+
+        return $spreadsheetService->streamDownloadResponse();
+    }
+
+    /**
+     * Trigger synchronization of pending attachments to Google Drive.
+     */
+    public function syncDrive(
+        Request $request,
+        AttachmentDriveSyncService $syncService,
+        AuditLogger $auditLogger
+    ) {
+        abort_unless($request->user()?->role === 'super_admin', 403, 'Akses terbatas untuk Super Admin.');
+
+        $limit = (int) $request->input('limit', 100);
+        $result = $syncService->syncBatch($limit);
+
+        $auditLogger->userEvent(
+            'BACKUP_DRIVE_FILES_SYNCED',
+            $request->user(),
+            $request->user(),
+            "Sinkronisasi lampiran ke Google Drive: {$result['synced']} berhasil, {$result['failed']} gagal."
+        );
+
+        if ($request->wantsJson()) {
+            return response()->json($result);
+        }
+
+        if ($result['status'] === 'skipped') {
+            return redirect()
+                ->route('admin.backups.index')
+                ->with('error', "Gagal menyinkronkan berkas: {$result['reason']}");
+        }
+
+        $msg = "Sinkronisasi Google Drive selesai: {$result['synced']} berkas berhasil ditautkan ke Google Drive.";
+        if ($result['failed'] > 0) {
+            $msg .= " ({$result['failed']} berkas mengalami kendala).";
+        }
 
         return redirect()->route('admin.backups.index')->with('success', $msg);
     }
