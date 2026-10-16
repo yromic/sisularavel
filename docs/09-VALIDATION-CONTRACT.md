@@ -35,7 +35,9 @@
 | `perihal` | Perihal | **Yes** | `string|max:1000` | Trim | *"Perihal surat wajib diisi (maks. 1000 karakter)."* |
 | `tanggal_surat`| Tanggal Surat | **Yes** | `date|date_format:Y-m-d|before_or_equal:today` | Format `YYYY-MM-DD` | *"Tanggal surat tidak boleh tanggal masa depan."* |
 | `tanggal_diterima`| Tanggal Diterima | **Yes** | `date|date_format:Y-m-d|after_or_equal:tanggal_surat` | Format `YYYY-MM-DD` | *"Tanggal diterima tidak boleh lebih awal dari tanggal surat."* |
-| `attachment` | Berkas Lampiran| Optional | `file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240` | Binary file | *"Berkas harus berupa PDF, Word, atau Gambar dengan ukuran maksimal 10 MB."* |
+| `attachment` | Berkas Lampiran| Optional | `file|mimetypes:pdf,doc,docx,jpg,jpeg,png|max:2048` | Binary file | *"Berkas harus berupa PDF, Word, atau Gambar dengan ukuran maksimal 2 MB."* |
+| `photos` | Foto Kamera Multi-Lembar | Optional | `array|max:15|cumulative_bytes<=5120KB` | Array of images | *"Total ukuran seluruh foto lampiran tidak boleh melebihi 5 MB."* |
+| `photos.*` | Lembar Foto Kamera | Optional | `file|image|max:2048` | Binary image | *"Ukuran masing-masing lembar foto tidak boleh melebihi 2 MB."* |
 
 ---
 
@@ -49,7 +51,9 @@
 | `perihal` | Perihal | **Yes** | `string|max:1000` | Trim | *"Perihal surat wajib diisi (maks. 1000 karakter)."* |
 | `tanggal_surat`| Tanggal Surat | **Yes** | `date|date_format:Y-m-d|before_or_equal:today` | Format `YYYY-MM-DD` | *"Tanggal surat tidak boleh tanggal masa depan."* |
 | `tanggal_share`| Tanggal Disahkan/Share | **Yes** | `date|date_format:Y-m-d|after_or_equal:tanggal_surat` | Format `YYYY-MM-DD` | *"Tanggal di-share tidak boleh mendahului tanggal surat."* |
-| `attachment` | Berkas Lampiran| Optional | `file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240` | Binary file | *"Berkas harus berupa PDF, Word, atau Gambar dengan ukuran maksimal 10 MB."* |
+| `attachment` | Berkas Lampiran| Optional | `file|mimetypes:pdf,doc,docx,jpg,jpeg,png|max:2048` | Binary file | *"Berkas harus berupa PDF, Word, atau Gambar dengan ukuran maksimal 2 MB."* |
+| `photos` | Foto Kamera Multi-Lembar | Optional | `array|max:15|cumulative_bytes<=5120KB` | Array of images | *"Total ukuran seluruh foto lampiran tidak boleh melebihi 5 MB."* |
+| `photos.*` | Lembar Foto Kamera | Optional | `file|image|max:2048` | Binary image | *"Ukuran masing-masing lembar foto tidak boleh melebihi 2 MB."* |
 
 ---
 

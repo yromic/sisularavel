@@ -244,9 +244,12 @@ class IncomingLetterController extends Controller
             'attachment' => [
                 'required',
                 'file',
-                'max:10240',
+                'max:2048',
                 'mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png',
             ],
+        ], [
+            'attachment.max' => 'Ukuran berkas lampiran utama tidak boleh melebihi 2 MB.',
+            'attachment.mimetypes' => 'Berkas harus berupa PDF, Word, atau Gambar dengan ukuran maksimal 2 MB.',
         ]);
 
         $attachment = $incomingLetter->attachments()->firstOrFail();

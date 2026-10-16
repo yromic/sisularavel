@@ -174,6 +174,86 @@ class AttachmentStorageContractTest extends TestCase
         $this->assertDatabaseCount('attachments', 0);
     }
 
+    public function test_incoming_letter_attachment_rejects_file_exceeding_2mb(): void
+    {
+        $operator = User::factory()->for(Division::factory())->create();
+
+        $this->actingAs($operator)
+            ->withHeader('Idempotency-Key', (string) Str::uuid())
+            ->postJson('/api/v1/surat-masuk', [
+                'nomor_surat' => '101/09/2026',
+                'asal_surat' => 'Bupati Semarang',
+                'tanggal_surat' => '2026-09-01',
+                'tanggal_diterima' => '2026-09-02',
+                'perihal' => 'File terlalu besar',
+                'attachment' => UploadedFile::fake()->create('huge.pdf', 2500, 'application/pdf'),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['attachment']);
+    }
+
+    public function test_incoming_letter_multi_photo_rejects_photos_exceeding_cumulative_5mb(): void
+    {
+        $operator = User::factory()->for(Division::factory())->create();
+
+        // 3 photos x 1800 KB = 5400 KB > 5120 KB (5 MB)
+        $photo1 = UploadedFile::fake()->create('page1.jpg', 1800, 'image/jpeg');
+        $photo2 = UploadedFile::fake()->create('page2.jpg', 1800, 'image/jpeg');
+        $photo3 = UploadedFile::fake()->create('page3.jpg', 1800, 'image/jpeg');
+
+        $this->actingAs($operator)
+            ->withHeader('Idempotency-Key', (string) Str::uuid())
+            ->postJson('/api/v1/surat-masuk', [
+                'nomor_surat' => '102/09/2026',
+                'asal_surat' => 'Bupati Semarang',
+                'tanggal_surat' => '2026-09-01',
+                'tanggal_diterima' => '2026-09-02',
+                'perihal' => 'Foto melebihi 5MB',
+                'photos' => [$photo1, $photo2, $photo3],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['photos']);
+    }
+
+    public function test_incoming_letter_multi_photo_accepts_photos_within_cumulative_5mb(): void
+    {
+        Storage::fake('private_documents');
+        $operator = User::factory()->for(Division::factory())->create();
+
+        // 2 photos x 800 KB = 1600 KB <= 5120 KB
+        $photo1 = UploadedFile::fake()->image('page1.jpg', 600, 800);
+        $photo2 = UploadedFile::fake()->image('page2.jpg', 600, 800);
+
+        $this->actingAs($operator)
+            ->withHeader('Idempotency-Key', (string) Str::uuid())
+            ->postJson('/api/v1/surat-masuk', [
+                'nomor_surat' => '103/09/2026',
+                'asal_surat' => 'Bupati Semarang',
+                'tanggal_surat' => '2026-09-01',
+                'tanggal_diterima' => '2026-09-02',
+                'perihal' => 'Foto aman di bawah 5MB',
+                'photos' => [$photo1, $photo2],
+            ])
+            ->assertCreated();
+    }
+
+    public function test_outgoing_letter_attachment_rejects_file_exceeding_2mb(): void
+    {
+        $operator = User::factory()->for(Division::factory())->create();
+
+        $this->actingAs($operator)
+            ->withHeader('Idempotency-Key', (string) Str::uuid())
+            ->postJson('/api/v1/surat-keluar', [
+                'nomor_surat' => 'OUT-101/2026',
+                'tanggal_surat' => '2026-09-01',
+                'tanggal_share' => '2026-09-02',
+                'perihal' => 'File keluar terlalu besar',
+                'attachment' => UploadedFile::fake()->create('huge.pdf', 2500, 'application/pdf'),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['attachment']);
+    }
+
     private function incomingLetter(Division $division): IncomingLetter
     {
         return IncomingLetter::query()->create([

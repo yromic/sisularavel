@@ -118,10 +118,10 @@
                                                 <x-icon name="upload" class="h-4 w-4 text-amber-700" />
                                                 Remediasi Berkas Lampiran
                                             </div>
-                                            <p class="text-[11px] text-amber-800 mb-2">Unggah dokumen fisik/scan pengganti untuk memulihkan arsip ini ke penyimpanan privat SISURAT.</p>
+                                            <p class="text-[11px] text-amber-800 mb-2">Unggah dokumen fisik/scan pengganti untuk memulihkan arsip ini ke penyimpanan privat SISURAT (Maksimal 2 MB).</p>
                                             <form method="post" action="/api/v1/surat-masuk/{{ $letter->id }}/remediate-attachment" enctype="multipart/form-data" class="space-y-2">
                                                 @csrf
-                                                <input type="file" name="attachment" required accept="application/pdf,image/jpeg,image/png,.doc,.docx" class="block w-full text-xs text-slate-600 file:mr-2 file:py-1 file:px-2.5 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-amber-700 file:text-white hover:file:bg-amber-800">
+                                                <input type="file" name="attachment" required accept="application/pdf,image/jpeg,image/png,.doc,.docx" onchange="if(this.files[0] && this.files[0].size > 2097152){ alert('Ukuran berkas melebihi batas 2 MB.'); this.value = ''; }" class="block w-full text-xs text-slate-600 file:mr-2 file:py-1 file:px-2.5 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-amber-700 file:text-white hover:file:bg-amber-800">
                                                 <button type="submit" class="flex min-h-[36px] w-full items-center justify-center gap-1.5 rounded-md bg-amber-700 px-3 text-xs font-semibold text-white hover:bg-amber-800 shadow-xs">
                                                     <x-icon name="check" class="h-4 w-4" />
                                                     Unggah Dokumen Pengganti

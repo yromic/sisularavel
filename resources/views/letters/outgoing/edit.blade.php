@@ -66,8 +66,8 @@
 
             <div class="block md:col-span-2">
                 <span class="text-sm font-medium text-slate-800">Perbarui Lampiran (Opsional)</span>
-                <p class="text-xs text-slate-500 mb-2">Pilih berkas baru jika ingin mengganti lampiran saat ini.</p>
-                <input name="attachment" type="file" accept="application/pdf,image/*,.doc,.docx" class="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                <p class="text-xs text-slate-500 mb-2">Pilih berkas baru jika ingin mengganti lampiran saat ini (Maksimal 2 MB).</p>
+                <input name="attachment" type="file" accept="application/pdf,image/*,.doc,.docx" onchange="if(this.files[0] && this.files[0].size > 2097152){ alert('Ukuran berkas melebihi batas 2 MB.'); this.value = ''; }" class="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
             </div>
 
             <div class="mt-4 flex gap-3 border-t border-slate-200 pt-4 md:col-span-2">

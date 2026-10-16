@@ -93,7 +93,7 @@
                 <div id="form-row-attachment" class="rounded-lg border border-slate-200 bg-slate-50/70 p-3.5 space-y-3">
                     <div>
                         <span class="block text-xs font-semibold text-slate-700">Dokumen Lampiran (PDF / Word / Foto Kamera HP)</span>
-                        <p class="text-[11px] text-slate-500">Unggah berkas dokumen atau ambil foto lembaran surat fisik menggunakan kamera HP.</p>
+                        <p class="text-[11px] text-slate-500">Unggah berkas dokumen (maks. 2 MB) atau foto lembaran surat fisik menggunakan kamera HP (maks. 2 MB/lembar, total maks. 5 MB).</p>
                     </div>
                     
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -384,17 +384,88 @@
         }
     }
 
+    function compressImageModal(file, maxDimension = 1600, quality = 0.8) {
+        return new Promise((resolve) => {
+            if (!file.type.startsWith('image/')) {
+                resolve(file);
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > maxDimension || height > maxDimension) {
+                        if (width > height) {
+                            height = Math.round((height * maxDimension) / width);
+                            width = maxDimension;
+                        } else {
+                            width = Math.round((width * maxDimension) / height);
+                            height = maxDimension;
+                        }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob(function(blob) {
+                        if (blob && blob.size < file.size) {
+                            const compressed = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
+                            resolve(compressed);
+                        } else {
+                            resolve(file);
+                        }
+                    }, 'image/jpeg', quality);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
     function handleModalFilePicked(input) {
         if (input.files && input.files[0]) {
+            const file = input.files[0];
+            if (file.size > 2 * 1024 * 1024) {
+                const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+                alert(`Ukuran berkas (${sizeMb} MB) melebihi batas maksimal 2 MB. Silakan pilih berkas yang lebih kecil.`);
+                input.value = '';
+                clearModalAttachment();
+                return;
+            }
             clearAllCapturedPhotos();
-            showModalFilePill(input.files[0].name);
+            showModalFilePill(`${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
         }
     }
 
-    function handleModalCameraCaptured(input) {
+    async function handleModalCameraCaptured(input) {
         if (input.files && input.files[0]) {
-            const file = input.files[0];
+            const rawFile = input.files[0];
             clearModalAttachment();
+
+            const triggerLabel = document.getElementById('label-camera-trigger');
+            const prevLabel = triggerLabel.textContent;
+            triggerLabel.textContent = 'Memproses Foto...';
+
+            const file = await compressImageModal(rawFile);
+            triggerLabel.textContent = prevLabel;
+
+            if (file.size > 2 * 1024 * 1024) {
+                const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+                alert(`Ukuran foto (${sizeMb} MB) melebihi batas 2 MB per lembar.`);
+                input.value = '';
+                return;
+            }
+
+            const currentTotalBytes = capturedPhotos.reduce((sum, item) => sum + (item.file.size || 0), 0);
+            if (currentTotalBytes + file.size > 5 * 1024 * 1024) {
+                const totalMb = ((currentTotalBytes + file.size) / (1024 * 1024)).toFixed(2);
+                alert(`Total ukuran seluruh foto (${totalMb} MB) akan melebihi batas maksimal 5 MB. Hapus sebagian foto atau gunakan dokumen scan PDF.`);
+                input.value = '';
+                return;
+            }
 
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -423,8 +494,11 @@
             return;
         }
 
+        const totalBytes = capturedPhotos.reduce((sum, item) => sum + (item.file.size || 0), 0);
+        const totalMb = (totalBytes / (1024 * 1024)).toFixed(2);
+
         container.classList.remove('hidden');
-        countEl.textContent = `${capturedPhotos.length} Lembar Foto Terambil`;
+        countEl.textContent = `${capturedPhotos.length} Lembar Foto Terambil (Total: ${totalMb} MB / Maks. 5 MB)`;
         triggerLabel.textContent = '+ Tambah Lembar Foto';
 
         grid.innerHTML = '';

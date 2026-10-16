@@ -58,7 +58,7 @@
         <!-- Attachment with dual Camera and File chooser -->
         <div class="block md:col-span-2">
             <span class="text-sm font-medium text-slate-800">Lampiran Dokumen / Foto Fisik (Opsional)</span>
-            <p class="text-xs text-slate-500 mb-2">Unggah file scan dokumen (PDF/DOC) atau ambil foto fisik surat langsung menggunakan kamera.</p>
+            <p class="text-xs text-slate-500 mb-2">Unggah file scan dokumen (PDF/DOC) atau ambil foto fisik surat langsung menggunakan kamera. Maksimal 2 MB untuk berkas utama dan total maksimal 5 MB untuk foto.</p>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label class="flex min-h-[48px] cursor-pointer items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-xs">
@@ -82,10 +82,59 @@
     </form>
 
     <script>
+        function compressImage(file, maxDimension = 1600, quality = 0.8) {
+            return new Promise((resolve) => {
+                if (!file.type.startsWith('image/')) {
+                    resolve(file);
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > maxDimension || height > maxDimension) {
+                            if (width > height) {
+                                height = Math.round((height * maxDimension) / width);
+                                width = maxDimension;
+                            } else {
+                                width = Math.round((width * maxDimension) / height);
+                                height = maxDimension;
+                            }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        canvas.toBlob(function(blob) {
+                            if (blob && blob.size < file.size) {
+                                const compressed = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
+                                resolve(compressed);
+                            } else {
+                                resolve(file);
+                            }
+                        }, 'image/jpeg', quality);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
         function handleFileSelected(input) {
             const info = document.getElementById('file-info');
             if (input.files && input.files[0]) {
                 const file = input.files[0];
+                if (file.size > 2 * 1024 * 1024) {
+                    const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+                    alert(`Ukuran berkas (${sizeMb} MB) melebihi batas maksimal 2 MB. Silakan pilih berkas yang lebih kecil.`);
+                    input.value = '';
+                    info.textContent = '';
+                    info.classList.add('hidden');
+                    return;
+                }
                 const sizeKb = (file.size / 1024).toFixed(1);
                 info.textContent = `Berkas terpilih: ${file.name} (${sizeKb} KB)`;
                 info.classList.remove('hidden');
@@ -94,10 +143,23 @@
             }
         }
 
-        function handleCameraSelected(input) {
+        async function handleCameraSelected(input) {
             const info = document.getElementById('file-info');
             if (input.files && input.files[0]) {
-                const file = input.files[0];
+                const rawFile = input.files[0];
+                info.textContent = 'Memproses foto kamera...';
+                info.classList.remove('hidden');
+
+                const file = await compressImage(rawFile);
+                if (file.size > 2 * 1024 * 1024) {
+                    const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+                    alert(`Ukuran foto (${sizeMb} MB) melebihi batas 2 MB per lembar.`);
+                    input.value = '';
+                    info.textContent = '';
+                    info.classList.add('hidden');
+                    return;
+                }
+
                 const sizeKb = (file.size / 1024).toFixed(1);
                 info.textContent = `Foto kamera terpilih: ${file.name} (${sizeKb} KB)`;
                 info.classList.remove('hidden');

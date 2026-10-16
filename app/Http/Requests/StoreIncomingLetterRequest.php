@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\UploadedFile;
 
 class StoreIncomingLetterRequest extends FormRequest
 {
@@ -26,11 +27,28 @@ class StoreIncomingLetterRequest extends FormRequest
             'attachment' => [
                 'sometimes',
                 'file',
-                'max:10240',
+                'max:2048',
                 'mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png',
             ],
-            'photos' => ['sometimes', 'array', 'max:15'],
-            'photos.*' => ['file', 'image', 'max:10240'],
+            'photos' => [
+                'sometimes',
+                'array',
+                'max:15',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (is_array($value)) {
+                        $totalBytes = 0;
+                        foreach ($value as $file) {
+                            if ($file instanceof UploadedFile) {
+                                $totalBytes += $file->getSize() ?: 0;
+                            }
+                        }
+                        if ($totalBytes > 5 * 1024 * 1024) {
+                            $fail('Total ukuran seluruh foto lampiran tidak boleh melebihi 5 MB.');
+                        }
+                    }
+                },
+            ],
+            'photos.*' => ['file', 'image', 'max:2048'],
         ];
     }
 
@@ -65,8 +83,10 @@ class StoreIncomingLetterRequest extends FormRequest
             'perihal.max' => 'Perihal surat wajib diisi (maks. 1000 karakter).',
             'tanggal_surat.before_or_equal' => 'Tanggal surat tidak boleh tanggal masa depan.',
             'tanggal_diterima.after_or_equal' => 'Tanggal diterima tidak boleh lebih awal dari tanggal surat.',
-            'attachment.mimetypes' => 'Berkas harus berupa PDF, Word, atau Gambar dengan ukuran maksimal 10 MB.',
-            'attachment.max' => 'Berkas harus berupa PDF, Word, atau Gambar dengan ukuran maksimal 10 MB.',
+            'attachment.mimetypes' => 'Berkas harus berupa PDF, Word, atau Gambar dengan ukuran maksimal 2 MB.',
+            'attachment.max' => 'Ukuran berkas lampiran utama tidak boleh melebihi 2 MB.',
+            'photos.*.max' => 'Ukuran masing-masing lembar foto tidak boleh melebihi 2 MB.',
+            'photos.*.image' => 'Masing-masing berkas foto harus berupa gambar valid.',
         ];
     }
 }
