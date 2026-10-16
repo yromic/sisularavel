@@ -27,12 +27,28 @@ class Attachment extends Model
         'missing_reason',
         'legacy_drive_file_id',
         'legacy_drive_url',
+        'google_drive_file_id',
+        'google_drive_view_url',
+        'google_drive_synced_at',
         'created_by_user_id',
     ];
 
     protected function casts(): array
     {
-        return ['is_missing' => 'boolean'];
+        return [
+            'is_missing' => 'boolean',
+            'google_drive_synced_at' => 'datetime',
+        ];
+    }
+
+    public function getDriveViewUrlAttribute(): ?string
+    {
+        return $this->google_drive_view_url ?: $this->legacy_drive_url;
+    }
+
+    public function getDriveViewLinkAttribute(): ?string
+    {
+        return $this->drive_view_url;
     }
 
     public function attachable(): MorphTo
