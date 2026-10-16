@@ -741,3 +741,18 @@ graph TD
 ### Kesimpulan & Langkah Segera
 
 Blueprint arsitektur backup dan disaster recovery SISURAT V1 ini telah matang dan komprehensif. Langkah teknis pertama yang direkomendasikan adalah memulai **Fase 01 (Read-only Technical Audit)** pada lingkungan hosting untuk memastikan ketersediaan binary `mysqldump`, ketersediaan memory, dan perilaku cron shared hosting.
+
+---
+
+## 19. Adendum V1.1: Evolusi Format Cadangan Ramah Dinas (Spreadsheet-First & Google Drive Link)
+
+> [!IMPORTANT]
+> **Keputusan Stakeholder Operasional:**  
+> Berdasarkan evaluasi kebutuhan riil pegawai ASN dan staf dinas non-teknis, sistem cadangan SISURAT diperluas dengan paradigma **Spreadsheet-First & Human-Readable Archive**. Format arsip yang diakses oleh pengguna dinas adalah **berkas Excel / CSV terpadu yang memuat kolom tautan langsung (*hyperlink*) ke berkas PDF surat dan PNG tanda tangan di Google Drive**, melengkapi cadangan database SQL teknis untuk pemulihan bencana.
+> 
+> Spesifikasi teknis, skema kolom spreadsheet, alur kerja pengunggahan berkas individual, dan antarmuka web ramah dinas didokumentasikan secara lengkap pada:  
+> 📄 [`docs/30-SPESIFIKASI-BACKUP-SPREADSHEET-DINAS.md`](30-SPESIFIKASI-BACKUP-SPREADSHEET-DINAS.md).
+> 
+> *Catatan Arsitektur:* Seluruh mesin inti yang dibangun pada Fase 01–06 (`DatabaseDumperService`, `BackupConsistencyService`, `GoogleDriveStorageService`, cron scheduler, dan tabel `backup_runs`) **tetap dipertahankan 100% sebagai mesin di bawah kap (*engine under the hood*)**. Format Spreadsheet-First ini bertindak sebagai lapisan luaran dan antarmuka ramah pengguna (*presentation layer*) yang ditenagai oleh mesin tersebut.
+
+
