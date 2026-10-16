@@ -99,14 +99,15 @@ class GoogleDriveStorageService
         string $filename,
         int $fileSizeBytes,
         ?string $mimeType = 'application/octet-stream',
-        ?string $folderId = null
+        ?string $folderId = null,
+        ?string $description = 'SISURAT Digital Archive File'
     ): string {
         $token = $this->getAccessToken();
         $targetFolder = $folderId ?? config('backup.remote.google_drive.folder_id');
 
         $metadata = [
             'name' => $filename,
-            'description' => 'SISURAT Disaster Recovery Encrypted Archive (V1)',
+            'description' => $description ?? 'SISURAT Digital Archive File',
         ];
 
         if (! empty($targetFolder)) {
@@ -346,6 +347,190 @@ class GoogleDriveStorageService
         } catch (Throwable) {
             return false;
         }
+    }
+
+    /**
+     * Ensure a subfolder exists on Google Drive (finds or creates it) and caches its ID.
+     */
+    public function ensureFolder(string $folderName, ?string $parentFolderId = null): string
+    {
+        $parent = $parentFolderId ?? config('backup.remote.google_drive.folder_id');
+        $cacheKey = 'sisurat:backup:gdrive_folder:'.md5($folderName.':'.($parent ?? 'root'));
+
+        $cachedId = Cache::get($cacheKey);
+        if (! empty($cachedId)) {
+            return (string) $cachedId;
+        }
+
+        $existingId = $this->findFolderIdByName($folderName, $parent);
+        if (! empty($existingId)) {
+            Cache::put($cacheKey, $existingId, 86400);
+
+            return $existingId;
+        }
+
+        $newId = $this->createFolder($folderName, $parent);
+        Cache::put($cacheKey, $newId, 86400);
+
+        return $newId;
+    }
+
+    /**
+     * Search for a folder by name inside a parent folder.
+     */
+    public function findFolderIdByName(string $folderName, ?string $parentFolderId = null): ?string
+    {
+        $token = $this->getAccessToken();
+        $endpoint = 'https://www.googleapis.com/drive/v3/files';
+
+        $escapedName = str_replace("'", "\\'", $folderName);
+        $q = "mimeType = 'application/vnd.google-apps.folder' and name = '{$escapedName}' and trashed = false";
+        if (! empty($parentFolderId)) {
+            $q .= " and '{$parentFolderId}' in parents";
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$token}",
+            ])->get($endpoint, [
+                'q' => $q,
+                'fields' => 'files(id, name)',
+                'pageSize' => 1,
+            ]);
+
+            if ($response->successful()) {
+                $files = $response->json('files', []);
+
+                return ! empty($files) ? $files[0]['id'] : null;
+            }
+        } catch (Throwable) {
+            // Fail open, return null to attempt creation
+        }
+
+        return null;
+    }
+
+    /**
+     * Create a new folder on Google Drive.
+     */
+    public function createFolder(string $folderName, ?string $parentFolderId = null): string
+    {
+        $token = $this->getAccessToken();
+        $endpoint = 'https://www.googleapis.com/drive/v3/files';
+
+        $metadata = [
+            'name' => $folderName,
+            'mimeType' => 'application/vnd.google-apps.folder',
+        ];
+
+        if (! empty($parentFolderId)) {
+            $metadata['parents'] = [$parentFolderId];
+        }
+
+        $response = Http::withHeaders([
+            'Authorization' => "Bearer {$token}",
+            'Content-Type' => 'application/json',
+        ])->post($endpoint, $metadata);
+
+        if (! $response->successful()) {
+            throw new RuntimeException("Failed to create Google Drive folder [{$folderName}]: {$response->body()}");
+        }
+
+        $folderId = $response->json('id');
+        if (empty($folderId)) {
+            throw new RuntimeException("Google Drive did not return an ID for created folder [{$folderName}].");
+        }
+
+        return $folderId;
+    }
+
+    /**
+     * Upload an individual document or image to Google Drive and return view URL.
+     */
+    public function uploadSingleFile(
+        string $filePath,
+        string $filename,
+        ?string $folderId = null,
+        ?string $mimeType = 'application/octet-stream',
+        bool $makePublic = true
+    ): array {
+        if (! File::exists($filePath)) {
+            throw new RuntimeException("Local file not found for upload: {$filePath}");
+        }
+
+        $fileSize = File::size($filePath);
+        $sessionUri = $this->initiateResumableSession(
+            $filename,
+            $fileSize,
+            $mimeType,
+            $folderId,
+            'SISURAT Human-Readable Document File'
+        );
+
+        $contents = file_get_contents($filePath);
+        if ($contents === false) {
+            throw new RuntimeException("Unable to read local file contents: {$filePath}");
+        }
+
+        $response = Http::withHeaders([
+            'Content-Length' => (string) $fileSize,
+            'Content-Range' => 'bytes 0-'.($fileSize > 0 ? $fileSize - 1 : 0)."/{$fileSize}",
+            'Content-Type' => $mimeType ?: 'application/octet-stream',
+        ])->withBody($contents, $mimeType ?: 'application/octet-stream')->put($sessionUri);
+
+        if (! $response->successful()) {
+            throw new RuntimeException("Failed to upload single file [{$filename}] to Google Drive: {$response->body()}");
+        }
+
+        $data = $response->json();
+        $fileId = $data['id'] ?? null;
+
+        if (empty($fileId)) {
+            throw new RuntimeException("Google Drive did not return a valid file ID for {$filename}.");
+        }
+
+        if ($makePublic) {
+            $this->setFilePublicPermission($fileId);
+        }
+
+        return [
+            'file_id' => $fileId,
+            'name' => $data['name'] ?? $filename,
+            'size_bytes' => (int) ($data['size'] ?? $fileSize),
+            'view_url' => $this->getFileViewUrl($fileId),
+            'md5_checksum' => $data['md5Checksum'] ?? null,
+        ];
+    }
+
+    /**
+     * Grant 'reader' permission to 'anyone' with the link on Google Drive.
+     */
+    public function setFilePublicPermission(string $fileId): bool
+    {
+        $token = $this->getAccessToken();
+        $endpoint = "https://www.googleapis.com/drive/v3/files/{$fileId}/permissions";
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$token}",
+                'Content-Type' => 'application/json',
+            ])->post($endpoint, [
+                'role' => 'reader',
+                'type' => 'anyone',
+            ]);
+
+            return $response->successful();
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    /**
+     * Generate standard Google Drive preview/view URL.
+     */
+    public function getFileViewUrl(string $fileId): string
+    {
+        return "https://drive.google.com/file/d/{$fileId}/view";
     }
 
     /**

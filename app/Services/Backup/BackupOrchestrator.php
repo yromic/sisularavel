@@ -4,6 +4,7 @@ namespace App\Services\Backup;
 
 use App\Models\BackupRun;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Symfony\Component\Finder\Finder;
@@ -18,8 +19,13 @@ class BackupOrchestrator
         protected BackupEncryptionService $encryption,
         protected DatabaseDumperService $dumper,
         protected ArchivePackerService $packer,
-        protected GoogleDriveStorageService $googleDrive
-    ) {}
+        protected GoogleDriveStorageService $googleDrive,
+        protected ?AttachmentDriveSyncService $driveSync = null,
+        protected ?SpreadsheetBackupService $spreadsheet = null
+    ) {
+        $this->driveSync = $driveSync ?? app(AttachmentDriveSyncService::class);
+        $this->spreadsheet = $spreadsheet ?? app(SpreadsheetBackupService::class);
+    }
 
     /**
      * Run the complete local backup pipeline.
@@ -180,6 +186,38 @@ class BackupOrchestrator
                 }
 
                 $remoteProvider = 'google_drive';
+
+                // 9B. Human-Readable Tier Sync (Google Drive Folders & Spreadsheet)
+                try {
+                    $sqlPath = $stagingDir.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'sisurat.sql';
+                    if (File::exists($sqlPath)) {
+                        $sqlFolderId = $this->googleDrive->ensureFolder('04_Basis_Data_SQL');
+                        $this->googleDrive->uploadSingleFile(
+                            $sqlPath,
+                            'sisurat_database_backup.sql',
+                            $sqlFolderId,
+                            'application/sql',
+                            false
+                        );
+                    }
+
+                    $this->driveSync->syncBatch(50);
+
+                    $spreadsheetPath = $stagingBase.DIRECTORY_SEPARATOR.'Rekap_Cadangan_SISURAT_Terbaru.xls';
+                    $this->spreadsheet->saveWorkbookToFile($spreadsheetPath);
+                    if (File::exists($spreadsheetPath)) {
+                        $this->googleDrive->uploadSingleFile(
+                            $spreadsheetPath,
+                            'Rekap_Cadangan_SISURAT_Terbaru.xls',
+                            null,
+                            'application/vnd.ms-excel',
+                            true
+                        );
+                        @File::delete($spreadsheetPath);
+                    }
+                } catch (Throwable $e) {
+                    Log::warning('BackupOrchestrator: Human-readable sync warning: '.$e->getMessage());
+                }
             }
 
             // 10. Completed Stage
