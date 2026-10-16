@@ -308,6 +308,7 @@
         clearAllCapturedPhotos();
         if (previousFormFocusedElement && typeof previousFormFocusedElement.focus === 'function') {
             previousFormFocusedElement.focus();
+        }
     }
 
     function clearFieldErrors() {
