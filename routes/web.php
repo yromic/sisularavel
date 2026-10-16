@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Api\AttachmentController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DivisionContextController;
@@ -627,4 +628,10 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
     Route::get('/api/v1/search', [SearchController::class, 'index']);
     Route::get('/api/v1/reports/export.csv', [ReportExportController::class, 'csv']);
     Route::get('/api/v1/reports/export.pdf', [ReportExportController::class, 'pdf']);
+
+    // Admin Backup & Disaster Recovery Management (Fase 06)
+    Route::get('/admin/backups', [BackupController::class, 'index'])->name('admin.backups.index');
+    Route::post('/admin/backups', [BackupController::class, 'store'])->name('admin.backups.store');
+    Route::get('/admin/backups/{backupId}/download', [BackupController::class, 'download'])->name('admin.backups.download')->where('backupId', '.*');
+    Route::post('/admin/backups/prune', [BackupController::class, 'prune'])->name('admin.backups.prune');
 });
