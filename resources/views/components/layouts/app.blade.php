@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'SISURAT' }} — Disdikbudpora Kab. Semarang</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('images/icon/icon.svg') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-[#F7F8FA] text-[#17243A] antialiased font-sans">
@@ -23,9 +24,7 @@
                 <div class="flex flex-col">
                     <!-- Brand Header -->
                     <div class="flex items-center gap-3 border-b border-[#23344E] px-5 py-4">
-                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#147D73] font-bold text-white shadow-xs">
-                            SI
-                        </div>
+                        <img src="{{ asset('images/icon/icon.svg') }}" alt="Logo SISURAT" class="h-10 w-10 shrink-0 object-contain drop-shadow-xs" />
                         <div class="min-w-0">
                             <div class="flex items-center gap-1.5">
                                 <span class="text-base font-bold tracking-tight text-white">SISURAT</span>
@@ -62,40 +61,12 @@
                                 <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Layanan Persuratan & Piagam</p>
                             </div>
                             <div class="space-y-0.5">
-                                <!-- Pusat Persuratan (Terpadu 1 Halaman) -->
+                                <!-- Persuratan & Piagam (Konsol Terpadu Cepat) -->
                                 <a href="/persuratan" 
-                                   class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('persuratan*') ? 'bg-[#147D73] font-semibold text-white shadow-xs' : 'text-teal-300 bg-teal-950/40 hover:bg-[#23344E]/60 hover:text-white border border-teal-500/30' }}">
-                                    <x-icon name="layers" class="h-4 w-4 shrink-0 text-teal-300" />
-                                    <span>Pusat Persuratan</span>
-                                    <span class="ml-auto rounded bg-teal-500/20 px-1.5 py-0.5 text-[9px] font-bold text-teal-200 uppercase">Terpadu</span>
-                                </a>
-
-                                <!-- Sub-Register Divider & Group (UX-002: Hierarchy clarification) -->
-                                <div class="pt-2.5 pb-1 px-3 flex items-center gap-2">
-                                    <span class="h-px flex-1 bg-slate-700/60"></span>
-                                    <span class="text-[9px] font-bold tracking-wider text-slate-400 uppercase">Register Individual</span>
-                                    <span class="h-px flex-1 bg-slate-700/60"></span>
-                                </div>
-
-                                <!-- Surat Masuk -->
-                                <a href="/surat-masuk" 
-                                   class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 pl-4 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('surat-masuk*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
-                                    <x-icon name="mail" class="h-4 w-4 shrink-0 text-slate-400" />
-                                    <span>Surat Masuk</span>
-                                </a>
-
-                                <!-- Surat Keluar -->
-                                <a href="/surat-keluar" 
-                                   class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 pl-4 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('surat-keluar*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
-                                    <x-icon name="send" class="h-4 w-4 shrink-0 text-slate-400" />
-                                    <span>Surat Keluar</span>
-                                </a>
-
-                                <!-- Rekap Pengambilan Piagam -->
-                                <a href="/piagam" 
-                                   class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 pl-4 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('piagam*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
-                                    <x-icon name="award" class="h-4 w-4 shrink-0 text-slate-400" />
-                                    <span>Rekap Pengambilan Piagam</span>
+                                   class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('persuratan*') ? 'bg-[#147D73] font-semibold text-white shadow-xs' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                    <x-icon name="layers" class="h-4 w-4 shrink-0 text-teal-400" />
+                                    <span>Persuratan & Piagam</span>
+                                    <span class="ml-auto rounded bg-teal-500/20 px-1.5 py-0.5 text-[9px] font-bold text-teal-300 uppercase">Terpadu</span>
                                 </a>
                             </div>
                         </div>
@@ -178,9 +149,7 @@
                     <div class="flex flex-col">
                         <div class="flex items-center justify-between border-b border-[#23344E] pb-3">
                             <div class="flex items-center gap-2.5">
-                                <div class="flex h-8 w-8 items-center justify-center rounded-md bg-[#147D73] font-bold text-white text-sm">
-                                    SI
-                                </div>
+                                <img src="{{ asset('images/icon/icon.svg') }}" alt="Logo SISURAT" class="h-8 w-8 shrink-0 object-contain drop-shadow-xs" />
                                 <div>
                                     <span class="text-base font-bold text-white">SISURAT</span>
                                     <span class="ml-1 rounded bg-teal-950 px-1.5 py-0.2 text-[10px] font-semibold text-teal-300">v1.3</span>
@@ -203,14 +172,10 @@
                             <div class="space-y-1">
                                 <p class="px-3 pt-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Layanan Persuratan & Piagam</p>
                                 <div class="space-y-0.5">
-                                    <a href="/surat-masuk" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('surat-masuk*') ? 'bg-[#147D73]/25 text-teal-300 font-semibold' : 'text-slate-300' }}">
-                                        <x-icon name="mail" class="h-4 w-4" /> Surat Masuk
-                                    </a>
-                                    <a href="/surat-keluar" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('surat-keluar*') ? 'bg-[#147D73]/25 text-teal-300 font-semibold' : 'text-slate-300' }}">
-                                        <x-icon name="send" class="h-4 w-4" /> Surat Keluar
-                                    </a>
-                                    <a href="/piagam" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('piagam*') ? 'bg-[#147D73]/25 text-teal-300 font-semibold' : 'text-slate-300' }}">
-                                        <x-icon name="award" class="h-4 w-4" /> Rekap Pengambilan Piagam
+                                    <a href="/persuratan" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('persuratan*') ? 'bg-[#147D73] font-semibold text-white' : 'text-slate-300 hover:bg-[#23344E]' }}">
+                                        <x-icon name="layers" class="h-4 w-4 text-teal-400" />
+                                        <span>Persuratan & Piagam</span>
+                                        <span class="ml-auto rounded bg-teal-500/20 px-1.5 py-0.5 text-[9px] font-bold text-teal-300 uppercase">Terpadu</span>
                                     </a>
                                 </div>
                             </div>
@@ -476,6 +441,8 @@
                 }
             });
         </script>
+
+        <x-modal.confirm />
     @else
         <!-- Guest Viewport Layout (Login, Claim Piagam, etc.) -->
         <main class="min-h-screen bg-[#F7F8FA]">

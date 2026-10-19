@@ -8,43 +8,33 @@
 
     <section class="px-4 py-4 sm:px-6 sm:py-6 md:px-8">
         <!-- ============================================================ -->
-        <!-- REFINED WORKSPACE HEADER                                     -->
+        <!-- REFINED WORKSPACE HEADER (STANDARDIZED)                      -->
         <!-- ============================================================ -->
-        <header class="mb-6 rounded-xl border border-[#E3E8EE] bg-white p-4 sm:p-5 shadow-2xs">
-            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <div class="flex items-center gap-2">
-                        <span class="inline-flex items-center rounded-md bg-[#EBF7F6] border border-[#9DD8D2] px-2.5 py-0.5 text-xs font-bold text-[#0F635B]">
-                            {{ $activeDivision ? $activeDivision->code . ' — ' . $activeDivision->name : 'Semua Divisi (Konteks Global)' }}
-                        </span>
-                        <span class="hidden sm:inline-block text-xs text-[#657184] font-medium">
-                            &bull; Peran: <span class="capitalize font-semibold text-[#17243A]">{{ str_replace('_', ' ', $user->role) }}</span>
-                        </span>
-                    </div>
-                    <h1 class="mt-2 text-xl sm:text-2xl font-bold tracking-tight text-[#17243A]">Dashboard Pengarsipan Surat</h1>
-                    <p class="mt-0.5 text-xs sm:text-sm text-[#657184]">Sistem Informasi Surat & Kearsipan Dinas Pendidikan, Kebudayaan, Kepemudaan, dan Olahraga</p>
-                </div>
+        <x-page-header
+            :badge="$activeDivision ? $activeDivision->code . ' — ' . $activeDivision->name : 'Semua Divisi (Konteks Global)'"
+            :meta="'Peran: ' . ucwords(str_replace('_', ' ', $user->role))"
+            title="Dashboard Pengarsipan Surat"
+            subtitle="Sistem Informasi Surat & Kearsipan Dinas Pendidikan, Kebudayaan, Kepemudaan, dan Olahraga"
+        >
+            <x-slot:actions>
+                <a href="/surat-masuk/create" 
+                   class="flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#147D73] px-4 text-xs font-semibold text-white shadow-xs hover:bg-[#0F635B] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
+                    <x-icon name="plus" class="h-4 w-4" />
+                    <span>Surat Masuk</span>
+                </a>
+                <a href="/surat-keluar/create" 
+                   class="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-[#E3E8EE] bg-white px-3.5 text-xs font-semibold text-[#17243A] shadow-2xs hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
+                    <x-icon name="plus" class="h-4 w-4 text-slate-500" />
+                    <span>Surat Keluar</span>
+                </a>
+                <a href="/piagam/create" 
+                   class="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-[#E3E8EE] bg-white px-3.5 text-xs font-semibold text-[#17243A] shadow-2xs hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
+                    <x-icon name="plus" class="h-4 w-4 text-slate-500" />
+                    <span>Catat Piagam</span>
+                </a>
+            </x-slot:actions>
+        </x-page-header>
 
-                <!-- Role-Aware Quick Action Toolbar -->
-                <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
-                    <a href="/surat-masuk/create" 
-                       class="flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#147D73] px-4 text-xs font-semibold text-white shadow-xs hover:bg-[#0F635B] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
-                        <x-icon name="plus" class="h-4 w-4" />
-                        <span>+ Surat Masuk</span>
-                    </a>
-                    <a href="/surat-keluar/create" 
-                       class="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-[#E3E8EE] bg-white px-3.5 text-xs font-semibold text-[#17243A] shadow-2xs hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
-                        <x-icon name="plus" class="h-4 w-4 text-slate-500" />
-                        <span>+ Surat Keluar</span>
-                    </a>
-                    <a href="/piagam/create" 
-                       class="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-[#E3E8EE] bg-white px-3.5 text-xs font-semibold text-[#17243A] shadow-2xs hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
-                        <x-icon name="plus" class="h-4 w-4 text-slate-500" />
-                        <span>+ Piagam</span>
-                    </a>
-                </div>
-            </div>
-        </header>
 
         <!-- ============================================================ -->
         <!-- QUICK NAVIGATION CARDS (UX-018)                              -->
@@ -64,12 +54,12 @@
                 </div>
                 <div class="mt-3 flex items-center gap-1 text-xs font-semibold text-[#147D73]">
                     <span>Buka Workspace</span>
-                    <span class="transition-transform group-hover:translate-x-1">&rarr;</span>
+                    <x-icon name="arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
                 </div>
             </a>
 
             <!-- 2. Surat Masuk -->
-            <a href="/surat-masuk" class="group flex flex-col justify-between rounded-xl border border-[#E3E8EE] bg-white p-4 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-500 hover:shadow-md">
+            <a href="/persuratan?tab=masuk" class="group flex flex-col justify-between rounded-xl border border-[#E3E8EE] bg-white p-4 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-500 hover:shadow-md">
                 <div class="flex items-start justify-between">
                     <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 transition-colors group-hover:bg-emerald-700 group-hover:text-white">
                         <x-icon name="mail" class="h-5 w-5" />
@@ -78,16 +68,16 @@
                 </div>
                 <div class="mt-3">
                     <h3 class="font-bold text-sm text-[#17243A] group-hover:text-emerald-700 transition-colors">Surat Masuk</h3>
-                    <p class="mt-0.5 text-xs text-[#657184] line-clamp-1">Arsip surat masuk & disposisi</p>
+                    <p class="mt-0.5 text-xs text-[#657184] line-clamp-1">Register arsip surat masuk</p>
                 </div>
                 <div class="mt-3 flex items-center gap-1 text-xs font-semibold text-emerald-700">
                     <span>Lihat Register</span>
-                    <span class="transition-transform group-hover:translate-x-1">&rarr;</span>
+                    <x-icon name="arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
                 </div>
             </a>
 
             <!-- 3. Surat Keluar -->
-            <a href="/surat-keluar" class="group flex flex-col justify-between rounded-xl border border-[#E3E8EE] bg-white p-4 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-500 hover:shadow-md">
+            <a href="/persuratan?tab=keluar" class="group flex flex-col justify-between rounded-xl border border-[#E3E8EE] bg-white p-4 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-500 hover:shadow-md">
                 <div class="flex items-start justify-between">
                     <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-700 transition-colors group-hover:bg-blue-700 group-hover:text-white">
                         <x-icon name="send" class="h-5 w-5" />
@@ -100,7 +90,7 @@
                 </div>
                 <div class="mt-3 flex items-center gap-1 text-xs font-semibold text-blue-700">
                     <span>Lihat Register</span>
-                    <span class="transition-transform group-hover:translate-x-1">&rarr;</span>
+                    <x-icon name="arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
                 </div>
             </a>
 
@@ -118,7 +108,7 @@
                 </div>
                 <div class="mt-3 flex items-center gap-1 text-xs font-semibold text-amber-700">
                     <span>Mulai Cari</span>
-                    <span class="transition-transform group-hover:translate-x-1">&rarr;</span>
+                    <x-icon name="arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
                 </div>
             </a>
         </div>
@@ -153,7 +143,7 @@
                     <p class="text-2xl sm:text-3xl font-extrabold text-[#17243A] tabular-nums">{{ number_format($totalIncoming) }}</p>
                     <div class="mt-1 flex items-center justify-between text-xs">
                         <span class="font-medium text-[#0F635B]">{{ $percentIncoming }}% total</span>
-                        <a href="/surat-masuk" class="font-semibold text-[#147D73] hover:underline">
+                        <a href="/persuratan?tab=masuk" class="font-semibold text-[#147D73] hover:underline">
                             Buka arsip &rarr;
                         </a>
                     </div>
@@ -172,7 +162,7 @@
                     <p class="text-2xl sm:text-3xl font-extrabold text-[#17243A] tabular-nums">{{ number_format($totalOutgoing) }}</p>
                     <div class="mt-1 flex items-center justify-between text-xs">
                         <span class="font-medium text-blue-700">{{ $percentOutgoing }}% total</span>
-                        <a href="/surat-keluar" class="font-semibold text-blue-700 hover:underline">
+                        <a href="/persuratan?tab=keluar" class="font-semibold text-blue-700 hover:underline">
                             Buka arsip &rarr;
                         </a>
                     </div>
@@ -191,7 +181,7 @@
                     <p class="text-2xl sm:text-3xl font-extrabold text-[#17243A] tabular-nums">{{ number_format($totalPiagam) }}</p>
                     <div class="mt-1 flex items-center justify-between text-xs">
                         <span class="font-medium text-amber-700">{{ $percentPiagam }}% total</span>
-                        <a href="/piagam" class="font-semibold text-amber-700 hover:underline">
+                        <a href="/persuratan?tab=piagam" class="font-semibold text-amber-700 hover:underline">
                             Buka log &rarr;
                         </a>
                     </div>
@@ -342,7 +332,7 @@
                         <x-icon name="mail" class="h-4 w-4 text-[#147D73]" />
                         <h2 class="font-bold text-sm text-[#17243A]">Arsip Masuk Terkini</h2>
                     </div>
-                    <a href="/surat-masuk" class="text-xs font-semibold text-[#147D73] hover:underline">
+                    <a href="/persuratan?tab=masuk" class="text-xs font-semibold text-[#147D73] hover:underline">
                         Lihat semua &rarr;
                     </a>
                 </div>
@@ -375,7 +365,7 @@
                         <x-icon name="send" class="h-4 w-4 text-blue-700" />
                         <h2 class="font-bold text-sm text-[#17243A]">Arsip Keluar Terkini</h2>
                     </div>
-                    <a href="/surat-keluar" class="text-xs font-semibold text-blue-700 hover:underline">
+                    <a href="/persuratan?tab=keluar" class="text-xs font-semibold text-blue-700 hover:underline">
                         Lihat semua &rarr;
                     </a>
                 </div>

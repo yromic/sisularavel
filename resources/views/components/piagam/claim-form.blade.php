@@ -378,6 +378,7 @@
                 <div class="relative w-full overflow-hidden rounded-xl border-2 border-dashed border-slate-300 bg-white shadow-inner">
                     <canvas id="signature-pad"
                             data-testid="signature-pad"
+                            aria-label="Kanvas Tanda Tangan Digital"
                             class="block w-full min-h-[180px] h-48 cursor-crosshair touch-none"
                             style="touch-action: none; -ms-touch-action: none;"></canvas>
                     <div id="signature-watermark" class="pointer-events-none absolute inset-0 flex items-center justify-center text-xs font-medium text-slate-300 select-none">
@@ -421,7 +422,20 @@
     let isDrawing = false;
     let hasStrokes = false;
     let strokeCount = 0;
-    const idempotencyKey = '{{ (string) \Illuminate\Support\Str::uuid() }}';
+    let lastCanvasWidth = 0;
+    let lastCanvasHeight = 0;
+
+    function generateIdempotencyKey() {
+        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+            return crypto.randomUUID();
+        }
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    let idempotencyKey = '{{ (string) \Illuminate\Support\Str::uuid() }}' || generateIdempotencyKey();
 
     function initSignatureCanvas() {
         canvas = document.getElementById('signature-pad');
@@ -431,6 +445,15 @@
         function resizeCanvas() {
             const rect = canvas.getBoundingClientRect();
             if (rect.width === 0 || rect.height === 0) return;
+
+            const currentWidth = Math.round(rect.width);
+            const currentHeight = Math.round(rect.height);
+            // Guard against redundant canvas redraws when mobile virtual keyboard triggers resize without changing width
+            if (currentWidth === lastCanvasWidth && currentHeight === lastCanvasHeight) {
+                return;
+            }
+            lastCanvasWidth = currentWidth;
+            lastCanvasHeight = currentHeight;
 
             // Preserve canvas content if user has already drawn
             let tempImage = null;
@@ -647,7 +670,12 @@
 
                 if (!response.ok) {
                     errorBanner.classList.remove('hidden');
-                    if (data.errors) {
+                    if (response.status === 409) {
+                        idempotencyKey = generateIdempotencyKey();
+                        const li = document.createElement('li');
+                        li.textContent = 'Permintaan tanda terima terdeteksi ganda atau sudah pernah diproses. Kunci transaksi telah diperbarui, silakan periksa atau kirim ulang formulir.';
+                        errorList.appendChild(li);
+                    } else if (data.errors) {
                         for (const [field, messages] of Object.entries(data.errors)) {
                             messages.forEach(msg => {
                                 const li = document.createElement('li');
@@ -668,7 +696,8 @@
                     return;
                 }
 
-                // SUCCESS STATE
+                // SUCCESS STATE - regenerate key for subsequent submissions
+                idempotencyKey = generateIdempotencyKey();
                 document.getElementById('claim-form-card').classList.add('hidden');
                 document.getElementById('claim-success-banner').classList.remove('hidden');
                 const successMsg = document.getElementById('claim-success-message');
@@ -694,6 +723,7 @@
     function resetFormForNewReceipt() {
         document.getElementById('public-handover-form').reset();
         clearSignaturePad();
+        idempotencyKey = generateIdempotencyKey();
         document.getElementById('claim-success-banner').classList.add('hidden');
         document.getElementById('claim-form-card').classList.remove('hidden');
         const submitBtn = document.getElementById('btn-submit-handover');

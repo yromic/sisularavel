@@ -1,15 +1,18 @@
 <x-layouts.app title="Surat Keluar">
     <section class="px-4 py-4 md:px-8">
-        <header class="sticky top-0 z-10 -mx-4 mb-4 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:static md:mx-0 md:rounded-md md:border">
-            <div>
-                <p class="text-sm font-semibold text-emerald-700">{{ auth()->user()->division?->code ?? 'GLOBAL' }}</p>
-                <h1 class="text-xl font-semibold text-slate-900">Surat Keluar</h1>
-            </div>
-            <a href="/surat-keluar/create" onclick="event.preventDefault(); openLetterFormModal('surat-keluar', 'create')" class="flex min-h-[44px] items-center gap-2 rounded-md bg-emerald-700 px-3 font-semibold text-white hover:bg-emerald-800 shadow-xs">
-                <x-icon name="plus" class="h-5 w-5" />
-                Tambah
-            </a>
-        </header>
+        <x-page-header
+            :badge="auth()->user()->division?->code ? auth()->user()->division->code . ' — ' . auth()->user()->division->name : 'Semua Divisi (Konteks Global)'"
+            meta="Register Arsip Keluar"
+            title="Surat Keluar"
+            subtitle="Daftar seluruh surat dinas resmi yang diterbitkan beserta penomoran agenda kerja."
+        >
+            <x-slot:actions>
+                <a href="/surat-keluar/create" onclick="event.preventDefault(); openLetterFormModal('surat-keluar', 'create')" class="flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#147D73] px-4 text-xs font-semibold text-white shadow-xs hover:bg-[#0F635B] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
+                    <x-icon name="plus" class="h-4 w-4" />
+                    <span>+ Tambah Surat Keluar</span>
+                </a>
+            </x-slot:actions>
+        </x-page-header>
 
         @if(session('success'))
             <div class="mb-4 rounded-md border border-emerald-300 bg-emerald-50 p-4 text-sm font-medium text-emerald-900">
@@ -78,7 +81,7 @@
                     <div class="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 pt-2.5">
                         <div class="flex items-center gap-1.5">
                             @if ($letter->trashed())
-                                <form method="post" action="/surat-keluar/{{ $letter->id }}/restore" class="inline" onsubmit="return confirm('Pulihkan kembali surat keluar {{ $letter->letter_number }}?')">
+                                <form method="post" action="/surat-keluar/{{ $letter->id }}/restore" class="inline" onsubmit="return confirmAction(event, 'Pulihkan kembali surat keluar {{ $letter->letter_number }}?', 'Konfirmasi Pemulihan Surat', 'emerald', 'Ya, Pulihkan')">
                                     @csrf
                                     <button type="submit" class="inline-flex min-h-[36px] items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 shadow-2xs">
                                         <x-icon name="rotate-ccw" class="h-3.5 w-3.5 text-emerald-700" />
@@ -89,9 +92,11 @@
                                 <a href="/surat-keluar/{{ $letter->id }}" onclick="event.preventDefault(); openLetterDetailModal('surat-keluar', '{{ $letter->id }}')" class="inline-flex min-h-[36px] items-center rounded-md border border-slate-300 px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
                                     Detail
                                 </a>
-                                <a href="/surat-keluar/{{ $letter->id }}/edit" onclick="event.preventDefault(); openLetterFormModal('surat-keluar', 'edit', {{ json_encode($letterPayload) }})" class="inline-flex min-h-[36px] items-center rounded-md border border-emerald-600 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100">
-                                    Edit
-                                </a>
+                                @if (in_array(auth()->user()->role, ['super_admin', 'division_admin'], true))
+                                    <a href="/surat-keluar/{{ $letter->id }}/edit" onclick="event.preventDefault(); openLetterFormModal('surat-keluar', 'edit', {{ json_encode($letterPayload) }})" class="inline-flex min-h-[36px] items-center rounded-md border border-emerald-600 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100">
+                                        Edit
+                                    </a>
+                                @endif
                             @endif
                         </div>
                         @if ($letter->attachments->isNotEmpty())
@@ -162,7 +167,7 @@
                             <td class="p-3 text-center">
                                 <div class="flex items-center justify-center gap-1.5" onclick="event.stopPropagation()">
                                     @if ($letter->trashed())
-                                        <form method="post" action="/surat-keluar/{{ $letter->id }}/restore" class="inline" onsubmit="return confirm('Pulihkan kembali surat keluar {{ $letter->letter_number }}?')">
+                                        <form method="post" action="/surat-keluar/{{ $letter->id }}/restore" class="inline" onsubmit="return confirmAction(event, 'Pulihkan kembali surat keluar {{ $letter->letter_number }}?', 'Konfirmasi Pemulihan Surat', 'emerald', 'Ya, Pulihkan')">
                                             @csrf
                                             <button type="submit" class="inline-flex min-h-[34px] items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 shadow-2xs" title="Pulihkan surat">
                                                 <x-icon name="rotate-ccw" class="h-3.5 w-3.5 text-emerald-700" />
@@ -173,9 +178,11 @@
                                         <a href="/surat-keluar/{{ $letter->id }}" onclick="event.preventDefault(); openLetterDetailModal('surat-keluar', '{{ $letter->id }}')" class="inline-flex min-h-[34px] items-center rounded-md border border-slate-300 px-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50" title="Detail surat">
                                             Detail
                                         </a>
-                                        <a href="/surat-keluar/{{ $letter->id }}/edit" onclick="event.preventDefault(); openLetterFormModal('surat-keluar', 'edit', {{ json_encode($letterPayload) }})" class="inline-flex min-h-[34px] items-center rounded-md border border-emerald-600 bg-emerald-50 px-2.5 text-xs font-medium text-emerald-800 hover:bg-emerald-100" title="Edit surat">
-                                            Edit
-                                        </a>
+                                        @if (in_array(auth()->user()->role, ['super_admin', 'division_admin'], true))
+                                            <a href="/surat-keluar/{{ $letter->id }}/edit" onclick="event.preventDefault(); openLetterFormModal('surat-keluar', 'edit', {{ json_encode($letterPayload) }})" class="inline-flex min-h-[34px] items-center rounded-md border border-emerald-600 bg-emerald-50 px-2.5 text-xs font-medium text-emerald-800 hover:bg-emerald-100" title="Edit surat">
+                                                Edit
+                                            </a>
+                                        @endif
                                         @if (in_array(auth()->user()->role, ['super_admin', 'division_admin'], true))
                                             <button type="button" onclick="openLetterDeleteModal('surat-keluar', '{{ $letter->id }}', '{{ addslashes($letter->letter_number) }}')" class="flex min-h-[34px] min-w-[34px] items-center justify-center rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50" title="Hapus surat keluar">
                                                 <x-icon name="trash" class="h-4 w-4" />

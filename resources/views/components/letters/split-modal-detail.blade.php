@@ -457,14 +457,23 @@
         closeLetterDetailModal();
         if (typeof openLetterDeleteModal === 'function') {
             openLetterDeleteModal(type, letter.id, letter.nomor_surat || letter.letter_number);
-        } else if (confirm(`Hapus arsip surat ${letter.nomor_surat || letter.letter_number}?`)) {
-            fetch(`/${type}/${letter.id}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                    'Accept': 'application/json'
+        } else if (typeof window.showConfirmDialog === 'function') {
+            window.showConfirmDialog({
+                title: 'Konfirmasi Hapus Surat',
+                message: `Hapus arsip surat ${letter.nomor_surat || letter.letter_number}? Tindakan ini akan memindahkan surat ke arsip terhapus.`,
+                variant: 'danger',
+                confirmText: 'Ya, Hapus Surat'
+            }).then((confirmed) => {
+                if (confirmed) {
+                    fetch(`/${type}/${letter.id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                            'Accept': 'application/json'
+                        }
+                    }).then(() => window.location.reload());
                 }
-            }).then(() => window.location.reload());
+            });
         }
     }
 

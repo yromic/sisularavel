@@ -40,53 +40,64 @@
                 @if (auth()->user()->role === 'super_admin')
                     <!-- Super Admin Division Selector -->
                     <div id="form-row-division">
-                        <label class="block text-xs font-semibold text-slate-700">Divisi Pengarsip *</label>
+                        <label for="form-input-division" class="block text-xs font-semibold text-slate-700">Divisi Pengarsip *</label>
                         <select name="division_id" id="form-input-division" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm focus:border-emerald-700 focus:outline-hidden" required>
+                            <option value="" disabled @selected(!session('active_division_id'))>-- Pilih Divisi Pengarsip (Wajib) --</option>
                             @foreach (\App\Models\Division::where('status', 'active')->orderBy('name')->get() as $div)
                                 <option value="{{ $div->id }}" @selected(session('active_division_id') == $div->id)>
                                     {{ $div->code }} - {{ $div->name }}
                                 </option>
                             @endforeach
                         </select>
+                        <p id="form-division-edit-locked-notice" class="hidden mt-1 text-[11px] text-slate-500 font-medium">Divisi pengarsip terkunci permanen sesuai aturan kepemilikan tunggal (DEC-TEN-001).</p>
                     </div>
                 @endif
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <!-- Nomor Surat -->
                     <div class="sm:col-span-2">
-                        <label class="block text-xs font-semibold text-slate-700">Nomor Surat *</label>
+                        <label for="form-input-nomor" class="block text-xs font-semibold text-slate-700">Nomor Surat *</label>
                         <input name="nomor_surat" id="form-input-nomor" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Contoh: 005/789/Disdik/2026" required>
                     </div>
 
                     <!-- Asal Surat (Hanya Surat Masuk) -->
                     <div id="form-row-asal" class="sm:col-span-2">
-                        <label class="block text-xs font-semibold text-slate-700">Asal Surat (Instansi Pengirim) *</label>
+                        <label for="form-input-asal" class="block text-xs font-semibold text-slate-700">Asal Surat (Instansi Pengirim) *</label>
                         <input name="asal_surat" id="form-input-asal" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Contoh: Kementerian Pendidikan Dasar" required>
                     </div>
 
                     <!-- Tanggal Surat -->
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700">Tanggal Surat *</label>
+                        <label for="form-input-tanggal-surat" class="block text-xs font-semibold text-slate-700">Tanggal Surat *</label>
                         <input name="tanggal_surat" id="form-input-tanggal-surat" type="date" value="{{ date('Y-m-d') }}" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" required>
                     </div>
 
                     <!-- Tanggal Diterima (Surat Masuk) -->
                     <div id="form-row-tanggal-diterima">
-                        <label class="block text-xs font-semibold text-slate-700">Tanggal Diterima *</label>
+                        <label for="form-input-tanggal-diterima" class="block text-xs font-semibold text-slate-700">Tanggal Diterima *</label>
                         <input name="tanggal_diterima" id="form-input-tanggal-diterima" type="date" value="{{ date('Y-m-d') }}" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" required>
                     </div>
 
                     <!-- Tanggal Share (Surat Keluar) -->
                     <div id="form-row-tanggal-share" class="hidden">
-                        <label class="block text-xs font-semibold text-slate-700">Tanggal Diseminasi / Share *</label>
+                        <label for="form-input-tanggal-share" class="block text-xs font-semibold text-slate-700">Tanggal Diseminasi / Share *</label>
                         <input name="tanggal_share" id="form-input-tanggal-share" type="date" value="{{ date('Y-m-d') }}" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden">
                     </div>
                 </div>
 
                 <!-- Perihal -->
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700">Perihal / Ringkasan *</label>
+                    <label for="form-input-perihal" class="block text-xs font-semibold text-slate-700">Perihal / Ringkasan *</label>
                     <textarea name="perihal" id="form-input-perihal" rows="3" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2.5 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Perihal atau ringkasan isi surat..." required></textarea>
+                </div>
+
+                <!-- Notice Lampiran Mode Edit (UX2-003) -->
+                <div id="form-edit-attachment-notice" class="hidden rounded-lg border border-slate-200 bg-slate-50 p-3.5 text-xs text-slate-600">
+                    <div class="flex items-center gap-2 font-semibold text-slate-800">
+                        <x-icon name="file-text" class="h-4 w-4 text-emerald-700" />
+                        <span>Dokumen Lampiran Terkunci</span>
+                    </div>
+                    <p class="mt-1 text-[11px] text-slate-500 leading-relaxed">Lampiran berkas tidak dapat diubah dari formulir metadata ini. Untuk mengganti berkas yang hilang atau rusak, silakan buka halaman <strong>Detail Surat</strong> dan gunakan formulir <strong>Remediasi Lampiran</strong>.</p>
                 </div>
 
                 <!-- Lampiran Berkas & Kamera Multi-Lembar -->
@@ -217,6 +228,16 @@
             document.getElementById('form-input-tanggal-surat').value = today;
             document.getElementById('form-input-tanggal-diterima').value = today;
             document.getElementById('form-input-tanggal-share').value = today;
+
+            // Reset Mode Create UI
+            document.getElementById('form-row-attachment')?.classList.remove('hidden');
+            document.getElementById('form-edit-attachment-notice')?.classList.add('hidden');
+            const divSelect = document.getElementById('form-input-division');
+            if (divSelect) {
+                divSelect.removeAttribute('disabled');
+                divSelect.classList.remove('bg-slate-100', 'cursor-not-allowed');
+            }
+            document.getElementById('form-division-edit-locked-notice')?.classList.add('hidden');
         } else if (mode === 'edit' && letterData) {
             titleEl.textContent = type === 'surat-masuk' ? 'Edit Surat Masuk' : 'Edit Surat Keluar';
             submitText.textContent = 'Simpan Perubahan';
@@ -238,15 +259,41 @@
             if (letterData.division_id && document.getElementById('form-input-division')) {
                 document.getElementById('form-input-division').value = letterData.division_id;
             }
+
+            // Mode Edit UI constraints (UX2-003)
+            document.getElementById('form-row-attachment')?.classList.add('hidden');
+            document.getElementById('form-edit-attachment-notice')?.classList.remove('hidden');
+            const divSelect = document.getElementById('form-input-division');
+            if (divSelect) {
+                divSelect.setAttribute('disabled', 'disabled');
+                divSelect.classList.add('bg-slate-100', 'cursor-not-allowed');
+            }
+            document.getElementById('form-division-edit-locked-notice')?.classList.remove('hidden');
+
+            // Baseline values for dirty guard (UX2-030)
+            editInitialValues = {
+                nomor: (letterData.nomor_surat || letterData.letter_number || '').trim(),
+                perihal: (letterData.perihal || letterData.subject || '').trim(),
+                asal: (letterData.asal_surat || letterData.origin_agency || '').trim(),
+                tglSurat: letterData.tanggal_surat || letterData.letter_date || '',
+                tglDiterima: letterData.tanggal_diterima || letterData.received_date || '',
+                tglShare: letterData.tanggal_share || letterData.disseminated_date || ''
+            };
         }
 
         previousFormFocusedElement = document.activeElement;
         document.addEventListener('keydown', trapFormModalFocus);
         modal.classList.remove('hidden');
         document.body.classList.add('overflow-hidden');
+
+        setTimeout(() => {
+            const first = document.getElementById('form-input-nomor');
+            if (first) first.focus();
+        }, 50);
     }
 
     let previousFormFocusedElement = null;
+    let editInitialValues = { nomor: '', perihal: '', asal: '', tglSurat: '', tglDiterima: '', tglShare: '' };
 
     function trapFormModalFocus(e) {
         const modal = document.getElementById('letter-form-modal');
@@ -284,14 +331,39 @@
             if (nomor !== '' || perihal !== '' || (currentFormType === 'surat-masuk' && asal !== '')) {
                 return true;
             }
+        } else if (currentFormMode === 'edit') {
+            const tglSurat = document.getElementById('form-input-tanggal-surat')?.value || '';
+            const tglDiterima = document.getElementById('form-input-tanggal-diterima')?.value || '';
+            const tglShare = document.getElementById('form-input-tanggal-share')?.value || '';
+
+            if (nomor !== editInitialValues.nomor ||
+                perihal !== editInitialValues.perihal ||
+                asal !== editInitialValues.asal ||
+                tglSurat !== editInitialValues.tglSurat ||
+                tglDiterima !== editInitialValues.tglDiterima ||
+                tglShare !== editInitialValues.tglShare) {
+                return true;
+            }
         }
         return false;
     }
 
     function requestCloseLetterFormModal() {
         if (isLetterFormDirty()) {
-            const confirmed = window.confirm('Ada draf isian surat atau foto kamera yang belum disimpan. Batalkan dan tutup formulir?');
-            if (!confirmed) {
+            if (typeof window.showConfirmDialog === 'function') {
+                window.showConfirmDialog({
+                    title: 'Batalkan Pengisian Formulir',
+                    message: 'Ada draf isian surat atau foto kamera yang belum disimpan. Batalkan dan tutup formulir sekarang?',
+                    variant: 'amber',
+                    confirmText: 'Ya, Tutup Formulir',
+                    cancelText: 'Lanjutkan Pengisian'
+                }).then((confirmed) => {
+                    if (confirmed) {
+                        closeLetterFormModal();
+                    }
+                });
+                return;
+            } else if (!window.confirm('Ada draf isian surat atau foto kamera yang belum disimpan. Batalkan dan tutup formulir?')) {
                 return;
             }
         }

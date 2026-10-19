@@ -1,49 +1,45 @@
 <x-layouts.app title="Pusat Persuratan & Buku Ekspedisi">
     <section class="px-4 py-4 md:px-8">
         
-        <!-- Header Halaman Terpadu -->
-        <header class="sticky top-0 z-10 -mx-4 mb-4 flex flex-col gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between md:static md:mx-0 md:rounded-md md:border">
-            <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-emerald-700">
-                    {{ auth()->user()->division?->code ?? 'LOKET GLOBAL' }} — {{ auth()->user()->division?->name ?? 'Seluruh Bidang' }}
-                </p>
-                <h1 class="text-xl font-bold text-slate-900">Pusat Persuratan & Buku Ekspedisi</h1>
-                <p class="text-xs text-slate-500">Kelola seluruh arsip Surat Masuk, Surat Keluar, dan Buku Ekspedisi Piagam dalam satu konsol terpadu.</p>
-            </div>
-
-            <!-- Dynamic Action Toolbar: Menyesuaikan Tab Aktif -->
-            <div class="flex flex-wrap items-center gap-2">
+        <!-- Header Halaman Terpadu (Standar SISURAT) -->
+        <x-page-header
+            :badge="auth()->user()->division?->code ? auth()->user()->division->code . ' — ' . auth()->user()->division->name : 'Semua Divisi (Konteks Global)'"
+            meta="Status: Konsol Terpadu"
+            title="Pusat Persuratan & Buku Ekspedisi"
+            subtitle="Kelola seluruh arsip Surat Masuk, Surat Keluar, dan Buku Ekspedisi Piagam dalam satu konsol terpadu."
+        >
+            <x-slot:actions>
                 <!-- Aksi Tambah Surat Masuk -->
-                <button type="button" id="btn-action-masuk" onclick="openLetterFormModal('surat-masuk', 'create')" class="flex min-h-[44px] items-center gap-2 rounded-md bg-emerald-700 px-3.5 text-xs font-semibold text-white shadow-xs hover:bg-emerald-800">
+                <button type="button" id="btn-action-masuk" onclick="openLetterFormModal('surat-masuk', 'create')" class="flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#147D73] px-4 text-xs font-semibold text-white shadow-xs hover:bg-[#0F635B] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
                     <x-icon name="plus" class="h-4 w-4" />
-                    + Tambah Surat Masuk
+                    <span>+ Tambah Surat Masuk</span>
                 </button>
 
                 <!-- Aksi Tambah Surat Keluar -->
-                <button type="button" id="btn-action-keluar" onclick="openLetterFormModal('surat-keluar', 'create')" class="hidden flex min-h-[44px] items-center gap-2 rounded-md bg-blue-700 px-3.5 text-xs font-semibold text-white shadow-xs hover:bg-blue-800">
+                <button type="button" id="btn-action-keluar" onclick="openLetterFormModal('surat-keluar', 'create')" class="hidden flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#147D73] px-4 text-xs font-semibold text-white shadow-xs hover:bg-[#0F635B] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
                     <x-icon name="plus" class="h-4 w-4" />
-                    + Tambah Surat Keluar
+                    <span>+ Tambah Surat Keluar</span>
                 </button>
 
                 <!-- Aksi Tambah Piagam -->
-                <a href="/piagam/ambil" id="btn-action-piagam" class="hidden flex min-h-[44px] items-center gap-2 rounded-md bg-teal-700 px-3.5 text-xs font-semibold text-white shadow-xs hover:bg-teal-800">
+                <a href="/piagam/ambil" id="btn-action-piagam" class="hidden flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#147D73] px-4 text-xs font-semibold text-white shadow-xs hover:bg-[#0F635B] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
                     <x-icon name="plus" class="h-4 w-4" />
-                    + Catat Pengambilan Piagam
+                    <span>+ Catat Pengambilan Piagam</span>
                 </a>
 
                 <!-- Ekspor CSV -->
-                <a id="btn-export-csv" href="/api/v1/reports/export.csv?type=incoming" onclick="handleExportClick(this, 'Menyiapkan CSV...')" class="flex min-h-[44px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs">
+                <a id="btn-export-csv" href="/api/v1/reports/export.csv?type=incoming" onclick="handleExportClick(this, 'Menyiapkan CSV...')" class="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-[#E3E8EE] bg-white px-3.5 text-xs font-semibold text-[#17243A] shadow-2xs hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
                     <x-icon name="download" class="h-4 w-4 text-slate-500" />
-                    Ekspor CSV
+                    <span>Ekspor CSV</span>
                 </a>
 
                 <!-- Cetak PDF -->
-                <a id="btn-export-pdf" href="/api/v1/reports/export.pdf?type=incoming" target="_blank" onclick="handleExportClick(this, 'Menyiapkan PDF...')" class="flex min-h-[44px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs">
+                <a id="btn-export-pdf" href="/api/v1/reports/export.pdf?type=incoming" target="_blank" onclick="handleExportClick(this, 'Menyiapkan PDF...')" class="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-[#E3E8EE] bg-white px-3.5 text-xs font-semibold text-[#17243A] shadow-2xs hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
                     <x-icon name="file-text" class="h-4 w-4 text-slate-500" />
-                    Cetak PDF
+                    <span>Cetak PDF</span>
                 </a>
-            </div>
-        </header>
+            </x-slot:actions>
+        </x-page-header>
 
         <!-- Segmented Tab Switcher (Touch-First & Zero Reload) & Status Toggle -->
         <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -102,31 +98,57 @@
             </div>
         @endif
 
-        <!-- Universal Filter & Search Toolbar -->
+        <!-- Universal Filter & Search Toolbar (UX2-012 Collapsible Mobile Optimization) -->
         <div class="mb-5 rounded-lg border border-slate-200 bg-white p-3.5 shadow-xs">
-            <form method="get" action="/persuratan" id="workspace-search-form" class="grid grid-cols-1 gap-2.5 sm:grid-cols-4">
+            <form method="get" action="/persuratan" id="workspace-search-form" class="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-12 sm:gap-2.5">
                 <input type="hidden" name="tab" id="form-active-tab-input" value="{{ $tab }}">
                 <input type="hidden" name="status" value="{{ $status ?? 'active' }}">
                 
-                <div class="sm:col-span-2">
-                    <div class="flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-3">
+                <div class="sm:col-span-5">
+                    <label for="input-search-q" class="sr-only">Kata Kunci Pencarian</label>
+                    <div class="flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-3 focus-within:border-emerald-700 focus-within:ring-1 focus-within:ring-emerald-700">
                         <x-icon name="search" class="h-4 w-4 text-slate-400 shrink-0" />
-                        <input name="q" id="input-search-q" value="{{ request('q') }}" class="min-h-[40px] w-full border-0 bg-transparent text-xs focus:outline-hidden" placeholder="Cari nomor surat, perihal, instansi, atau pengambil...">
+                        <input name="q" id="input-search-q" value="{{ request('q') }}" class="min-h-[40px] w-full border-0 bg-transparent text-xs text-slate-800 focus:outline-hidden" placeholder="Cari nomor surat, perihal, instansi, atau pengambil...">
                     </div>
                 </div>
-                <div>
-                    <input type="date" name="date_from" value="{{ request('date_from') }}" class="min-h-[42px] w-full rounded-md border border-slate-300 bg-white px-3 text-xs text-slate-700" title="Dari Tanggal">
-                </div>
-                <div class="flex items-center gap-2">
-                    <input type="date" name="date_to" value="{{ request('date_to') }}" class="min-h-[42px] w-full rounded-md border border-slate-300 bg-white px-3 text-xs text-slate-700" title="Sampai Tanggal">
-                    <button type="submit" class="min-h-[42px] rounded-md bg-slate-800 px-4 text-xs font-semibold text-white hover:bg-slate-900 shadow-xs">
-                        Filter
+
+                <!-- Mobile Toggle Button for Date Filter Panel -->
+                <div class="flex items-center gap-2 sm:hidden">
+                    <button type="button"
+                            onclick="toggleMobileFilterPanel()"
+                            id="btn-toggle-mobile-filter"
+                            class="flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-slate-50 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100">
+                        <x-icon name="calendar" class="h-4 w-4 text-slate-500" />
+                        <span>Filter Rentang Tanggal</span>
+                        @if (request()->filled('date_from') || request()->filled('date_to'))
+                            <span class="h-2 w-2 rounded-full bg-emerald-600"></span>
+                        @endif
                     </button>
-                    @if (request()->hasAny(['q', 'date_from', 'date_to']))
-                        <a href="/persuratan?tab={{ $tab }}&status={{ $status ?? 'active' }}" class="min-h-[42px] flex items-center justify-center rounded-md border border-slate-300 px-2.5 text-xs text-slate-600 hover:bg-slate-100" title="Reset filter">
-                            Reset
-                        </a>
-                    @endif
+                    <button type="submit" class="min-h-[40px] rounded-md bg-slate-800 px-4 text-xs font-semibold text-white hover:bg-slate-900 shadow-xs">
+                        Cari
+                    </button>
+                </div>
+
+                <!-- Date Filter Panel (Collapsible on mobile, inline on desktop) -->
+                <div id="workspace-date-filter-panel" class="{{ (request()->filled('date_from') || request()->filled('date_to')) ? '' : 'hidden sm:grid' }} sm:col-span-7 sm:grid sm:grid-cols-7 sm:gap-2 space-y-2.5 sm:space-y-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                    <div class="sm:col-span-3">
+                        <label for="filter-date-from" class="block text-[11px] font-semibold text-slate-600 mb-1 sm:sr-only">Tanggal Mulai</label>
+                        <input type="date" name="date_from" id="filter-date-from" value="{{ request('date_from') }}" class="min-h-[42px] w-full rounded-md border border-slate-300 bg-white px-3 text-xs text-slate-700" title="Dari Tanggal">
+                    </div>
+                    <div class="sm:col-span-3">
+                        <label for="filter-date-to" class="block text-[11px] font-semibold text-slate-600 mb-1 sm:sr-only">Tanggal Selesai</label>
+                        <input type="date" name="date_to" id="filter-date-to" value="{{ request('date_to') }}" class="min-h-[42px] w-full rounded-md border border-slate-300 bg-white px-3 text-xs text-slate-700" title="Sampai Tanggal">
+                    </div>
+                    <div class="flex items-center gap-1.5 sm:col-span-1">
+                        <button type="submit" class="hidden sm:inline-flex min-h-[42px] w-full items-center justify-center rounded-md bg-slate-800 px-3 text-xs font-semibold text-white hover:bg-slate-900 shadow-xs">
+                            Filter
+                        </button>
+                        @if (request()->hasAny(['q', 'date_from', 'date_to']))
+                            <a href="/persuratan?tab={{ $tab }}&status={{ $status ?? 'active' }}" class="min-h-[38px] sm:min-h-[42px] flex items-center justify-center rounded-md border border-slate-300 px-2.5 text-xs text-slate-600 hover:bg-slate-100 w-full sm:w-auto" title="Reset filter">
+                                Reset
+                            </a>
+                        @endif
+                    </div>
                 </div>
             </form>
 
@@ -196,7 +218,7 @@
                             <span class="text-[11px] text-slate-400 font-mono">Tgl Surat: {{ $letter->letter_date?->format('d/m/Y') }}</span>
                             <div class="flex items-center gap-1.5">
                                 @if ($letter->trashed())
-                                    <form method="post" action="/surat-masuk/{{ $letter->id }}/restore" class="inline" onsubmit="return confirm('Pulihkan kembali surat masuk {{ $letter->letter_number }}?')">
+                                    <form method="post" action="/surat-masuk/{{ $letter->id }}/restore" class="inline" onsubmit="return confirmAction(event, 'Pulihkan kembali surat masuk {{ $letter->letter_number }}?', 'Konfirmasi Pemulihan Surat', 'emerald', 'Ya, Pulihkan')">
                                         @csrf
                                         <button type="submit" onclick="event.stopPropagation()" class="inline-flex min-h-[32px] items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 shadow-2xs">
                                             <x-icon name="rotate-ccw" class="h-3.5 w-3.5 text-emerald-700" />
@@ -266,7 +288,7 @@
                                 <td class="p-3 text-center">
                                     <div class="flex items-center justify-center gap-1.5" onclick="event.stopPropagation()">
                                         @if ($letter->trashed())
-                                            <form method="post" action="/surat-masuk/{{ $letter->id }}/restore" class="inline" onsubmit="return confirm('Pulihkan kembali surat masuk {{ $letter->letter_number }}?')">
+                                            <form method="post" action="/surat-masuk/{{ $letter->id }}/restore" class="inline" onsubmit="return confirmAction(event, 'Pulihkan kembali surat masuk {{ $letter->letter_number }}?', 'Konfirmasi Pemulihan Surat', 'emerald', 'Ya, Pulihkan')">
                                                 @csrf
                                                 <button type="submit" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 shadow-2xs">
                                                     <x-icon name="rotate-ccw" class="h-3.5 w-3.5 text-emerald-700" />
@@ -334,7 +356,7 @@
                             <span class="text-[11px] text-slate-400 font-mono">Tgl Surat: {{ $letter->letter_date?->format('d/m/Y') }}</span>
                             <div class="flex items-center gap-1.5">
                                 @if ($letter->trashed())
-                                    <form method="post" action="/surat-keluar/{{ $letter->id }}/restore" class="inline" onsubmit="return confirm('Pulihkan kembali surat keluar {{ $letter->letter_number }}?')">
+                                    <form method="post" action="/surat-keluar/{{ $letter->id }}/restore" class="inline" onsubmit="return confirmAction(event, 'Pulihkan kembali surat keluar {{ $letter->letter_number }}?', 'Konfirmasi Pemulihan Surat', 'emerald', 'Ya, Pulihkan')">
                                         @csrf
                                         <button type="submit" onclick="event.stopPropagation()" class="inline-flex min-h-[32px] items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 shadow-2xs">
                                             <x-icon name="rotate-ccw" class="h-3.5 w-3.5 text-emerald-700" />
@@ -404,7 +426,7 @@
                                 <td class="p-3 text-center">
                                     <div class="flex items-center justify-center gap-1.5" onclick="event.stopPropagation()">
                                         @if ($letter->trashed())
-                                            <form method="post" action="/surat-keluar/{{ $letter->id }}/restore" class="inline" onsubmit="return confirm('Pulihkan kembali surat keluar {{ $letter->letter_number }}?')">
+                                            <form method="post" action="/surat-keluar/{{ $letter->id }}/restore" class="inline" onsubmit="return confirmAction(event, 'Pulihkan kembali surat keluar {{ $letter->letter_number }}?', 'Konfirmasi Pemulihan Surat', 'emerald', 'Ya, Pulihkan')">
                                                 @csrf
                                                 <button type="submit" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 shadow-2xs">
                                                     <x-icon name="rotate-ccw" class="h-3.5 w-3.5 text-emerald-700" />
@@ -630,6 +652,13 @@
             const currentUrl = new URL(window.location);
             currentUrl.searchParams.set('tab', tab);
             window.history.replaceState({}, '', currentUrl);
+        }
+
+        function toggleMobileFilterPanel() {
+            const panel = document.getElementById('workspace-date-filter-panel');
+            if (panel) {
+                panel.classList.toggle('hidden');
+            }
         }
 
         // Initialize active tab from query string or default

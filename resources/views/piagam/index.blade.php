@@ -1,28 +1,26 @@
 <x-layouts.app title="Buku Ekspedisi Pengambilan Piagam">
     <section class="px-4 py-4 md:px-8">
-        <header class="sticky top-0 z-10 -mx-4 mb-4 flex flex-col gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between md:static md:mx-0 md:rounded-md md:border">
-            <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-emerald-700">
-                    {{ auth()->user()->division?->code ?? 'LOKET GLOBAL' }} — {{ auth()->user()->division?->name ?? 'Seluruh Bidang' }}
-                </p>
-                <h1 class="text-xl font-bold text-slate-900">Buku Ekspedisi Pengambilan Piagam</h1>
-                <p class="text-xs text-slate-500">Catatan resmi bukti serah terima fisik piagam penghargaan beserta tanda tangan pengambil.</p>
-            </div>
-            <div class="flex flex-wrap items-center gap-2">
-                <a href="/piagam/ambil" class="flex min-h-[44px] items-center gap-2 rounded-md bg-emerald-700 px-3.5 text-xs font-semibold text-white shadow-xs hover:bg-emerald-800">
+        <x-page-header
+            :badge="auth()->user()->division?->code ? auth()->user()->division->code . ' — ' . auth()->user()->division->name : 'Semua Divisi (Konteks Global)'"
+            meta="Buku Ekspedisi"
+            title="Buku Ekspedisi Pengambilan Piagam"
+            subtitle="Catatan resmi bukti serah terima fisik piagam penghargaan beserta tanda tangan pengambil."
+        >
+            <x-slot:actions>
+                <a href="/piagam/ambil" class="flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#147D73] px-4 text-xs font-semibold text-white shadow-xs hover:bg-[#0F635B] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
                     <x-icon name="plus" class="h-4 w-4" />
-                    + Catat Pengambilan Baru
+                    <span>+ Catat Pengambilan Baru</span>
                 </a>
-                <a href="/api/v1/reports/export.csv?type=piagam" class="flex min-h-[44px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                <a href="/api/v1/reports/export.csv?type=piagam" class="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-[#E3E8EE] bg-white px-3.5 text-xs font-semibold text-[#17243A] shadow-2xs hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
                     <x-icon name="download" class="h-4 w-4 text-slate-500" />
-                    Ekspor CSV
+                    <span>Ekspor CSV</span>
                 </a>
-                <a href="/api/v1/reports/export.pdf?type=piagam" target="_blank" class="flex min-h-[44px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                <a href="/api/v1/reports/export.pdf?type=piagam" target="_blank" class="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-[#E3E8EE] bg-white px-3.5 text-xs font-semibold text-[#17243A] shadow-2xs hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
                     <x-icon name="file-text" class="h-4 w-4 text-slate-500" />
-                    Cetak PDF
+                    <span>Cetak PDF</span>
                 </a>
-            </div>
-        </header>
+            </x-slot:actions>
+        </x-page-header>
 
         @if(session('success'))
             <div class="mb-4 rounded-md border border-emerald-300 bg-emerald-50 p-4 text-sm font-medium text-emerald-900 shadow-xs">

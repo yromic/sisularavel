@@ -1,18 +1,20 @@
 <x-layouts.app title="Master Data Sekolah">
     <section class="px-4 py-4 md:px-8">
-        <header class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <p class="text-sm font-semibold text-emerald-700">Master Data</p>
-                <h1 class="text-xl font-semibold text-slate-900">Data Referensi Sekolah</h1>
-                <p class="text-xs text-slate-500">Daftar sekolah aktif dan validasi 8 digit NPSN di lingkungan Kabupaten Semarang.</p>
-            </div>
+        <x-page-header
+            badge="Master Data"
+            meta="Kewenangan: Super Admin"
+            title="Data Referensi Sekolah"
+            subtitle="Daftar sekolah aktif dan validasi 8 digit NPSN di lingkungan Kabupaten Semarang."
+        >
             @if (auth()->user()->role === 'super_admin')
-                <button type="button" onclick="document.getElementById('modal-tambah-sekolah').classList.toggle('hidden')" class="flex min-h-[44px] items-center gap-2 rounded-md bg-emerald-700 px-3 font-semibold text-white hover:bg-emerald-800">
-                    <x-icon name="plus" class="h-5 w-5" />
-                    + Tambah Sekolah
-                </button>
+                <x-slot:actions>
+                    <button type="button" onclick="openCreateSchoolModal()" class="flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#147D73] px-4 text-xs font-semibold text-white shadow-xs hover:bg-[#0F635B] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
+                        <x-icon name="plus" class="h-4 w-4" />
+                        <span>+ Tambah Sekolah</span>
+                    </button>
+                </x-slot:actions>
             @endif
-        </header>
+        </x-page-header>
 
         @if (session('success'))
             <div class="mb-4 rounded-md border border-emerald-300 bg-emerald-50 p-4 text-sm font-medium text-emerald-900 shadow-xs">
@@ -46,30 +48,32 @@
             @endif
         </form>
 
-        <!-- Modal Tambah Sekolah (Super Admin Only) -->
+        <!-- Modal Tambah Sekolah (UX2-009 Standardized Popup Modal) -->
         @if (auth()->user()->role === 'super_admin')
-            <div id="modal-tambah-sekolah" class="{{ $errors->any() ? '' : 'hidden' }} mb-6 rounded-lg border border-emerald-300 bg-white p-5 shadow-sm">
-                <div class="mb-3 flex items-center justify-between border-b border-slate-200 pb-2">
-                    <h2 class="font-semibold text-slate-900">Tambah Sekolah Baru</h2>
-                    <button type="button" onclick="document.getElementById('modal-tambah-sekolah').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
-                        <x-icon name="x" class="h-5 w-5" />
-                    </button>
+            <div id="modal-tambah-sekolah" class="{{ $errors->any() ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="create-school-title">
+                <div class="relative w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-2xl transition-all">
+                    <div class="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
+                        <h2 class="text-base font-bold text-slate-900" id="create-school-title">Tambah Sekolah Baru</h2>
+                        <button type="button" onclick="closeCreateSchoolModal()" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label="Tutup modal tambah sekolah">
+                            <x-icon name="x" class="h-5 w-5" />
+                        </button>
+                    </div>
+                    <form method="post" action="/api/v1/schools" class="space-y-4">
+                        @csrf
+                        <div>
+                            <label for="create-school-npsn" class="block text-xs font-semibold text-slate-700">NPSN (8 Digit Angka) *</label>
+                            <input name="npsn" id="create-school-npsn" value="{{ old('npsn') }}" maxlength="8" pattern="\d{8}" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Contoh: 20320340" required>
+                        </div>
+                        <div>
+                            <label for="create-school-name" class="block text-xs font-semibold text-slate-700">Nama Resmi Sekolah *</label>
+                            <input name="name" id="create-school-name" value="{{ old('name') }}" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Contoh: SMP Negeri 1 Ungaran" required>
+                        </div>
+                        <div class="flex justify-end gap-2 border-t border-slate-200 pt-3">
+                            <button type="button" onclick="closeCreateSchoolModal()" class="min-h-[44px] rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700 hover:bg-slate-100">Batal</button>
+                            <button type="submit" class="min-h-[44px] rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800">Simpan Sekolah</button>
+                        </div>
+                    </form>
                 </div>
-                <form method="post" action="/api/v1/schools" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    @csrf
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700">NPSN (8 Digit Angka) *</label>
-                        <input name="npsn" value="{{ old('npsn') }}" maxlength="8" pattern="\d{8}" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Contoh: 20320340" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700">Nama Resmi Sekolah *</label>
-                        <input name="name" value="{{ old('name') }}" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Contoh: SMP Negeri 1 Ungaran" required>
-                    </div>
-                    <div class="sm:col-span-2 flex justify-end gap-2">
-                        <button type="button" onclick="document.getElementById('modal-tambah-sekolah').classList.add('hidden')" class="min-h-[44px] rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700 hover:bg-slate-100">Batal</button>
-                        <button type="submit" class="min-h-[44px] rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800">Simpan Sekolah</button>
-                    </div>
-                </form>
             </div>
         @endif
 
@@ -132,15 +136,15 @@
                         @csrf
                         @method('PUT')
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700">NPSN (8 Digit Angka) *</label>
+                            <label for="edit-school-npsn" class="block text-xs font-semibold text-slate-700">NPSN (8 Digit Angka) *</label>
                             <input name="npsn" id="edit-school-npsn" maxlength="8" pattern="\d{8}" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" required>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700">Nama Resmi Sekolah *</label>
+                            <label for="edit-school-name" class="block text-xs font-semibold text-slate-700">Nama Resmi Sekolah *</label>
                             <input name="name" id="edit-school-name" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" required>
                         </div>
                         <div>
-                            <label class="inline-flex items-center gap-2">
+                            <label for="edit-school-is_active" class="inline-flex items-center gap-2">
                                 <input type="checkbox" name="is_active" id="edit-school-is_active" value="1" class="rounded border-slate-300 text-emerald-700">
                                 <span class="text-xs font-semibold text-slate-700">Status Sekolah Aktif</span>
                             </label>
@@ -188,6 +192,22 @@
     </section>
 
     <script>
+        function openCreateSchoolModal() {
+            const modal = document.getElementById('modal-tambah-sekolah');
+            if (modal) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    const first = document.getElementById('create-school-npsn');
+                    if (first) first.focus();
+                }, 50);
+            }
+        }
+
+        function closeCreateSchoolModal() {
+            const modal = document.getElementById('modal-tambah-sekolah');
+            if (modal) modal.classList.add('hidden');
+        }
+
         function openEditSchoolModal(school) {
             document.getElementById('edit-school-title').textContent = `Edit Sekolah: ${school.name}`;
             document.getElementById('edit-school-npsn').value = school.npsn;
@@ -195,6 +215,10 @@
             document.getElementById('edit-school-is_active').checked = !!school.is_active;
             document.getElementById('form-edit-sekolah').action = `/api/v1/schools/${school.id}`;
             document.getElementById('modal-edit-sekolah').classList.remove('hidden');
+            setTimeout(() => {
+                const first = document.getElementById('edit-school-name');
+                if (first) first.focus();
+            }, 50);
         }
 
         function closeEditSchoolModal() {
@@ -214,6 +238,7 @@
 
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
+                closeCreateSchoolModal();
                 closeEditSchoolModal();
                 closeDeleteSchoolModal();
             }

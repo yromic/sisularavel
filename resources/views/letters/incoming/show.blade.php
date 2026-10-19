@@ -1,36 +1,40 @@
 <x-layouts.app :title="'Detail Surat Masuk - ' . $letter->letter_number">
     <section class="px-4 py-4 md:px-8">
-        <header class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <nav class="mb-1 flex items-center gap-2 text-xs text-slate-500">
-                    <a href="/surat-masuk" class="hover:text-emerald-700">Surat Masuk</a>
+        <x-page-header
+            :badge="$letter->division?->code ? $letter->division->name . ' (' . $letter->division->code . ')' : 'Divisi Tidak Diketahui'"
+            :meta="'ID Arsip #' . $letter->id"
+            :title="$letter->letter_number"
+            subtitle="Detail rekaman dokumen arsip surat masuk dan meta lampiran berkas."
+        >
+            <x-slot:breadcrumbs>
+                <nav class="flex items-center gap-2 text-xs text-slate-500">
+                    <a href="/surat-masuk" class="hover:text-teal-700">Surat Masuk</a>
                     <span>/</span>
                     <span class="font-medium text-slate-800">Detail #{{ $letter->id }}</span>
                 </nav>
-                <h1 class="text-xl font-bold text-slate-900">{{ $letter->letter_number }}</h1>
-                <p class="text-xs text-slate-500">Divisi: <span class="font-semibold text-emerald-700">{{ $letter->division?->name }} ({{ $letter->division?->code }})</span></p>
-            </div>
-            <div class="flex items-center gap-2">
-                <a href="/surat-masuk" class="flex min-h-[40px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+            </x-slot:breadcrumbs>
+
+            <x-slot:actions>
+                <a href="/surat-masuk" class="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-[#E3E8EE] bg-white px-3.5 text-xs font-semibold text-[#17243A] shadow-2xs hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
                     <x-icon name="arrow-left" class="h-4 w-4" />
-                    Kembali
+                    <span>Kembali</span>
                 </a>
                 @if (in_array(auth()->user()->role, ['super_admin', 'division_admin'], true))
-                    <a href="/surat-masuk/{{ $letter->id }}/edit" class="flex min-h-[40px] items-center gap-1.5 rounded-md border border-emerald-600 bg-emerald-50 px-3.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100">
+                    <a href="/surat-masuk/{{ $letter->id }}/edit" class="flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#147D73] px-4 text-xs font-semibold text-white shadow-xs hover:bg-[#0F635B] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
                         <x-icon name="edit" class="h-4 w-4" />
-                        Edit Surat
+                        <span>Edit Surat</span>
                     </a>
-                    <form method="post" action="/api/v1/surat-masuk/{{ $letter->id }}" onsubmit="return confirm('Apakah Anda yakin ingin menghapus arsip surat masuk ini?')" class="inline">
+                    <form method="post" action="/api/v1/surat-masuk/{{ $letter->id }}" onsubmit="return confirmAction(event, 'Apakah Anda yakin ingin menghapus arsip surat masuk ini?', 'Konfirmasi Hapus Surat Masuk', 'danger', 'Ya, Hapus Surat')" class="inline">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="flex min-h-[40px] items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-3.5 text-xs font-semibold text-rose-700 hover:bg-rose-100">
+                        <button type="submit" class="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors">
                             <x-icon name="trash" class="h-4 w-4" />
-                            Hapus
+                            <span>Hapus</span>
                         </button>
                     </form>
                 @endif
-            </div>
-        </header>
+            </x-slot:actions>
+        </x-page-header>
 
         @if(session('success'))
             <div class="mb-6 rounded-md border border-emerald-300 bg-emerald-50 p-4 text-sm font-medium text-emerald-900">

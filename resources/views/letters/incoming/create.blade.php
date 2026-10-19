@@ -30,6 +30,7 @@
             <label class="block md:col-span-2">
                 <span class="text-sm font-medium text-slate-800">Divisi Pengarsip *</span>
                 <select name="division_id" class="mt-1 min-h-[48px] w-full rounded-md border border-slate-300 bg-white px-3 text-base focus:border-emerald-700 focus:outline-hidden" required>
+                    <option value="" disabled @selected(!session('active_division_id'))>-- Pilih Divisi Pengarsip (Wajib) --</option>
                     @foreach (\App\Models\Division::where('status', 'active')->orderBy('name')->get() as $div)
                         <option value="{{ $div->id }}" @selected(session('active_division_id') == $div->id)>
                             {{ $div->code }} - {{ $div->name }}

@@ -1,18 +1,20 @@
 <x-layouts.app title="Master Data Divisi">
     <section class="px-4 py-4 md:px-8">
-        <header class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <p class="text-sm font-semibold text-emerald-700">Master Data</p>
-                <h1 class="text-xl font-semibold text-slate-900">Manajemen Divisi Kerja</h1>
-                <p class="text-xs text-slate-500">Kelola unit kerja dan partisi tenant data di lingkungan dinas.</p>
-            </div>
+        <x-page-header
+            badge="Master Data"
+            meta="Kewenangan: Super Admin"
+            title="Manajemen Divisi Kerja"
+            subtitle="Kelola unit kerja dan partisi tenant data di lingkungan dinas."
+        >
             @if (auth()->user()->role === 'super_admin')
-                <button type="button" onclick="document.getElementById('modal-tambah-divisi').classList.toggle('hidden')" class="flex min-h-[44px] items-center gap-2 rounded-md bg-emerald-700 px-3 font-semibold text-white hover:bg-emerald-800">
-                    <x-icon name="plus" class="h-5 w-5" />
-                    + Tambah Divisi
-                </button>
+                <x-slot:actions>
+                    <button type="button" onclick="openCreateDivisionModal()" class="flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#147D73] px-4 text-xs font-semibold text-white shadow-xs hover:bg-[#0F635B] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
+                        <x-icon name="plus" class="h-4 w-4" />
+                        <span>+ Tambah Divisi</span>
+                    </button>
+                </x-slot:actions>
             @endif
-        </header>
+        </x-page-header>
 
         @if (session('success'))
             <div class="mb-4 rounded-md border border-emerald-300 bg-emerald-50 p-4 text-sm font-medium text-emerald-900 shadow-xs">
@@ -46,30 +48,32 @@
             @endif
         </form>
 
-        <!-- Modal Tambah Divisi (Super Admin Only) -->
+        <!-- Modal Tambah Divisi (UX2-009 Standardized Popup Modal) -->
         @if (auth()->user()->role === 'super_admin')
-            <div id="modal-tambah-divisi" class="{{ $errors->any() ? '' : 'hidden' }} mb-6 rounded-lg border border-emerald-300 bg-white p-5 shadow-sm">
-                <div class="mb-3 flex items-center justify-between border-b border-slate-200 pb-2">
-                    <h2 class="font-semibold text-slate-900">Tambah Divisi Baru</h2>
-                    <button type="button" onclick="document.getElementById('modal-tambah-divisi').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
-                        <x-icon name="x" class="h-5 w-5" />
-                    </button>
+            <div id="modal-tambah-divisi" class="{{ $errors->any() ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="create-division-title">
+                <div class="relative w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-2xl transition-all">
+                    <div class="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
+                        <h2 class="text-base font-bold text-slate-900" id="create-division-title">Tambah Divisi Baru</h2>
+                        <button type="button" onclick="closeCreateDivisionModal()" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label="Tutup modal tambah divisi">
+                            <x-icon name="x" class="h-5 w-5" />
+                        </button>
+                    </div>
+                    <form method="post" action="/api/v1/divisions" class="space-y-4">
+                        @csrf
+                        <div>
+                            <label for="create-division-code" class="block text-xs font-semibold text-slate-700">Kode Divisi (Unik) *</label>
+                            <input name="code" id="create-division-code" value="{{ old('code') }}" maxlength="20" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm uppercase focus:border-emerald-700 focus:outline-hidden" placeholder="Contoh: DIK-03" required>
+                        </div>
+                        <div>
+                            <label for="create-division-name" class="block text-xs font-semibold text-slate-700">Nama Divisi Lengkap *</label>
+                            <input name="name" id="create-division-name" value="{{ old('name') }}" maxlength="150" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Contoh: Bidang Pembinaan SMP" required>
+                        </div>
+                        <div class="flex justify-end gap-2 border-t border-slate-200 pt-3">
+                            <button type="button" onclick="closeCreateDivisionModal()" class="min-h-[44px] rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700 hover:bg-slate-100">Batal</button>
+                            <button type="submit" class="min-h-[44px] rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800">Simpan Divisi</button>
+                        </div>
+                    </form>
                 </div>
-                <form method="post" action="/api/v1/divisions" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    @csrf
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700">Kode Divisi (Unik) *</label>
-                        <input name="code" value="{{ old('code') }}" maxlength="20" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm uppercase focus:border-emerald-700 focus:outline-hidden" placeholder="Contoh: DIK-03" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700">Nama Divisi Lengkap *</label>
-                        <input name="name" value="{{ old('name') }}" maxlength="150" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Contoh: Bidang Pembinaan SMP" required>
-                    </div>
-                    <div class="sm:col-span-2 flex justify-end gap-2">
-                        <button type="button" onclick="document.getElementById('modal-tambah-divisi').classList.add('hidden')" class="min-h-[44px] rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700 hover:bg-slate-100">Batal</button>
-                        <button type="submit" class="min-h-[44px] rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800">Simpan Divisi</button>
-                    </div>
-                </form>
             </div>
         @endif
 
@@ -155,11 +159,11 @@
                         @csrf
                         @method('PUT')
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700">Kode Divisi (Unik) *</label>
+                            <label for="edit-division-code" class="block text-xs font-semibold text-slate-700">Kode Divisi (Unik) *</label>
                             <input name="code" id="edit-division-code" maxlength="20" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm uppercase focus:border-emerald-700 focus:outline-hidden" required>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700">Nama Divisi Lengkap *</label>
+                            <label for="edit-division-name" class="block text-xs font-semibold text-slate-700">Nama Divisi Lengkap *</label>
                             <input name="name" id="edit-division-name" maxlength="150" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" required>
                         </div>
                         <div class="flex justify-end gap-2 border-t border-slate-200 pt-3">
@@ -208,12 +212,32 @@
     </section>
 
     <script>
+        function openCreateDivisionModal() {
+            const modal = document.getElementById('modal-tambah-divisi');
+            if (modal) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    const first = document.getElementById('create-division-code');
+                    if (first) first.focus();
+                }, 50);
+            }
+        }
+
+        function closeCreateDivisionModal() {
+            const modal = document.getElementById('modal-tambah-divisi');
+            if (modal) modal.classList.add('hidden');
+        }
+
         function openEditDivisionModal(division) {
             document.getElementById('edit-division-title').textContent = `Edit Divisi: ${division.code}`;
             document.getElementById('edit-division-code').value = division.code;
             document.getElementById('edit-division-name').value = division.name;
             document.getElementById('form-edit-divisi').action = `/api/v1/divisions/${division.id}`;
             document.getElementById('modal-edit-divisi').classList.remove('hidden');
+            setTimeout(() => {
+                const first = document.getElementById('edit-division-name');
+                if (first) first.focus();
+            }, 50);
         }
 
         function closeEditDivisionModal() {
@@ -233,6 +257,7 @@
 
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
+                closeCreateDivisionModal();
                 closeEditDivisionModal();
                 closeDeleteDivisionModal();
             }

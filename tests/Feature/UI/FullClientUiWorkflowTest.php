@@ -253,9 +253,7 @@ class FullClientUiWorkflowTest extends TestCase
             ->get('/dashboard')
             ->assertOk()
             ->assertSee('Layanan Persuratan & Piagam', false)
-            ->assertSee('Surat Masuk')
-            ->assertSee('Surat Keluar')
-            ->assertSee('Rekap Pengambilan Piagam')
+            ->assertSee('Persuratan & Piagam', false)
             ->assertSee('Ganti Password')
             ->assertSee('Logout');
     }

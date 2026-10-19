@@ -1,10 +1,11 @@
 <x-layouts.app title="Master Kategori">
     <section class="px-4 py-4 md:px-8">
-        <header class="mb-6">
-            <p class="text-sm font-semibold text-emerald-700">Master Data</p>
-            <h1 class="text-xl font-semibold text-slate-900">Kategori Lomba & Pengambilan</h1>
-            <p class="text-xs text-slate-500">Kelola kategori referensi untuk divisi aktif.</p>
-        </header>
+        <x-page-header
+            badge="Master Data"
+            meta="Kategori Referensi Lomba & Piagam"
+            title="Kategori Lomba & Pengambilan"
+            subtitle="Kelola kategori referensi untuk divisi aktif."
+        />
 
         @if (session('success'))
             <div class="mb-4 rounded-md border border-emerald-300 bg-emerald-50 p-4 text-sm font-medium text-emerald-900 shadow-xs">
@@ -41,7 +42,7 @@
 
                 <form method="post" action="/api/v1/reference/competition-categories" class="mb-4 flex gap-2">
                     @csrf
-                    <input name="name" class="min-h-[44px] flex-1 rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Nama kategori lomba baru..." required>
+                    <input name="name" id="input-cat-competition-name" aria-label="Nama kategori lomba baru" class="min-h-[44px] flex-1 rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Nama kategori lomba baru..." required>
                     <button type="submit" class="min-h-[44px] rounded-md bg-emerald-700 px-4 text-xs font-semibold text-white hover:bg-emerald-800">
                         + Tambah
                     </button>
@@ -54,7 +55,7 @@
                                 <span class="text-sm font-medium text-slate-800">{{ $cat->name }}</span>
                                 <span class="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Aktif</span>
                             </div>
-                            <form method="post" action="/api/v1/reference/competition-categories/{{ $cat->id }}" onsubmit="return confirm('Hapus kategori lomba {{ $cat->name }}?')" class="inline">
+                            <form method="post" action="/api/v1/reference/competition-categories/{{ $cat->id }}" onsubmit="return confirmAction(event, 'Hapus kategori lomba {{ $cat->name }}?', 'Konfirmasi Hapus Kategori', 'danger', 'Ya, Hapus')" class="inline">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50" title="Hapus kategori lomba">
@@ -79,7 +80,7 @@
 
                 <form method="post" action="/api/v1/reference/pickup-categories" class="mb-4 flex gap-2">
                     @csrf
-                    <input name="name" class="min-h-[44px] flex-1 rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Nama kategori pengambilan baru..." required>
+                    <input name="name" id="input-cat-pickup-name" aria-label="Nama kategori pengambilan baru" class="min-h-[44px] flex-1 rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Nama kategori pengambilan baru..." required>
                     <button type="submit" class="min-h-[44px] rounded-md bg-emerald-700 px-4 text-xs font-semibold text-white hover:bg-emerald-800">
                         + Tambah
                     </button>
@@ -92,7 +93,7 @@
                                 <span class="text-sm font-medium text-slate-800">{{ $cat->name }}</span>
                                 <span class="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Aktif</span>
                             </div>
-                            <form method="post" action="/api/v1/reference/pickup-categories/{{ $cat->id }}" onsubmit="return confirm('Hapus kategori pengambilan {{ $cat->name }}?')" class="inline">
+                            <form method="post" action="/api/v1/reference/pickup-categories/{{ $cat->id }}" onsubmit="return confirmAction(event, 'Hapus kategori pengambilan {{ $cat->name }}?', 'Konfirmasi Hapus Kategori', 'danger', 'Ya, Hapus')" class="inline">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50" title="Hapus kategori pengambilan">
@@ -117,7 +118,7 @@
 
                 <form method="post" action="/api/v1/reference/work-units" class="mb-4 flex gap-2">
                     @csrf
-                    <input name="name" class="min-h-[44px] flex-1 rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Nama unit kerja baru..." required>
+                    <input name="name" id="input-work-unit-name" aria-label="Nama unit kerja baru" class="min-h-[44px] flex-1 rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Nama unit kerja baru..." required>
                     <button type="submit" class="min-h-[44px] rounded-md bg-emerald-700 px-4 text-xs font-semibold text-white hover:bg-emerald-800">
                         + Tambah
                     </button>
@@ -130,7 +131,7 @@
                                 <span class="text-sm font-medium text-slate-800">{{ $unit->name }}</span>
                                 <span class="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Aktif</span>
                             </div>
-                            <form method="post" action="/master/kategori/unit-kerja/{{ $unit->id }}" onsubmit="return confirm('Hapus unit kerja {{ $unit->name }}?')" class="inline">
+                            <form method="post" action="/master/kategori/unit-kerja/{{ $unit->id }}" onsubmit="return confirmAction(event, 'Hapus unit kerja {{ $unit->name }}?', 'Konfirmasi Hapus Unit Kerja', 'danger', 'Ya, Hapus')" class="inline">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50" title="Hapus unit kerja">

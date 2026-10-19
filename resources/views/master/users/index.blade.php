@@ -1,24 +1,20 @@
 <x-layouts.app title="Manajemen Pengguna">
     <section class="px-4 py-4 md:px-8">
-        <header class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <p class="text-sm font-semibold text-emerald-700">Master Data</p>
-                <h1 class="text-xl font-semibold text-slate-900">Manajemen Pengguna & Staf</h1>
-                <p class="text-xs text-slate-500">
-                    @if (($status ?? 'active') === 'trashed')
-                        Daftar akun pengguna yang diarsipkan (soft-deleted). Administrator berwenang dapat memulihkan akun ke status nonaktif.
-                    @else
-                        Kelola akun operator dan administrator sesuai lingkup divisi kerja aktif.
-                    @endif
-                </p>
-            </div>
+        <x-page-header
+            badge="Master Data"
+            meta="Kewenangan: Administrator"
+            title="Manajemen Pengguna & Staf"
+            :subtitle="(($status ?? 'active') === 'trashed') ? 'Daftar akun pengguna yang diarsipkan (soft-deleted). Administrator berwenang dapat memulihkan akun ke status nonaktif.' : 'Kelola akun operator dan administrator sesuai lingkup divisi kerja aktif.'"
+        >
             @if (($status ?? 'active') !== 'trashed')
-                <button type="button" onclick="document.getElementById('modal-tambah-user').classList.toggle('hidden')" class="flex min-h-[44px] items-center gap-2 rounded-md bg-emerald-700 px-3 font-semibold text-white hover:bg-emerald-800">
-                    <x-icon name="plus" class="h-5 w-5" />
-                    + Tambah Pengguna
-                </button>
+                <x-slot:actions>
+                    <button type="button" onclick="openCreateUserModal()" class="flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#147D73] px-4 text-xs font-semibold text-white shadow-xs hover:bg-[#0F635B] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
+                        <x-icon name="plus" class="h-4 w-4" />
+                        <span>+ Tambah Pengguna</span>
+                    </button>
+                </x-slot:actions>
             @endif
-        </header>
+        </x-page-header>
 
         @if (session('success'))
             <div class="mb-4 rounded-md border border-emerald-300 bg-emerald-50 p-4 text-sm font-medium text-emerald-900 shadow-xs">
@@ -64,60 +60,62 @@
             </a>
         </div>
 
-        <!-- Modal Tambah Pengguna -->
-        <div id="modal-tambah-user" class="{{ $errors->any() && ($status ?? 'active') !== 'trashed' ? '' : 'hidden' }} mb-6 rounded-lg border border-emerald-300 bg-white p-5 shadow-sm">
-            <div class="mb-3 flex items-center justify-between border-b border-slate-200 pb-2">
-                <h2 class="font-semibold text-slate-900">Tambah Akun Pengguna Baru</h2>
-                <button type="button" onclick="document.getElementById('modal-tambah-user').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
-                    <x-icon name="x" class="h-5 w-5" />
-                </button>
+        <!-- Modal Tambah Pengguna (UX2-009 Standardized Popup Modal) -->
+        <div id="modal-tambah-user" class="{{ $errors->any() && ($status ?? 'active') !== 'trashed' ? '' : 'hidden' }} fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="create-user-title">
+            <div class="relative w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-2xl transition-all">
+                <div class="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
+                    <h2 class="text-base font-bold text-slate-900" id="create-user-title">Tambah Akun Pengguna Baru</h2>
+                    <button type="button" onclick="closeCreateUserModal()" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label="Tutup modal tambah pengguna">
+                        <x-icon name="x" class="h-5 w-5" />
+                    </button>
+                </div>
+                <form id="form-create-user" method="post" action="/api/v1/users" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    @csrf
+                    <div>
+                        <label for="create-username" class="block text-xs font-semibold text-slate-700">Username *</label>
+                        <input name="username" id="create-username" value="{{ old('username') }}" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Contoh: op_dikdas02" required>
+                    </div>
+                    <div>
+                        <label for="create-name" class="block text-xs font-semibold text-slate-700">Nama Lengkap *</label>
+                        <input name="name" id="create-name" value="{{ old('name') }}" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Nama lengkap pegawai/operator" required>
+                    </div>
+                    <div>
+                        <label for="create-email" class="block text-xs font-semibold text-slate-700">Email Resmi *</label>
+                        <input name="email" id="create-email" type="email" value="{{ old('email') }}" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="email@disdikbudpora.test" required>
+                    </div>
+                    <div>
+                        <label for="create-role" class="block text-xs font-semibold text-slate-700">Peran (Role) *</label>
+                        <select name="role" id="create-role" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm focus:border-emerald-700 focus:outline-hidden" required>
+                            <option value="operator">Operator Divisi</option>
+                            @if (auth()->user()->role === 'super_admin')
+                                <option value="division_admin">Admin Divisi</option>
+                                <option value="super_admin">Super Admin</option>
+                            @endif
+                        </select>
+                    </div>
+                    <div>
+                        <label for="create-division_id" class="block text-xs font-semibold text-slate-700">Divisi Kerja *</label>
+                        <select name="division_id" id="create-division_id" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm focus:border-emerald-700 focus:outline-hidden">
+                            @if (auth()->user()->role === 'super_admin')
+                                <option value="">-- Tanpa Divisi (Global Super Admin) --</option>
+                            @endif
+                            @foreach ($divisions as $division)
+                                <option value="{{ $division->id }}" @selected(auth()->user()->division_id === $division->id)>
+                                    {{ $division->code }} - {{ $division->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label for="create-password" class="block text-xs font-semibold text-slate-700">Password Sementara *</label>
+                        <input name="password" id="create-password" type="password" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Minimal 8 karakter" required>
+                    </div>
+                    <div class="sm:col-span-2 flex justify-end gap-2 border-t border-slate-200 pt-3">
+                        <button type="button" onclick="closeCreateUserModal()" class="min-h-[44px] rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700 hover:bg-slate-100">Batal</button>
+                        <button type="submit" class="min-h-[44px] rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800">Simpan Akun</button>
+                    </div>
+                </form>
             </div>
-            <form id="form-create-user" method="post" action="/api/v1/users" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                @csrf
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700">Username *</label>
-                    <input name="username" value="{{ old('username') }}" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Contoh: op_dikdas02" required>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700">Nama Lengkap *</label>
-                    <input name="name" value="{{ old('name') }}" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Nama lengkap pegawai/operator" required>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700">Email Resmi *</label>
-                    <input name="email" type="email" value="{{ old('email') }}" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="email@disdikbudpora.test" required>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700">Peran (Role) *</label>
-                    <select name="role" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm focus:border-emerald-700 focus:outline-hidden" required>
-                        <option value="operator">Operator Divisi</option>
-                        @if (auth()->user()->role === 'super_admin')
-                            <option value="division_admin">Admin Divisi</option>
-                            <option value="super_admin">Super Admin</option>
-                        @endif
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700">Divisi Kerja *</label>
-                    <select name="division_id" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm focus:border-emerald-700 focus:outline-hidden">
-                        @if (auth()->user()->role === 'super_admin')
-                            <option value="">-- Tanpa Divisi (Global Super Admin) --</option>
-                        @endif
-                        @foreach ($divisions as $division)
-                            <option value="{{ $division->id }}" @selected(auth()->user()->division_id === $division->id)>
-                                {{ $division->code }} - {{ $division->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700">Password Sementara *</label>
-                    <input name="password" type="password" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Minimal 8 karakter" required>
-                </div>
-                <div class="sm:col-span-2 flex justify-end gap-2">
-                    <button type="button" onclick="document.getElementById('modal-tambah-user').classList.add('hidden')" class="min-h-[44px] rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700 hover:bg-slate-100">Batal</button>
-                    <button type="submit" class="min-h-[44px] rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800">Simpan Akun</button>
-                </div>
-            </form>
         </div>
 
         @if (($status ?? 'active') === 'trashed')
@@ -143,8 +141,15 @@
                                 <td class="p-3 text-slate-600">{{ $user->email ?? '-' }}</td>
                                 <td class="p-3 text-xs text-slate-600">{{ $user->division?->name ?? 'Global' }}</td>
                                 <td class="p-3">
-                                    <span class="inline-flex rounded-xs bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 uppercase">
-                                        {{ str_replace('_', ' ', $user->role) }}
+                                    @php
+                                        $roleMap = [
+                                            'super_admin' => 'Super Admin',
+                                            'division_admin' => 'Admin Divisi',
+                                            'operator' => 'Operator Divisi',
+                                        ];
+                                    @endphp
+                                    <span class="inline-flex rounded-xs bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+                                        {{ $roleMap[$user->role] ?? ucwords(str_replace('_', ' ', $user->role)) }}
                                     </span>
                                 </td>
                                 <td class="p-3 text-xs text-rose-700 font-mono">
@@ -193,8 +198,15 @@
                                 <td class="p-3 font-mono font-medium text-slate-900">{{ $user->username }}</td>
                                 <td class="p-3">{{ $user->name }}</td>
                                 <td class="p-3">
-                                    <span class="inline-flex rounded-xs bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 uppercase">
-                                        {{ str_replace('_', ' ', $user->role) }}
+                                    @php
+                                        $roleMap = [
+                                            'super_admin' => 'Super Admin',
+                                            'division_admin' => 'Admin Divisi',
+                                            'operator' => 'Operator Divisi',
+                                        ];
+                                    @endphp
+                                    <span class="inline-flex rounded-xs bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+                                        {{ $roleMap[$user->role] ?? ucwords(str_replace('_', ' ', $user->role)) }}
                                     </span>
                                 </td>
                                 <td class="p-3 text-xs text-slate-600">{{ $user->division?->name ?? 'Global' }}</td>
@@ -252,24 +264,24 @@
                     @csrf
                     @method('PUT')
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700">Username</label>
+                        <label for="edit-username" class="block text-xs font-semibold text-slate-700">Username</label>
                         <input id="edit-username" type="text" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-200 bg-slate-100 px-3 text-sm text-slate-600" disabled>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700">Nama Lengkap *</label>
+                        <label for="edit-name" class="block text-xs font-semibold text-slate-700">Nama Lengkap *</label>
                         <input name="name" id="edit-name" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700">Email Resmi</label>
+                        <label for="edit-email" class="block text-xs font-semibold text-slate-700">Email Resmi</label>
                         <input name="email" id="edit-email" type="email" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700">Password Baru (Opsional)</label>
+                        <label for="edit-password" class="block text-xs font-semibold text-slate-700">Password Baru (Opsional)</label>
                         <input name="password" id="edit-password" type="password" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Kosongkan jika tidak diubah">
                     </div>
                     @if (auth()->user()->role === 'super_admin')
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700">Peran (Role) *</label>
+                            <label for="edit-role" class="block text-xs font-semibold text-slate-700">Peran (Role) *</label>
                             <select name="role" id="edit-role" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm focus:border-emerald-700 focus:outline-hidden">
                                 <option value="operator">Operator Divisi</option>
                                 <option value="division_admin">Admin Divisi</option>
@@ -277,7 +289,7 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700">Divisi Kerja</label>
+                            <label for="edit-division_id" class="block text-xs font-semibold text-slate-700">Divisi Kerja</label>
                             <select name="division_id" id="edit-division_id" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm focus:border-emerald-700 focus:outline-hidden">
                                 <option value="">-- Tanpa Divisi (Global) --</option>
                                 @foreach ($divisions as $division)
@@ -372,6 +384,18 @@
     </section>
 
     <script>
+        function openCreateUserModal() {
+            document.getElementById('modal-tambah-user').classList.remove('hidden');
+            setTimeout(() => {
+                const first = document.getElementById('create-username');
+                if (first) first.focus();
+            }, 50);
+        }
+
+        function closeCreateUserModal() {
+            document.getElementById('modal-tambah-user').classList.add('hidden');
+        }
+
         function openEditUserModal(user) {
             document.getElementById('edit-user-title').textContent = `Edit Pengguna: ${user.username}`;
             document.getElementById('edit-username').value = user.username;
@@ -388,6 +412,10 @@
 
             document.getElementById('form-edit-user').action = `/api/v1/users/${user.id}`;
             document.getElementById('modal-edit-user').classList.remove('hidden');
+            setTimeout(() => {
+                const first = document.getElementById('edit-name');
+                if (first) first.focus();
+            }, 50);
         }
 
         function closeEditUserModal() {
@@ -430,7 +458,18 @@
         }
 
         async function issueSecret(userId, username) {
-            if (!confirm(`Terbitkan kunci rahasia aktivasi sekali pakai untuk akun ${username}?`)) return;
+            if (typeof window.showConfirmDialog === 'function') {
+                const confirmed = await window.showConfirmDialog({
+                    title: 'Terbitkan Token Aktivasi Staf',
+                    message: `Terbitkan token aktivasi sekali pakai untuk akun ${username}? Token ini berlaku selama 24 jam.`,
+                    variant: 'info',
+                    confirmText: 'Terbitkan Token'
+                });
+                if (!confirmed) return;
+            } else if (!confirm(`Terbitkan token aktivasi sekali pakai untuk akun ${username}?`)) {
+                return;
+            }
+
             const banner = document.getElementById('secret-result-banner');
             banner.classList.add('hidden');
             try {
@@ -444,17 +483,31 @@
                 const data = await response.json();
                 if (response.ok) {
                     banner.classList.remove('hidden');
-                    banner.innerHTML = `<strong>Kunci Rahasia untuk ${username}:</strong> <code class="bg-white px-2 py-1 rounded font-mono font-bold text-amber-950">${data.temporary_secret}</code><br><span class="text-xs">Berikan kode ini kepada operator. Kunci ini kedaluwarsa dalam 24 jam.</span>`;
+                    const safeUser = document.createElement('span');
+                    safeUser.textContent = username;
+                    const safeSecret = document.createElement('span');
+                    safeSecret.textContent = data.temporary_secret;
+                    banner.innerHTML = `<strong>Token Aktivasi untuk ${safeUser.innerHTML}:</strong> <code class="bg-white px-2 py-1 rounded font-mono font-bold text-amber-950">${safeSecret.innerHTML}</code><br><span class="text-xs">Berikan token ini kepada staf terkait. Token ini kedaluwarsa dalam 24 jam.</span>`;
+                    if (typeof showToast === 'function') {
+                        showToast('Token aktivasi staf berhasil diterbitkan.', 'success');
+                    }
                 } else {
-                    alert(data.message || 'Gagal menerbitkan kunci rahasia.');
+                    if (typeof showToast === 'function') {
+                        showToast(data.message || 'Gagal menerbitkan token aktivasi.', 'error');
+                    } else {
+                        alert(data.message || 'Gagal menerbitkan token aktivasi.');
+                    }
                 }
             } catch (e) {
-                alert('Terjadi gangguan koneksi.');
+                if (typeof showToast === 'function') {
+                    showToast('Gagal menghubungi server.', 'error');
+                }
             }
         }
 
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
+                closeCreateUserModal();
                 closeEditUserModal();
                 closeDeleteUserModal();
                 closeRestoreModal();

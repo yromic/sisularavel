@@ -26,6 +26,7 @@
             <label class="block md:col-span-2">
                 <span class="text-sm font-medium text-slate-800">Divisi Pemilik Surat *</span>
                 <select name="division_id" id="division_id" class="mt-1 min-h-[48px] w-full rounded-md border border-slate-300 px-3 text-base focus:border-emerald-700 focus:outline-hidden" required>
+                    <option value="" disabled {{ !session('active_division_id') ? 'selected' : '' }}>-- Pilih Divisi Pemilik Surat (Wajib) --</option>
                     @foreach($divisions as $div)
                         <option value="{{ $div->id }}" {{ session('active_division_id') == $div->id ? 'selected' : '' }}>{{ $div->name }} ({{ $div->code }})</option>
                     @endforeach
