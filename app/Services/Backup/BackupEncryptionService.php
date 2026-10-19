@@ -140,7 +140,6 @@ class BackupEncryptionService
     {
         $secret = $passphrase
             ?? config('backup.encryption.key')
-            ?? env('BACKUP_ENCRYPTION_KEY')
             ?? config('app.key');
 
         if (empty($secret)) {

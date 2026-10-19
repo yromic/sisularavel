@@ -19,6 +19,7 @@ return [
     'encryption' => [
         'cipher' => env('BACKUP_CIPHER', 'aes-256-gcm'),
         'key_id' => env('BACKUP_KEY_ID', 'sisurat-backup-master-2026'),
+        'key' => env('BACKUP_ENCRYPTION_KEY'),
     ],
 
     // Storage capacity thresholds (Section 10.4 of docs/backup.md)
@@ -68,9 +69,9 @@ return [
 
     // Rolling retention policy (Section 10.3 of docs/backup.md)
     'retention' => [
-        'keep_daily_days' => (int) env('BACKUP_RETENTION_DAILY_DAYS', 7),
-        'keep_weekly_weeks' => (int) env('BACKUP_RETENTION_WEEKLY_WEEKS', 4),
-        'keep_monthly_months' => (int) env('BACKUP_RETENTION_MONTHLY_MONTHS', 12),
+        'keep_daily_days' => (int) env('BACKUP_RETENTION_DAILY_DAYS', 2),
+        'keep_weekly_weeks' => (int) env('BACKUP_RETENTION_WEEKLY_WEEKS', 1),
+        'keep_monthly_months' => (int) env('BACKUP_RETENTION_MONTHLY_MONTHS', 0),
         'delete_remote_on_prune' => (bool) env('BACKUP_PRUNE_REMOTE', true),
     ],
 ];

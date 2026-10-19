@@ -21,6 +21,8 @@ class PasswordActivationContractTest extends TestCase
             'password_reset_expires_at' => null,
         ]);
 
+        \Illuminate\Support\Facades\Notification::fake();
+
         $this->postJson('/forgot-password', [
             'email' => 'operator@example.test',
         ])
@@ -28,6 +30,11 @@ class PasswordActivationContractTest extends TestCase
             ->assertJsonPath('message', 'Jika akun terdaftar, tautan reset telah dikirimkan')
             ->assertJsonMissing(['email' => 'operator@example.test'])
             ->assertJsonMissing(['token']);
+
+        \Illuminate\Support\Facades\Notification::assertSentTo(
+            $user,
+            \App\Notifications\ResetPasswordNotification::class
+        );
 
         $user->refresh();
 

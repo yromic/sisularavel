@@ -602,6 +602,16 @@ class DigitalExpeditionBookHandoverContractTest extends TestCase
         $this->assertDatabaseMissing('work_units', ['id' => $unit->id]);
     }
 
+    public function test_piagam_claim_endpoint_is_rate_limited(): void
+    {
+        for ($i = 0; $i < 10; $i++) {
+            $this->postJson('/api/v1/piagam/ambil', [], ['Idempotency-Key' => "rate-test-{$i}"]);
+        }
+
+        $this->postJson('/api/v1/piagam/ambil', [], ['Idempotency-Key' => 'rate-test-11'])
+            ->assertStatus(429);
+    }
+
     private function pngDataUrl(): string
     {
         return 'data:image/png;base64,'.base64_encode(base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=').str_repeat('A', 150));

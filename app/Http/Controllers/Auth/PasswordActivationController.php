@@ -29,6 +29,12 @@ class PasswordActivationController extends Controller
                 'password_reset_token' => hash('sha256', $plainToken),
                 'password_reset_expires_at' => now()->addDay(),
             ])->save();
+
+            try {
+                $user->notify(new \App\Notifications\ResetPasswordNotification($plainToken));
+            } catch (\Throwable $e) {
+                report($e);
+            }
         }
 
         return response()->json([
