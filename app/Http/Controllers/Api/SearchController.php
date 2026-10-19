@@ -38,7 +38,8 @@ class SearchController extends Controller
                 ->where('letter_number', 'like', "%{$search}%")
                 ->orWhere('origin_agency', 'like', "%{$search}%")
                 ->orWhere('subject', 'like', "%{$search}%"))
-            ->get()
+            ->limit(50)
+            ->get(['id', 'division_id', 'letter_number', 'subject'])
             ->map(fn (IncomingLetter $letter) => [
                 'type' => 'incoming_letter',
                 'id' => $letter->id,
@@ -55,7 +56,8 @@ class SearchController extends Controller
             ->where(fn ($query) => $query
                 ->where('letter_number', 'like', "%{$search}%")
                 ->orWhere('subject', 'like', "%{$search}%"))
-            ->get()
+            ->limit(50)
+            ->get(['id', 'division_id', 'letter_number', 'subject'])
             ->map(fn (OutgoingLetter $letter) => [
                 'type' => 'outgoing_letter',
                 'id' => $letter->id,
@@ -80,7 +82,8 @@ class SearchController extends Controller
                 ->orWhereHas('school', fn ($s) => $s->where('name', 'like', "%{$search}%"))
                 ->orWhereHas('workUnit', fn ($w) => $w->where('name', 'like', "%{$search}%"))
                 ->orWhereHas('competitionCategory', fn ($c) => $c->where('name', 'like', "%{$search}%")))
-            ->get()
+            ->limit(50)
+            ->get(['id', 'division_id', 'student_name', 'piagam_description'])
             ->map(fn (Piagam $piagam) => [
                 'type' => 'piagam',
                 'id' => $piagam->id,

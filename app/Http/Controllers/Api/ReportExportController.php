@@ -323,6 +323,7 @@ class ReportExportController extends Controller
                         ->orWhere('origin_agency', 'like', "%{$q}%");
                 }))
                 ->orderBy('id')
+                ->limit(500)
                 ->get();
         }
 
@@ -339,6 +340,7 @@ class ReportExportController extends Controller
                         ->orWhere('subject', 'like', "%{$q}%");
                 }))
                 ->orderBy('id')
+                ->limit(500)
                 ->get();
         }
 
@@ -355,6 +357,7 @@ class ReportExportController extends Controller
                         ->orWhere('recipient_name', 'like', "%{$q}%");
                 }))
                 ->orderBy('id')
+                ->limit(500)
                 ->get();
         }
 

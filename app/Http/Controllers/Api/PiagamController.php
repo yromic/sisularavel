@@ -21,13 +21,17 @@ class PiagamController extends Controller
     public function index(Request $request, DivisionContext $divisionContext): JsonResponse
     {
         $activeDivisionId = $divisionContext->activeDivisionId($request, $request->user());
+        $perPage = max(1, min(100, $request->integer('per_page', 25)));
 
-        $piagams = Piagam::query()
+        $paginated = Piagam::query()
+            ->with(['school', 'competitionCategory', 'pickupCategory', 'division', 'workUnit'])
             ->when($activeDivisionId !== null, fn ($query) => $query->where('division_id', $activeDivisionId))
             ->latest('id')
-            ->get();
+            ->paginate($perPage);
 
-        return response()->json(['data' => $piagams->map(fn (Piagam $piagam) => $this->resource($piagam))->values()]);
+        $paginated->getCollection()->transform(fn (Piagam $piagam) => $this->resource($piagam));
+
+        return response()->json($paginated);
     }
 
     public function store(StorePiagamRequest $request, DivisionContext $divisionContext, AuditLogger $auditLogger): Response

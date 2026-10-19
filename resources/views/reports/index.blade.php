@@ -1,26 +1,27 @@
 <x-layouts.app title="Pencarian Pintar & Laporan Arsip">
     <section class="px-4 py-4 md:px-8">
-        <!-- Header -->
-        <header class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <p class="text-sm font-semibold text-emerald-700">Pencarian & Rekapitulasi</p>
-                <h1 class="text-xl font-bold text-slate-900">Pencarian Terpadu & Ekspor Laporan Resmi</h1>
-                <p class="text-xs text-slate-500">Cari seluruh arsip surat masuk, surat keluar, dan piagam secara terpadu dalam satu aliran berkas.</p>
-            </div>
-            @php
-                $queryString = http_build_query(request()->query());
-            @endphp
-            <div class="flex flex-wrap items-center gap-2">
-                <a href="/api/v1/reports/export.csv?{{ $queryString }}" onclick="handleExportClick(this, 'Menyiapkan CSV...')" class="flex min-h-[40px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3.5 text-xs font-semibold text-slate-800 hover:bg-slate-50 shadow-xs" title="Unduh data dalam format CSV Spreadsheet">
-                    <x-icon name="download" class="h-4 w-4 text-emerald-700" />
-                    Unduh Rekap CSV
+        @php
+            $queryString = http_build_query(request()->query());
+        @endphp
+
+        <!-- Header Halaman Laporan (Standar SISURAT) -->
+        <x-page-header
+            badge="Pencarian & Rekapitulasi"
+            meta="Konteks: Lintas Dokumen"
+            title="Pencarian Terpadu & Ekspor Laporan Resmi"
+            subtitle="Cari seluruh arsip surat masuk, surat keluar, dan piagam secara terpadu dalam satu aliran berkas."
+        >
+            <x-slot:actions>
+                <a href="/api/v1/reports/export.csv?{{ $queryString }}" onclick="handleExportClick(this, 'Menyiapkan CSV...')" class="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-[#E3E8EE] bg-white px-3.5 text-xs font-semibold text-[#17243A] shadow-2xs hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors" title="Unduh data dalam format CSV Spreadsheet">
+                    <x-icon name="download" class="h-4 w-4 text-slate-500" />
+                    <span>Unduh Rekap CSV</span>
                 </a>
-                <a href="/api/v1/reports/export.pdf?{{ $queryString }}" target="_blank" onclick="handleExportClick(this, 'Menyiapkan PDF...')" class="flex min-h-[40px] items-center gap-1.5 rounded-md bg-emerald-700 px-3.5 text-xs font-semibold text-white hover:bg-emerald-800 shadow-xs" title="Cetak atau unduh laporan resmi format PDF">
+                <a href="/api/v1/reports/export.pdf?{{ $queryString }}" target="_blank" onclick="handleExportClick(this, 'Menyiapkan PDF...')" class="flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#147D73] px-4 text-xs font-semibold text-white shadow-xs hover:bg-[#0F635B] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors" title="Cetak atau unduh laporan resmi format PDF">
                     <x-icon name="file-text" class="h-4 w-4" />
-                    Cetak Laporan PDF
+                    <span>Cetak Laporan PDF</span>
                 </a>
-            </div>
-        </header>
+            </x-slot:actions>
+        </x-page-header>
 
         <!-- Advanced Search & Filter Form -->
         <form method="get" action="/laporan" class="mb-6 rounded-lg border border-slate-200 bg-white p-4 shadow-xs">

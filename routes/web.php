@@ -97,11 +97,11 @@ Route::get('/api/v1/public/piagams', function (Request $request) {
 
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->middleware('auth');
-Route::post('/forgot-password', [PasswordActivationController::class, 'forgot']);
-Route::post('/password/reset', [PasswordActivationController::class, 'reset']);
+Route::post('/forgot-password', [PasswordActivationController::class, 'forgot'])->middleware('throttle:5,1');
+Route::post('/password/reset', [PasswordActivationController::class, 'reset'])->middleware('throttle:5,1');
 Route::post('/password/activate', [PasswordActivationController::class, 'activate'])->middleware('auth');
 Route::post('/admin/users/{user}/activation-secret', [PasswordActivationController::class, 'issueSecret'])->middleware('auth');
-Route::post('/api/v1/piagam/ambil', [PublicPiagamController::class, 'claim'])->middleware('idempotent');
+Route::post('/api/v1/piagam/ambil', [PublicPiagamController::class, 'claim'])->middleware(['idempotent', 'throttle:10,1']);
 
 Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated::class])->group(function () {
     Route::get('/dashboard', function (Request $request, DivisionContext $divisionContext) {
@@ -483,8 +483,12 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
             }))
             ->latest('id');
 
-        $incomingStream = in_array($type, ['all', 'incoming'], true)
-            ? (clone $incomingQuery)->get()->map(fn ($item) => [
+        $perPage = 18;
+        $page = (int) $request->input('page', 1);
+
+        if ($type === 'incoming') {
+            $paginator = $incomingQuery->paginate($perPage)->withQueryString();
+            $paginatedItems = collect($paginator->items())->map(fn ($item) => [
                 'raw_id' => $item->id,
                 'doc_type' => 'incoming_letter',
                 'modal_type' => 'surat-masuk',
@@ -499,11 +503,15 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
                 'has_attachment' => $item->attachments->isNotEmpty(),
                 'extra_info' => 'Agenda #'.$item->id,
                 'division_code' => $item->division?->code ?? '-',
-            ])
-            : collect();
-
-        $outgoingStream = in_array($type, ['all', 'outgoing'], true)
-            ? (clone $outgoingQuery)->get()->map(fn ($item) => [
+            ]);
+            $totalResults = $paginator->total();
+            $unifiedResults = new LengthAwarePaginator($paginatedItems, $totalResults, $perPage, $page, [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]);
+        } elseif ($type === 'outgoing') {
+            $paginator = $outgoingQuery->paginate($perPage)->withQueryString();
+            $paginatedItems = collect($paginator->items())->map(fn ($item) => [
                 'raw_id' => $item->id,
                 'doc_type' => 'outgoing_letter',
                 'modal_type' => 'surat-keluar',
@@ -518,11 +526,15 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
                 'has_attachment' => $item->attachments->isNotEmpty(),
                 'extra_info' => 'Tahun '.$item->letter_year,
                 'division_code' => $item->division?->code ?? '-',
-            ])
-            : collect();
-
-        $piagamStream = in_array($type, ['all', 'piagam'], true)
-            ? (clone $piagamQuery)->get()->map(fn ($item) => [
+            ]);
+            $totalResults = $paginator->total();
+            $unifiedResults = new LengthAwarePaginator($paginatedItems, $totalResults, $perPage, $page, [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]);
+        } elseif ($type === 'piagam') {
+            $paginator = $piagamQuery->paginate($perPage)->withQueryString();
+            $paginatedItems = collect($paginator->items())->map(fn ($item) => [
                 'raw_id' => $item->id,
                 'doc_type' => 'piagam',
                 'modal_type' => 'piagam',
@@ -537,36 +549,78 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
                 'has_attachment' => $item->attachments->isNotEmpty(),
                 'extra_info' => 'Resi #'.$item->id,
                 'division_code' => $item->division?->code ?? '-',
-            ])
-            : collect();
+            ]);
+            $totalResults = $paginator->total();
+            $unifiedResults = new LengthAwarePaginator($paginatedItems, $totalResults, $perPage, $page, [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]);
+        } else {
+            $incomingStream = (clone $incomingQuery)->limit(200)->get()->map(fn ($item) => [
+                'raw_id' => $item->id,
+                'doc_type' => 'incoming_letter',
+                'modal_type' => 'surat-masuk',
+                'type_label' => 'Surat Masuk',
+                'badge_class' => 'bg-emerald-100 text-emerald-800 border border-emerald-300',
+                'icon_name' => 'mail',
+                'title' => $item->letter_number,
+                'origin_or_party' => $item->origin_agency,
+                'subject' => $item->subject,
+                'date_raw' => $item->received_date ?? $item->letter_date ?? $item->created_at,
+                'date_formatted' => $item->received_date ? $item->received_date->format('d/m/Y') : ($item->letter_date ? $item->letter_date->format('d/m/Y') : '-'),
+                'has_attachment' => $item->attachments->isNotEmpty(),
+                'extra_info' => 'Agenda #'.$item->id,
+                'division_code' => $item->division?->code ?? '-',
+            ]);
 
-        $merged = collect()
-            ->merge($incomingStream)
-            ->merge($outgoingStream)
-            ->merge($piagamStream)
-            ->sortByDesc('date_raw')
-            ->values();
+            $outgoingStream = (clone $outgoingQuery)->limit(200)->get()->map(fn ($item) => [
+                'raw_id' => $item->id,
+                'doc_type' => 'outgoing_letter',
+                'modal_type' => 'surat-keluar',
+                'type_label' => 'Surat Keluar',
+                'badge_class' => 'bg-blue-100 text-blue-800 border border-blue-300',
+                'icon_name' => 'send',
+                'title' => $item->letter_number,
+                'origin_or_party' => 'Diseminasi (Tahun '.$item->letter_year.')',
+                'subject' => $item->subject,
+                'date_raw' => $item->letter_date ?? $item->created_at,
+                'date_formatted' => $item->letter_date ? $item->letter_date->format('d/m/Y') : '-',
+                'has_attachment' => $item->attachments->isNotEmpty(),
+                'extra_info' => 'Tahun '.$item->letter_year,
+                'division_code' => $item->division?->code ?? '-',
+            ]);
 
-        $perPage = 18;
-        $page = (int) $request->input('page', 1);
-        $totalResults = $merged->count();
-        $sliced = $merged->slice(($page - 1) * $perPage, $perPage)->values();
-        $unifiedResults = new LengthAwarePaginator($sliced, $totalResults, $perPage, $page, [
-            'path' => $request->url(),
-            'query' => $request->query(),
-        ]);
+            $piagamStream = (clone $piagamQuery)->limit(200)->get()->map(fn ($item) => [
+                'raw_id' => $item->id,
+                'doc_type' => 'piagam',
+                'modal_type' => 'piagam',
+                'type_label' => 'Piagam Penghargaan',
+                'badge_class' => 'bg-teal-100 text-teal-800 border border-teal-300',
+                'icon_name' => 'award',
+                'title' => $item->piagam_description ?: $item->student_name,
+                'origin_or_party' => $item->unit_display_name ?: ($item->school?->name ?? $item->school_origin ?? '-'),
+                'subject' => ($item->recipient_name ? 'Penerima: '.$item->recipient_name.' ('.($item->recipient_position ?? 'Perwakilan').') — ' : '').$item->competition_display_name,
+                'date_raw' => $item->created_at,
+                'date_formatted' => $item->created_at->format('d/m/Y H:i'),
+                'has_attachment' => $item->attachments->isNotEmpty(),
+                'extra_info' => 'Resi #'.$item->id,
+                'division_code' => $item->division?->code ?? '-',
+            ]);
 
-        $incoming = in_array($type, ['all', 'incoming'], true)
-            ? ($type === 'all' ? $incomingQuery->paginate(8, ['*'], 'incoming_page')->withQueryString() : $incomingQuery->paginate(15)->withQueryString())
-            : collect();
+            $merged = collect()
+                ->merge($incomingStream)
+                ->merge($outgoingStream)
+                ->merge($piagamStream)
+                ->sortByDesc('date_raw')
+                ->values();
 
-        $outgoing = in_array($type, ['all', 'outgoing'], true)
-            ? ($type === 'all' ? $outgoingQuery->paginate(8, ['*'], 'outgoing_page')->withQueryString() : $outgoingQuery->paginate(15)->withQueryString())
-            : collect();
-
-        $piagams = in_array($type, ['all', 'piagam'], true)
-            ? ($type === 'all' ? $piagamQuery->paginate(8, ['*'], 'piagam_page')->withQueryString() : $piagamQuery->paginate(15)->withQueryString())
-            : collect();
+            $totalResults = $merged->count();
+            $sliced = $merged->slice(($page - 1) * $perPage, $perPage)->values();
+            $unifiedResults = new LengthAwarePaginator($sliced, $totalResults, $perPage, $page, [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]);
+        }
 
         return view('reports.index', [
             'q' => $q,
@@ -576,9 +630,6 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
             'year' => $year,
             'unifiedResults' => $unifiedResults,
             'totalResults' => $totalResults,
-            'incoming' => $incoming,
-            'outgoing' => $outgoing,
-            'piagams' => $piagams,
         ]);
     });
 });

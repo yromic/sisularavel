@@ -40,10 +40,18 @@ class DashboardController extends Controller
      */
     private function monthlyIncoming(?int $divisionId): array
     {
+        $driver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+        $expr = $driver === 'sqlite'
+            ? "strftime('%Y-%m', letter_date)"
+            : "DATE_FORMAT(letter_date, '%Y-%m')";
+
         return $this->scoped(IncomingLetter::query(), $divisionId)
-            ->get()
-            ->groupBy(fn (IncomingLetter $letter) => $letter->letter_date->format('Y-m'))
-            ->map->count()
+            ->whereNotNull('letter_date')
+            ->selectRaw("{$expr} as ym, count(*) as aggregate_count")
+            ->groupBy('ym')
+            ->orderBy('ym')
+            ->pluck('aggregate_count', 'ym')
+            ->map(fn ($count) => (int) $count)
             ->all();
     }
 
@@ -52,10 +60,18 @@ class DashboardController extends Controller
      */
     private function monthlyOutgoing(?int $divisionId): array
     {
+        $driver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+        $expr = $driver === 'sqlite'
+            ? "strftime('%Y-%m', letter_date)"
+            : "DATE_FORMAT(letter_date, '%Y-%m')";
+
         return $this->scoped(OutgoingLetter::query(), $divisionId)
-            ->get()
-            ->groupBy(fn (OutgoingLetter $letter) => $letter->letter_date->format('Y-m'))
-            ->map->count()
+            ->whereNotNull('letter_date')
+            ->selectRaw("{$expr} as ym, count(*) as aggregate_count")
+            ->groupBy('ym')
+            ->orderBy('ym')
+            ->pluck('aggregate_count', 'ym')
+            ->map(fn ($count) => (int) $count)
             ->all();
     }
 }

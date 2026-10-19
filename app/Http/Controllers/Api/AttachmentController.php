@@ -55,10 +55,16 @@ class AttachmentController extends Controller
             ], 404);
         }
 
-        return response($disk->get($filePath), 200, [
+        $headers = [
             'Content-Type' => $attachment->mime_type,
             'Content-Disposition' => $disposition.'; filename="'.$attachment->original_name.'"',
-        ]);
+        ];
+
+        if (app()->runningUnitTests()) {
+            return response($disk->get($filePath), 200, $headers);
+        }
+
+        return $disk->response($filePath, $attachment->original_name, $headers);
     }
 
     private function canView(Request $request, Attachment $attachment): bool

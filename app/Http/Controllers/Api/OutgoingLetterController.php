@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreOutgoingLetterRequest;
-use App\Models\Division;
 use App\Models\OutgoingLetter;
 use App\Services\AttachmentStorageService;
 use App\Services\AuditLogger;
@@ -21,13 +20,14 @@ class OutgoingLetterController extends Controller
     public function index(Request $request, DivisionContext $divisionContext): JsonResponse
     {
         $activeDivisionId = $divisionContext->activeDivisionId($request, $request->user());
+        $perPage = max(1, min(100, $request->integer('per_page', 25)));
 
         $letters = OutgoingLetter::query()
             ->when($activeDivisionId !== null, fn ($query) => $query->where('division_id', $activeDivisionId))
             ->latest('id')
-            ->get(['id', 'uuid', 'division_id', 'letter_year', 'letter_number', 'letter_date', 'disseminated_date', 'subject']);
+            ->paginate($perPage, ['id', 'uuid', 'division_id', 'letter_year', 'letter_number', 'letter_date', 'disseminated_date', 'subject']);
 
-        return response()->json(['data' => $letters]);
+        return response()->json($letters);
     }
 
     public function show(Request $request, OutgoingLetter $outgoingLetter): JsonResponse
@@ -51,21 +51,12 @@ class OutgoingLetterController extends Controller
 
         if ($divisionId === null && $user->role === 'super_admin' && $request->filled('division_id')) {
             $divisionId = (int) $request->input('division_id');
-            $request->session()->put('active_division_id', $divisionId);
-        }
-
-        if ($divisionId === null && $user->role === 'super_admin') {
-            $firstDiv = Division::where('status', 'active')->first();
-            if ($firstDiv) {
-                $divisionId = $firstDiv->id;
-                $request->session()->put('active_division_id', $divisionId);
-            }
         }
 
         if ($divisionId === null) {
             throw new HttpResponseException(response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => ['division_id' => ['Super Admin harus memilih konteks divisi aktif.']],
+                'errors' => ['division_id' => ['Super Admin wajib memilih divisi pengarsip saat dalam mode Semua Divisi.']],
             ], 422));
         }
 
@@ -117,6 +108,11 @@ class OutgoingLetterController extends Controller
 
     public function update(StoreOutgoingLetterRequest $request, OutgoingLetter $outgoingLetter, AuditLogger $auditLogger, AttachmentStorageService $attachments): Response
     {
+        $user = $request->user();
+        if (! in_array($user->role, ['super_admin', 'division_admin'], true)) {
+            return $this->forbiddenRoleResponse($request);
+        }
+
         if (! $this->canManage($request, $outgoingLetter)) {
             return $this->forbiddenDivisionResponse($request);
         }
@@ -249,6 +245,19 @@ class OutgoingLetterController extends Controller
         }
 
         return $user->role === 'division_admin' && $user->division_id === $outgoingLetter->division_id;
+    }
+
+    private function forbiddenRoleResponse(?Request $request = null): Response
+    {
+        if ($request && ! $request->expectsJson()) {
+            abort(403, 'Operator tidak memiliki wewenang untuk mengubah arsip surat.');
+        }
+
+        return response()->json([
+            'success' => false,
+            'code' => 'ERR_403_ROLE',
+            'message' => 'Operator tidak memiliki wewenang untuk mengubah arsip surat.',
+        ], 403);
     }
 
     private function forbiddenDivisionResponse(?Request $request = null): Response

@@ -1,30 +1,28 @@
 <x-layouts.app title="Backup & Disaster Recovery">
     <section class="px-4 py-4 md:px-8">
-        <!-- Header Page -->
-        <header class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-teal-700">
-                    <x-icon name="shield-check" class="h-4 w-4 text-teal-600" />
-                    <span>Sistem & Ketahanan Data</span>
-                </div>
-                <h1 class="text-xl font-bold tracking-tight text-slate-900 md:text-2xl">Backup & Disaster Recovery</h1>
-                <p class="text-xs text-slate-500 md:text-sm">Pemantauan snapshot berkala, replikasi off-site cloud, dan pemulihan bencana sistem.</p>
-            </div>
-            <div class="flex flex-wrap items-center gap-2">
+        <!-- Header Page (Standar SISURAT) -->
+        <x-page-header
+            badge="Sistem & Ketahanan Data"
+            badge-icon="shield-check"
+            meta="Kewenangan: Super Admin"
+            title="Backup & Disaster Recovery"
+            subtitle="Pemantauan snapshot berkala, replikasi off-site cloud, dan pemulihan bencana sistem."
+        >
+            <x-slot:actions>
                 <button type="button" 
                         onclick="document.getElementById('modal-prune-retensi').classList.toggle('hidden')" 
-                        class="flex min-h-[44px] items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 hover:text-slate-900 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700">
+                        class="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-[#E3E8EE] bg-white px-3.5 text-xs font-semibold text-[#17243A] shadow-2xs hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
                     <x-icon name="trash" class="h-4 w-4 text-slate-500" />
                     <span>Pruning Retensi</span>
                 </button>
                 <button type="button" 
                         onclick="document.getElementById('modal-backup-manual').classList.toggle('hidden')" 
-                        class="flex min-h-[44px] items-center gap-2 rounded-lg bg-teal-700 px-4 text-xs font-semibold text-white shadow-xs hover:bg-teal-800 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700">
+                        class="flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#147D73] px-4 text-xs font-semibold text-white shadow-xs hover:bg-[#0F635B] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
                     <x-icon name="plus" class="h-4 w-4" />
                     <span>+ Backup Manual Sekarang</span>
                 </button>
-            </div>
-        </header>
+            </x-slot:actions>
+        </x-page-header>
 
         <!-- Flash Notifications -->
         @if (session('success'))
@@ -483,6 +481,14 @@
 
                         <div class="rounded-lg border border-teal-200 bg-teal-50/50 p-3 text-xs text-teal-900 leading-relaxed">
                             <strong class="font-bold">Keamanan & Integritas:</strong> Arsip otomatis dienkripsi dengan standar AES-256-GCM dan diverifikasi oleh hash SHA-256. Kunci dekripsi tidak pernah disimpan di dalam file arsip cadangan.
+                        </div>
+
+                        <div class="rounded-lg border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-900 leading-relaxed flex items-start gap-2">
+                            <x-icon name="alert-triangle" class="h-4 w-4 text-amber-700 shrink-0 mt-0.5" />
+                            <div>
+                                <strong class="font-bold">Catatan Lingkungan Shared Hosting:</strong> Pencadangan manual via web berjalan sinkron dan dapat memerlukan 15–30 detik. Untuk menghindari batas waktu <em>Gateway Timeout (504)</em> pada arsip besar, disarankan menggunakan cron terjadwal pukul 02:00 WIB atau jalankan langsung via Terminal cPanel:
+                                <code class="mt-1 block rounded bg-white px-2 py-0.5 font-mono text-[11px] text-amber-950 border border-amber-300">php artisan sisurat:backup --type=full --upload</code>
+                            </div>
                         </div>
                     </div>
 
