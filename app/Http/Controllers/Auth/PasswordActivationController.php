@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Notifications\ResetPasswordNotification;
 use App\Services\AuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,7 +32,7 @@ class PasswordActivationController extends Controller
             ])->save();
 
             try {
-                $user->notify(new \App\Notifications\ResetPasswordNotification($plainToken));
+                $user->notify(new ResetPasswordNotification($plainToken));
             } catch (\Throwable $e) {
                 report($e);
             }

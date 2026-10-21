@@ -6,7 +6,7 @@
                 <img src="{{ asset('images/icon/icon.svg') }}" alt="Logo SISURAT" class="h-8 w-8 shrink-0 object-contain drop-shadow-xs" />
                 <div>
                     <span class="text-sm font-bold text-slate-900 leading-tight">SISURAT</span>
-                    <span class="text-xs text-slate-400 hidden sm:inline-block">· Disdikbudpora Kab. Semarang</span>
+                    <span class="text-sm text-slate-400 hidden sm:inline-block">Disdikbudpora Kab. Semarang</span>
                 </div>
             </div>
 
@@ -21,14 +21,11 @@
         <div class="mx-auto max-w-3xl">
             <!-- Header Section -->
             <header class="mb-6 text-center">
-                <span class="inline-flex rounded-full bg-emerald-100 px-3.5 py-1 text-xs font-bold text-emerald-800 tracking-wide uppercase">
-                    Loket Pelayanan Tamu & Pengambilan Piagam Fisik
-                </span>
-                <h1 class="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-                    Tanda Terima Pengambilan Piagam
+                <h1 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+                    Tanda terima piagam
                 </h1>
-                <p class="mt-2 text-xs sm:text-sm text-slate-600 max-w-xl mx-auto">
-                    Silakan isi data berikut sebagai bukti penerimaan piagam dari dinas.
+                <p class="mt-2 text-base text-slate-600 max-w-xl mx-auto">
+                    Isi tiga langkah singkat ini sebagai bukti Anda sudah menerima piagam.
                 </p>
             </header>
 

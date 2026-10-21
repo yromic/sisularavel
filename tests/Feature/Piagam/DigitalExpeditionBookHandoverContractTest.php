@@ -599,7 +599,7 @@ class DigitalExpeditionBookHandoverContractTest extends TestCase
             ->deleteJson("/api/v1/reference/work-units/{$unit->id}");
 
         $deleteRes->assertOk();
-        $this->assertDatabaseMissing('work_units', ['id' => $unit->id]);
+        $this->assertSoftDeleted('work_units', ['id' => $unit->id]);
     }
 
     public function test_piagam_claim_endpoint_is_rate_limited(): void

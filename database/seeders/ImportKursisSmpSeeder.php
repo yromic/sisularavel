@@ -372,6 +372,7 @@ class ImportKursisSmpSeeder extends Seeder
         if (preg_match('/\/d\/([a-zA-Z0-9_-]+)/', $url, $m)) {
             return $m[1];
         }
+
         return null;
     }
 }

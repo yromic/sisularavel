@@ -29,12 +29,9 @@
                 <x-icon name="check" class="h-7 w-7" />
             </div>
             <div class="flex-1">
-                <span class="inline-flex rounded-full bg-emerald-200/80 px-2.5 py-0.5 text-xs font-bold text-emerald-900 mb-1">
-                    Tercatat Sah di Buku Ekspedisi
-                </span>
-                <h3 class="font-extrabold text-xl text-emerald-950">Tanda Terima Berhasil Disimpan!</h3>
-                <p class="mt-1 text-xs sm:text-sm text-emerald-800 leading-relaxed" id="claim-success-message">
-                    Bukti serah terima fisik piagam beserta tanda tangan digital telah tersimpan aman dalam Buku Ekspedisi Digital SISURAT.
+                <h3 class="font-extrabold text-xl text-emerald-950">Tanda terima tersimpan</h3>
+                <p class="mt-1 text-base text-emerald-800 leading-relaxed" id="claim-success-message">
+                    Bukti serah terima dan tanda tangan sudah tercatat di Buku Ekspedisi Digital.
                 </p>
                 <div class="mt-5 flex flex-wrap gap-3">
                     <button type="button" onclick="resetFormForNewReceipt()" class="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-emerald-700 px-5 text-xs font-bold text-white shadow-xs hover:bg-emerald-800 transition-colors">
@@ -49,96 +46,58 @@
         </div>
     </div>
 
-    <!-- Main Handover Receipt Card -->
-    <div id="claim-form-card" class="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
-        <div class="border-b border-slate-100 pb-4 mb-6">
-            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Buku Tanda Terima Pengambilan Piagam</h2>
-            <p class="text-xs sm:text-sm text-slate-500 mt-1">
-                Silakan lengkapi formulir di bawah ini sebagai bukti penyerahan fisik piagam penghargaan di loket dinas.
-            </p>
-        </div>
+    @php
+        $labelCls = 'block text-sm font-semibold text-slate-800';
+        $hintCls = 'mt-1 text-sm text-slate-500';
+        $inputCls = 'mt-2 min-h-[48px] w-full rounded-lg border border-slate-300 bg-white px-4 text-base text-slate-900 placeholder-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/20 focus:outline-hidden';
+        $manualCls = 'min-h-[48px] w-full rounded-lg border border-amber-300 bg-amber-50/40 px-4 text-base text-slate-900 placeholder-slate-400 focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/20 focus:outline-hidden';
+        $stepCls = 'flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-sm font-bold text-white';
+        $legendCls = 'flex items-center gap-3 text-lg font-bold text-slate-900';
+    @endphp
 
+    <!-- Main Handover Receipt Card -->
+    <div id="claim-form-card" class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-8 shadow-sm">
         <div id="form-error-banner" class="hidden mb-6 rounded-xl border border-rose-300 bg-rose-50 p-4 sm:p-5 text-sm text-rose-800 shadow-xs">
             <div class="font-bold flex items-center gap-2 text-rose-900" id="form-error-title">
                 <x-icon name="x" class="h-4 w-4 text-rose-600" />
-                Gagal Menyimpan Tanda Terima:
+                Tanda terima belum tersimpan
             </div>
-            <ul id="form-error-list" class="mt-2 list-disc pl-5 space-y-1 text-xs text-rose-700 font-medium"></ul>
+            <ul id="form-error-list" class="mt-2 list-disc pl-5 space-y-1 text-sm text-rose-700"></ul>
         </div>
 
-        <form id="public-handover-form" data-testid="piagam-claim-form" method="post" action="/api/v1/piagam/ambil" class="space-y-8">
+        <form id="public-handover-form" data-testid="piagam-claim-form" method="post" action="/api/v1/piagam/ambil" class="space-y-10">
             @csrf
             <input type="hidden" name="signature_canvas" id="signature_canvas" required>
             <input type="hidden" name="piagam_id" id="piagam_id" value="">
             <input type="hidden" name="recipient_unit" id="recipient_unit" value="">
 
-            <!-- ============================================================ -->
-            <!-- SECTION A: INFORMASI PENGAMBIL                               -->
-            <!-- ============================================================ -->
-            <fieldset class="space-y-4 rounded-xl border border-slate-200/90 bg-slate-50/50 p-5 sm:p-6">
-                <legend class="px-2 text-xs font-black uppercase tracking-wider text-emerald-800 bg-emerald-100/80 rounded-md py-1 border border-emerald-200">
-                    BAGIAN A — INFORMASI PENGAMBIL
+            <!-- LANGKAH 1: PENGAMBIL -->
+            <fieldset class="space-y-5">
+                <legend class="{{ $legendCls }}">
+                    <span class="{{ $stepCls }}">1</span>
+                    Data pengambil
                 </legend>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                    <!-- 1. DIVISI TUJUAN -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-6">
                     <div>
-                        <label for="division_id" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                            Divisi Tujuan / Bidang Pengampu *
-                        </label>
-                        <select name="division_id"
-                                id="division_id"
-                                onchange="handleDivisionChange(this.value)"
-                                class="mt-1.5 min-h-[46px] w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm text-slate-900 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 focus:outline-hidden"
-                                required>
-                            <option value="">-- Pilih Bidang Penyerah --</option>
-                            @foreach ($divisions as $division)
-                                <option value="{{ $division->id }}" @selected(request('bidang') === $division->code || old('division_id') == $division->id)>
-                                    {{ $division->code }} — {{ $division->name }}
-                                </option>
-                            @endforeach
-                            <option value="manual" @selected(old('division_id') === 'manual')>-- Lainnya / Ketik Manual --</option>
-                        </select>
-
-                        <!-- Manual Division Input (Initially Hidden) -->
-                        <div id="division_manual_wrapper" class="{{ old('division_id') === 'manual' ? '' : 'hidden' }} mt-2">
-                            <label for="division_manual" class="block text-[11px] font-semibold text-slate-600">
-                                Ketik Nama / Kode Bidang:
-                            </label>
-                            <input type="text"
-                                   name="division_manual"
-                                   id="division_manual"
-                                   value="{{ old('division_manual') }}"
-                                   class="mt-1 min-h-[42px] w-full rounded-lg border border-amber-300 bg-amber-50/40 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 focus:outline-hidden"
-                                   placeholder="Contoh: DIKDAS atau Bidang Pembinaan SD">
-                            <p class="text-[11px] text-slate-400 mt-0.5">Akan dicocokkan dengan divisi dinas resmi yang aktif.</p>
-                        </div>
-                    </div>
-
-                    <!-- 2. NAMA PENGAMBIL -->
-                    <div>
-                        <label for="recipient_name" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                            Nama Lengkap Pengambil *
-                        </label>
+                        <label for="recipient_name" class="{{ $labelCls }}">Nama lengkap</label>
                         <input type="text"
                                name="recipient_name"
                                id="recipient_name"
                                value="{{ old('recipient_name') }}"
-                               class="mt-1.5 min-h-[46px] w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 focus:outline-hidden"
+                               autocomplete="name"
+                               class="{{ $inputCls }}"
                                placeholder="Contoh: Budi Santoso, S.Pd."
                                required>
                     </div>
 
-                    <!-- 3. POSISI / JABATAN -->
                     <div>
-                        <label for="recipient_position" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                            Posisi / Jabatan Pengambil *
-                        </label>
+                        <label for="recipient_position" class="{{ $labelCls }}">Jabatan</label>
                         <input list="positions_datalist"
                                name="recipient_position"
                                id="recipient_position"
                                value="{{ old('recipient_position') }}"
-                               class="mt-1.5 min-h-[46px] w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 focus:outline-hidden"
+                               class="{{ $inputCls }}"
                                placeholder="Ketik atau pilih jabatan"
                                required>
                         <datalist id="positions_datalist">
@@ -151,226 +110,226 @@
                         </datalist>
                     </div>
 
-                    <!-- 4. JENIS PENGAMBILAN -->
-                    <div>
-                        <label for="pickup_category_id" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                            Jenis Pengambilan *
-                        </label>
-                        <select name="pickup_category_id"
-                                id="pickup_category_id"
-                                onchange="handlePickupCategoryChange(this.value)"
-                                class="mt-1.5 min-h-[46px] w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm text-slate-900 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 focus:outline-hidden">
-                            <option value="">-- Pilih Jenis Pengambilan --</option>
-                            @foreach ($pickupCategories as $cat)
-                                <option value="{{ $cat->id }}" @selected(old('pickup_category_id') == $cat->id || $loop->first)>
-                                    {{ $cat->name }}
-                                </option>
-                            @endforeach
-                            <option value="manual" @selected(old('pickup_category_id') === 'manual')>-- Lainnya / Ketik Manual --</option>
-                        </select>
-
-                        <!-- Manual Pickup Category Input (Initially Hidden) -->
-                        <div id="pickup_category_manual_wrapper" class="{{ old('pickup_category_id') === 'manual' ? '' : 'hidden' }} mt-2">
-                            <input type="text"
-                                   name="pickup_category_manual"
-                                   id="pickup_category_manual"
-                                   value="{{ old('pickup_category_manual') }}"
-                                   class="min-h-[42px] w-full rounded-lg border border-amber-300 bg-amber-50/40 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 focus:outline-hidden"
-                                   placeholder="Ketik jenis pengambilan lainnya...">
-                        </div>
-                    </div>
-
-                    <!-- 5. UNIT KERJA -->
-                    <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="md:col-span-2">
-                            <!-- Typeahead Autocomplete Search for Schools (UX-014) -->
-                            <div class="relative mb-2.5">
-                                <div class="flex items-center justify-between mb-1">
-                                    <label for="school_search_autocomplete" class="block text-[11px] font-bold uppercase tracking-wider text-slate-700">
-                                        Pencarian Cepat Sekolah / NPSN (Autocomplete)
-                                    </label>
-                                    <span class="text-[10px] text-slate-400">Ketik nama sekolah atau 8 digit NPSN</span>
-                                </div>
-                                <div class="relative">
-                                    <input type="text"
-                                           id="school_search_autocomplete"
-                                           autocomplete="off"
-                                           class="min-h-[42px] w-full rounded-lg border border-slate-300 bg-white pl-9 pr-8 text-xs text-slate-900 placeholder-slate-400 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 focus:outline-hidden"
-                                           placeholder="Ketik nama sekolah (misal: SMPN 1) atau NPSN...">
-                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                                        <x-icon name="search" class="h-3.5 w-3.5" />
-                                    </div>
-                                    <button type="button" id="btn-clear-school-autocomplete" onclick="clearSchoolAutocomplete()" class="hidden absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600">
-                                        <x-icon name="x" class="h-3.5 w-3.5" />
-                                    </button>
-                                </div>
-                                <!-- Dropdown hasil pencarian -->
-                                <div id="school-autocomplete-results" class="hidden absolute z-30 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg text-xs"></div>
-                            </div>
-
-                            <label for="work_unit_selection" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                                Unit Kerja / Asal Instansi *
-                            </label>
-                            <select name="work_unit_selection"
-                                    id="work_unit_selection"
-                                    onchange="handleWorkUnitSelection(this.value)"
-                                    class="mt-1.5 min-h-[46px] w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm text-slate-900 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 focus:outline-hidden"
-                                    required>
-                                <option value="">-- Pilih Sekolah / Unit Kerja --</option>
-                                <optgroup label="Sekolah (Satuan Pendidikan)">
-                                    @foreach ($schools as $school)
-                                        <option value="school:{{ $school->id }}" data-npsn="{{ $school->npsn }}" data-name="{{ $school->name }}" @selected(old('work_unit_selection') === 'school:'.$school->id)>
-                                            {{ $school->name }} (NPSN: {{ $school->npsn }})
-                                        </option>
-                                    @endforeach
-                                </optgroup>
-                                @if($workUnits->isNotEmpty())
-                                    <optgroup label="Unit Kerja / Instansi Non-Sekolah">
-                                        @foreach ($workUnits as $unit)
-                                            <option value="work_unit:{{ $unit->id }}" data-npsn="" data-name="{{ $unit->name }}" @selected(old('work_unit_selection') === 'work_unit:'.$unit->id)>
-                                                {{ $unit->name }} {{ $unit->code ? '('.$unit->code.')' : '' }}
-                                            </option>
-                                        @endforeach
-                                    </optgroup>
-                                @endif
-                                <option value="manual" @selected(old('work_unit_selection') === 'manual')>-- Lainnya / Ketik Manual --</option>
-                            </select>
-
-                            <!-- Manual Unit Kerja Input (Initially Hidden) -->
-                            <div id="recipient_unit_manual_wrapper" class="{{ old('work_unit_selection') === 'manual' ? '' : 'hidden' }} mt-2">
-                                <label for="recipient_unit_manual" class="block text-[11px] font-semibold text-slate-600">
-                                    Ketik Nama Unit Kerja / Sekolah:
-                                </label>
+                    <!-- Sekolah: satu pintu pencarian, pilihan daftar disimpan di bagian "tidak ditemukan" -->
+                    <div class="md:col-span-2">
+                        <label for="school_search_autocomplete" class="{{ $labelCls }}">Asal sekolah atau instansi</label>
+                        <div class="relative">
+                            <div class="relative">
                                 <input type="text"
-                                       name="recipient_unit_manual"
-                                       id="recipient_unit_manual"
-                                       value="{{ old('recipient_unit_manual') }}"
-                                       class="mt-1 min-h-[42px] w-full rounded-lg border border-amber-300 bg-amber-50/40 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 focus:outline-hidden"
-                                       placeholder="Nama sekolah atau instansi pengambil">
+                                       id="school_search_autocomplete"
+                                       autocomplete="off"
+                                       class="{{ $inputCls }} pl-11 pr-10"
+                                       placeholder="Ketik nama sekolah atau NPSN">
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-4 pt-2 pointer-events-none text-slate-400">
+                                    <x-icon name="search" class="h-4 w-4" />
+                                </div>
+                                <button type="button" id="btn-clear-school-autocomplete" onclick="clearSchoolAutocomplete()" aria-label="Hapus pencarian" class="hidden absolute inset-y-0 right-0 flex items-center pr-4 pt-2 text-slate-400 hover:text-slate-600">
+                                    <x-icon name="x" class="h-4 w-4" />
+                                </button>
                             </div>
+                            <div id="school-autocomplete-results" class="hidden absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg text-sm"></div>
                         </div>
+                        <p class="{{ $hintCls }}">Pilih dari hasil pencarian. NPSN terisi otomatis.</p>
 
-                        <!-- 6. NPSN SEKOLAH -->
-                        <div>
-                            <label for="npsn" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                                NPSN Sekolah
-                            </label>
-                            <p class="text-xs text-slate-500 mt-0.5">8 digit angka (otomatis terisi jika memilih sekolah).</p>
-                            <input type="text"
-                                   name="npsn"
-                                   id="npsn"
-                                   inputmode="numeric"
-                                   pattern="[0-9]*"
-                                   value="{{ old('npsn') }}"
-                                   class="mt-1.5 min-h-[46px] w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 focus:outline-hidden"
-                                   placeholder="Contoh: 20320340">
-                        </div>
+                        <details class="mt-3 group" @if(old('work_unit_selection') === 'manual' || old('work_unit_selection')) open @endif>
+                            <summary class="cursor-pointer text-sm font-semibold text-emerald-800 hover:text-emerald-900">
+                                Tidak ketemu? Pilih dari daftar atau isi sendiri
+                            </summary>
+                            <div class="mt-4 space-y-5 rounded-xl bg-slate-50 p-4">
+                                <div>
+                                    <label for="work_unit_selection" class="{{ $labelCls }}">Daftar sekolah dan instansi</label>
+                                    <select name="work_unit_selection"
+                                            id="work_unit_selection"
+                                            onchange="handleWorkUnitSelection(this.value)"
+                                            class="{{ $inputCls }}">
+                                        <option value="">Pilih sekolah atau instansi</option>
+                                        <optgroup label="Sekolah">
+                                            @foreach ($schools as $school)
+                                                <option value="school:{{ $school->id }}" data-npsn="{{ $school->npsn }}" data-name="{{ $school->name }}" @selected(old('work_unit_selection') === 'school:'.$school->id)>
+                                                    {{ $school->name }} (NPSN {{ $school->npsn }})
+                                                </option>
+                                            @endforeach
+                                        </optgroup>
+                                        @if($workUnits->isNotEmpty())
+                                            <optgroup label="Instansi non-sekolah">
+                                                @foreach ($workUnits as $unit)
+                                                    <option value="work_unit:{{ $unit->id }}" data-npsn="" data-name="{{ $unit->name }}" @selected(old('work_unit_selection') === 'work_unit:'.$unit->id)>
+                                                        {{ $unit->name }} {{ $unit->code ? '('.$unit->code.')' : '' }}
+                                                    </option>
+                                                @endforeach
+                                            </optgroup>
+                                        @endif
+                                        <option value="manual" @selected(old('work_unit_selection') === 'manual')>Belum terdaftar, isi sendiri</option>
+                                    </select>
+                                </div>
+
+                                <div id="recipient_unit_manual_wrapper" class="{{ old('work_unit_selection') === 'manual' ? '' : 'hidden' }}">
+                                    <label for="recipient_unit_manual" class="{{ $labelCls }}">Nama sekolah atau instansi</label>
+                                    <input type="text"
+                                           name="recipient_unit_manual"
+                                           id="recipient_unit_manual"
+                                           value="{{ old('recipient_unit_manual') }}"
+                                           class="{{ $manualCls }} mt-2"
+                                           placeholder="Nama sekolah atau instansi pengambil">
+                                </div>
+
+                                <div>
+                                    <label for="npsn" class="{{ $labelCls }}">NPSN <span class="font-normal text-slate-500">(opsional)</span></label>
+                                    <input type="text"
+                                           name="npsn"
+                                           id="npsn"
+                                           inputmode="numeric"
+                                           pattern="[0-9]*"
+                                           value="{{ old('npsn') }}"
+                                           class="{{ $inputCls }}"
+                                           placeholder="8 digit, contoh: 20320340">
+                                </div>
+                            </div>
+                        </details>
                     </div>
                 </div>
             </fieldset>
 
-            <!-- ============================================================ -->
-            <!-- SECTION B: ATRIBUT KEJUARAAN                                 -->
-            <!-- ============================================================ -->
-            <fieldset class="space-y-4 rounded-xl border border-slate-200/90 bg-slate-50/50 p-5 sm:p-6">
-                <legend class="px-2 text-xs font-black uppercase tracking-wider text-emerald-800 bg-emerald-100/80 rounded-md py-1 border border-emerald-200">
-                    BAGIAN B — ATRIBUT KEJUARAAN & SISWA
+            <!-- LANGKAH 2: PIAGAM -->
+            <fieldset class="space-y-5">
+                <legend class="{{ $legendCls }}">
+                    <span class="{{ $stepCls }}">2</span>
+                    Data piagam
                 </legend>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                    <!-- 1. KELAS KOMPETISI -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-6">
+                    <div class="md:col-span-3">
+                        <label for="student_name" class="{{ $labelCls }}">Nama siswa atau regu</label>
+                        <input type="text"
+                               name="student_name"
+                               id="student_name"
+                               value="{{ old('student_name') }}"
+                               class="{{ $inputCls }}"
+                               placeholder="Contoh: Ahmad Zaki atau Regu Putri SMPN 1"
+                               required>
+                    </div>
+
                     <div class="md:col-span-2">
-                        <label for="competition_category_id" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                            Kelas Kompetisi / Kategori Perlombaan *
-                        </label>
+                        <label for="competition_category_id" class="{{ $labelCls }}">Lomba atau kategori</label>
                         <select name="competition_category_id"
                                 id="competition_category_id"
                                 onchange="handleCompetitionCategoryChange(this.value)"
-                                class="mt-1.5 min-h-[46px] w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm text-slate-900 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 focus:outline-hidden">
-                            <option value="">-- Pilih Kategori Perlombaan --</option>
+                                class="{{ $inputCls }}">
+                            <option value="">Pilih lomba</option>
                             @foreach ($competitionCategories as $comp)
                                 <option value="{{ $comp->id }}" data-division-id="{{ $comp->division_id }}" @selected(old('competition_category_id') == $comp->id)>
                                     {{ $comp->name }}
                                 </option>
                             @endforeach
-                            <option value="manual" @selected(old('competition_category_id') === 'manual')>-- Lainnya / Ketik Manual --</option>
+                            <option value="manual" @selected(old('competition_category_id') === 'manual')>Lainnya, isi sendiri</option>
                         </select>
 
-                        <!-- Manual Competition Category Input (Initially Hidden) -->
-                        <div id="competition_category_manual_wrapper" class="{{ old('competition_category_id') === 'manual' ? '' : 'hidden' }} mt-2">
+                        <div id="competition_category_manual_wrapper" class="{{ old('competition_category_id') === 'manual' ? '' : 'hidden' }} mt-3">
                             <input type="text"
                                    name="competition_category_manual"
                                    id="competition_category_manual"
                                    value="{{ old('competition_category_manual') }}"
-                                   class="min-h-[42px] w-full rounded-lg border border-amber-300 bg-amber-50/40 px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 focus:outline-hidden"
-                                   placeholder="Ketik nama perlombaan/kategori lomba...">
+                                   aria-label="Nama lomba"
+                                   class="{{ $manualCls }}"
+                                   placeholder="Nama lomba atau kategori">
                         </div>
                     </div>
 
-                    <!-- 2. TAHUN ACARA -->
                     <div>
-                        <label for="competition_year" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                            Tahun Acara *
-                        </label>
+                        <label for="competition_year" class="{{ $labelCls }}">Tahun</label>
                         <input type="number"
                                name="competition_year"
                                id="competition_year"
                                min="2000"
                                max="2099"
                                value="{{ old('competition_year', date('Y')) }}"
-                               class="mt-1.5 min-h-[46px] w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 focus:outline-hidden"
+                               class="{{ $inputCls }}"
                                required>
                     </div>
 
-                    <!-- 3. KANDIDAT PRESTASI (NAMA SISWA) -->
                     <div class="md:col-span-3">
-                        <label for="student_name" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                            Kandidat Prestasi (Nama Siswa) *
-                        </label>
-                        <input type="text"
-                               name="student_name"
-                               id="student_name"
-                               value="{{ old('student_name') }}"
-                               class="mt-1.5 min-h-[46px] w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 focus:outline-hidden"
-                               placeholder="Contoh: Ahmad Zaki / Regu Putri SMPN 1"
-                               required>
+                        <label for="division_id" class="{{ $labelCls }}">Bidang yang menyerahkan</label>
+                        <select name="division_id"
+                                id="division_id"
+                                onchange="handleDivisionChange(this.value)"
+                                class="{{ $inputCls }}"
+                                required>
+                            <option value="">Pilih bidang</option>
+                            @foreach ($divisions as $division)
+                                <option value="{{ $division->id }}" @selected(request('bidang') === $division->code || old('division_id') == $division->id)>
+                                    {{ $division->code }} · {{ $division->name }}
+                                </option>
+                            @endforeach
+                            <option value="manual" @selected(old('division_id') === 'manual')>Lainnya, isi sendiri</option>
+                        </select>
+
+                        <div id="division_manual_wrapper" class="{{ old('division_id') === 'manual' ? '' : 'hidden' }} mt-3">
+                            <input type="text"
+                                   name="division_manual"
+                                   id="division_manual"
+                                   value="{{ old('division_manual') }}"
+                                   aria-label="Nama atau kode bidang"
+                                   class="{{ $manualCls }}"
+                                   placeholder="Contoh: DIKDAS atau Bidang Pembinaan SD">
+                        </div>
                     </div>
 
-                    <!-- 4. KETERANGAN PIAGAM / PRESTASI (OPSIONAL) -->
                     <div class="md:col-span-3">
-                        <label for="piagam_description" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                            Keterangan Piagam Tambahan (Opsional)
-                        </label>
+                        <label for="pickup_category_id" class="{{ $labelCls }}">Jenis pengambilan</label>
+                        <select name="pickup_category_id"
+                                id="pickup_category_id"
+                                onchange="handlePickupCategoryChange(this.value)"
+                                class="{{ $inputCls }}">
+                            <option value="">Pilih jenis pengambilan</option>
+                            @foreach ($pickupCategories as $cat)
+                                <option value="{{ $cat->id }}" @selected(old('pickup_category_id') == $cat->id || $loop->first)>
+                                    {{ $cat->name }}
+                                </option>
+                            @endforeach
+                            <option value="manual" @selected(old('pickup_category_id') === 'manual')>Lainnya, isi sendiri</option>
+                        </select>
+
+                        <div id="pickup_category_manual_wrapper" class="{{ old('pickup_category_id') === 'manual' ? '' : 'hidden' }} mt-3">
+                            <input type="text"
+                                   name="pickup_category_manual"
+                                   id="pickup_category_manual"
+                                   value="{{ old('pickup_category_manual') }}"
+                                   aria-label="Jenis pengambilan lainnya"
+                                   class="{{ $manualCls }}"
+                                   placeholder="Jenis pengambilan lainnya">
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-3">
+                        <label for="piagam_description" class="{{ $labelCls }}">Keterangan <span class="font-normal text-slate-500">(opsional)</span></label>
                         <input type="text"
                                name="piagam_description"
                                id="piagam_description"
                                value="{{ old('piagam_description') }}"
-                               class="mt-1.5 min-h-[46px] w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 focus:outline-hidden"
-                               placeholder="Contoh: Juara 1 Solo Vokal FLS2N Tingkat Kabupaten">
+                               class="{{ $inputCls }}"
+                               placeholder="Contoh: Juara 1 Solo Vokal FLS2N tingkat kabupaten">
                     </div>
                 </div>
             </fieldset>
 
-            <!-- ============================================================ -->
-            <!-- SECTION C: BUKTI PENGAMBILAN (TANDA TANGAN DIGITAL)          -->
-            <!-- ============================================================ -->
-            <fieldset class="space-y-4 rounded-xl border border-slate-200/90 bg-slate-50/50 p-5 sm:p-6">
-                <legend class="px-2 text-xs font-black uppercase tracking-wider text-emerald-800 bg-emerald-100/80 rounded-md py-1 border border-emerald-200">
-                    BAGIAN C — BUKTI PENGAMBILAN & TANDA TANGAN DIGITAL
+            <!-- LANGKAH 3: TANDA TANGAN -->
+            <fieldset class="space-y-5">
+                <legend class="{{ $legendCls }}">
+                    <span class="{{ $stepCls }}">3</span>
+                    Tanda tangan
                 </legend>
 
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2">
-                    <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-900">
-                            Tanda Tangan Digital Pengambil *
-                        </label>
-                        <p class="text-xs text-slate-500">Bubuhkan tanda tangan Anda di area putih menggunakan layar sentuh atau mouse.</p>
-                    </div>
+                <div id="handover-summary" class="hidden rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-base leading-relaxed text-emerald-950">
+                    <span id="handover-summary-text"></span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <p class="text-sm text-slate-600">Tanda tangan di kotak di bawah dengan jari atau mouse.</p>
                     <button type="button"
                             id="btn-clear-signature"
                             onclick="clearSignaturePad()"
-                            class="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 self-start sm:self-auto py-1 px-3 rounded-md hover:bg-rose-50 border border-rose-200 transition-colors">
-                        <x-icon name="x" class="h-3.5 w-3.5" />
+                            class="inline-flex min-h-[40px] items-center gap-1.5 self-start rounded-lg border border-rose-200 px-3 text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-colors sm:self-auto">
+                        <x-icon name="x" class="h-4 w-4" />
                         Bersihkan Tanda Tangan
                     </button>
                 </div>
@@ -379,37 +338,36 @@
                     <canvas id="signature-pad"
                             data-testid="signature-pad"
                             aria-label="Kanvas Tanda Tangan Digital"
-                            class="block w-full min-h-[180px] h-48 cursor-crosshair touch-none"
+                            class="block w-full min-h-[180px] h-52 cursor-crosshair touch-none"
                             style="touch-action: none; -ms-touch-action: none;"></canvas>
-                    <div id="signature-watermark" class="pointer-events-none absolute inset-0 flex items-center justify-center text-xs font-medium text-slate-300 select-none">
-                        Tanda Tangan di Sini
+                    <div id="signature-watermark" class="pointer-events-none absolute inset-0 flex items-center justify-center text-base text-slate-300 select-none">
+                        Tanda tangan di sini
                     </div>
                 </div>
-                <p id="signature-error-text" class="hidden mt-1.5 text-xs font-semibold text-rose-600">
-                    Tanda tangan digital wajib dibubuhkan sebelum menyimpan tanda terima.
+                <p id="signature-error-text" class="hidden text-sm font-semibold text-rose-600">
+                    Mohon bubuhkan tanda tangan sebelum menyimpan.
                 </p>
 
-                <div class="rounded-lg bg-emerald-50/70 border border-emerald-100 p-3 text-[11px] text-emerald-800 flex items-center gap-2">
+                <p class="flex items-center gap-2 text-sm text-slate-500">
                     <x-icon name="clock" class="h-4 w-4 shrink-0 text-emerald-700" />
-                    <span>Waktu penyerahan fisik akan dicatat secara otomatis oleh server saat formulir disimpan.</span>
-                </div>
+                    Waktu penyerahan dicatat otomatis saat disimpan.
+                </p>
             </fieldset>
 
-            <!-- SUBMIT BUTTON -->
-            <div class="pt-2">
+            <div>
                 <button type="submit"
                         id="btn-submit-handover"
-                        class="flex min-h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-6 text-sm font-bold text-white shadow-md hover:bg-emerald-800 focus:ring-4 focus:ring-emerald-200 focus:outline-hidden transition-all disabled:opacity-50">
+                        class="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-6 text-base font-bold text-white shadow-md hover:bg-emerald-800 focus:ring-4 focus:ring-emerald-200 focus:outline-hidden transition-all disabled:opacity-50">
                     <span id="btn-submit-text" class="flex items-center gap-2">
                         <x-icon name="signature" class="h-5 w-5" />
-                        Simpan Tanda Terima (Konfirmasi & Ambil Piagam)
+                        Simpan tanda terima
                     </span>
                     <span id="btn-submit-spinner" class="hidden flex items-center gap-2">
                         <svg class="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Menyimpan ke Buku Ekspedisi...
+                        Menyimpan...
                     </span>
                 </button>
             </div>
@@ -792,7 +750,7 @@
 
                     dropdown.innerHTML = '';
                     if (schools.length === 0) {
-                        dropdown.innerHTML = '<div class="px-3 py-2.5 text-center text-xs text-slate-400">Tidak ada sekolah yang cocok. Anda dapat memilih "Ketik Manual" di bawah jika belum terdaftar.</div>';
+                        dropdown.innerHTML = '<div class="px-3 py-2.5 text-center text-xs text-slate-400">Tidak ada sekolah yang cocok. Buka "Tidak ketemu?" di bawah untuk mengisi sendiri.</div>';
                     } else {
                         schools.forEach((s) => {
                             const btn = document.createElement('button');
@@ -873,9 +831,35 @@
         }
     }
 
+    function updateHandoverSummary() {
+        const box = document.getElementById('handover-summary');
+        const text = document.getElementById('handover-summary-text');
+        if (!box || !text) return;
+        const name = document.getElementById('recipient_name').value.trim();
+        const student = document.getElementById('student_name').value.trim();
+        const comp = document.getElementById('competition_category_id');
+        const compLabel = comp.value && comp.value !== 'manual'
+            ? comp.options[comp.selectedIndex].text.trim()
+            : (document.getElementById('competition_category_manual')?.value.trim() || '');
+        if (!name || !student) {
+            box.classList.add('hidden');
+            return;
+        }
+        text.textContent = `Saya, ${name}, menerima piagam atas nama ${student}${compLabel ? ' (' + compLabel + ')' : ''}.`;
+        box.classList.remove('hidden');
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         initSignatureCanvas();
         setupFormSubmit();
         initSchoolAutocomplete();
+        ['recipient_name', 'student_name', 'competition_category_id', 'competition_category_manual'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', updateHandoverSummary);
+                el.addEventListener('change', updateHandoverSummary);
+            }
+        });
+        updateHandoverSummary();
     });
 </script>

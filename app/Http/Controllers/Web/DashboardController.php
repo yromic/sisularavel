@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Division;
 use App\Services\DashboardService;
 use App\Services\DivisionContext;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
@@ -17,7 +18,7 @@ class DashboardController extends Controller
         protected DivisionContext $divisionContext
     ) {}
 
-    public function index(Request $request): View|\Illuminate\Http\JsonResponse
+    public function index(Request $request): View|JsonResponse
     {
         if ($request->expectsJson()) {
             return response()->json(['success' => true]);
@@ -28,7 +29,7 @@ class DashboardController extends Controller
         $activeDivision = $divisionId ? Division::find($divisionId) : null;
 
         // Shared-hosting safe caching (60 seconds)
-        $cacheKey = "dashboard_data_u{$user->id}_d" . ($divisionId ?? 'all');
+        $cacheKey = "dashboard_data_u{$user->id}_d".($divisionId ?? 'all');
 
         $data = Cache::remember($cacheKey, 60, function () use ($user, $divisionId) {
             $summaryCounts = $this->dashboardService->getSummaryCounts($divisionId);

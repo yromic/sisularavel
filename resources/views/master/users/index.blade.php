@@ -124,6 +124,9 @@
                 <table class="w-full min-w-[768px] border-collapse text-left text-sm">
                     <thead>
                         <tr class="border-b border-slate-200 bg-rose-50/50 text-xs font-semibold uppercase tracking-wider text-slate-700">
+                            <th class="p-3 w-10 text-center">
+                                <input type="checkbox" id="bulk-select-all-page" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer" title="Pilih Semua di Halaman Ini">
+                            </th>
                             <th class="p-3">Nama Lengkap</th>
                             <th class="p-3">Username</th>
                             <th class="p-3">Email</th>
@@ -136,6 +139,11 @@
                     <tbody class="divide-y divide-slate-100">
                         @forelse ($users as $user)
                             <tr class="hover:bg-slate-50/75">
+                                <td class="p-3 w-10 text-center">
+                                    @if ($user->id !== auth()->id())
+                                        <input type="checkbox" value="{{ $user->id }}" class="bulk-row-checkbox rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer" aria-label="Pilih pengguna {{ $user->username }}">
+                                    @endif
+                                </td>
                                 <td class="p-3 font-medium text-slate-900">{{ $user->name }}</td>
                                 <td class="p-3 font-mono text-slate-700">{{ $user->username }}</td>
                                 <td class="p-3 text-slate-600">{{ $user->email ?? '-' }}</td>
@@ -166,7 +174,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="p-8 text-center text-sm text-slate-500">
+                                <td colspan="8" class="p-8 text-center text-sm text-slate-500">
                                     <div class="flex flex-col items-center justify-center gap-1">
                                         <x-icon name="trash" class="h-8 w-8 text-slate-300" />
                                         <p class="font-medium text-slate-600">Tidak ada akun pengguna yang berada dalam arsip terhapus.</p>
@@ -184,6 +192,9 @@
                 <table class="w-full min-w-[768px] border-collapse text-left text-sm">
                     <thead>
                         <tr class="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-600">
+                            <th class="p-3 w-10 text-center">
+                                <input type="checkbox" id="bulk-select-all-page" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer" title="Pilih Semua di Halaman Ini">
+                            </th>
                             <th class="p-3">Username</th>
                             <th class="p-3">Nama</th>
                             <th class="p-3">Role</th>
@@ -195,6 +206,11 @@
                     <tbody class="divide-y divide-slate-100">
                         @forelse ($users as $user)
                             <tr class="hover:bg-slate-50/75">
+                                <td class="p-3 w-10 text-center">
+                                    @if ($user->id !== auth()->id())
+                                        <input type="checkbox" value="{{ $user->id }}" class="bulk-row-checkbox rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer" aria-label="Pilih pengguna {{ $user->username }}">
+                                    @endif
+                                </td>
                                 <td class="p-3 font-mono font-medium text-slate-900">{{ $user->username }}</td>
                                 <td class="p-3">{{ $user->name }}</td>
                                 <td class="p-3">
@@ -243,7 +259,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="p-6 text-center text-sm text-slate-500">Tidak ada pengguna ditemukan.</td>
+                                <td colspan="7" class="p-6 text-center text-sm text-slate-500">Tidak ada pengguna ditemukan.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -512,6 +528,33 @@
                 closeDeleteUserModal();
                 closeRestoreModal();
             }
+        });
+    </script>
+
+    <!-- Bulk Operations UI (UX-BULK-001) -->
+    <x-bulk.table-toolbar entity-label="pengguna" :can-restore="true" :is-trashed="($status ?? 'active') === 'trashed'" />
+    <x-bulk.impact-modal />
+    <x-bulk.result-modal />
+
+    <script src="/js/bulk-select.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const isTrashed = {{ ($status ?? 'active') === 'trashed' ? 'true' : 'false' }};
+            window.bulkEngine = new BulkSelectEngine({
+                entityName: 'pengguna',
+                previewUrl: '/api/v1/users/bulk-delete/preview',
+                previewRestoreUrl: '/api/v1/users/bulk-restore/preview',
+                deleteUrl: '/api/v1/users/bulk-delete',
+                restoreUrl: '/api/v1/users/bulk-restore',
+                totalFilteredCount: {{ $users->total() ?? count($users) }},
+                confirmThreshold: 50,
+                filterParams: {
+                    status: '{{ $status ?? 'active' }}',
+                    role: '{{ request('role', '') }}',
+                    division_id: '{{ request('division_id', '') }}',
+                    q: '{{ request('q', '') }}'
+                }
+            });
         });
     </script>
 </x-layouts.app>

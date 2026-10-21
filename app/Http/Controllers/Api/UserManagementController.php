@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BulkDeleteRequest;
 use App\Models\Division;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\Bulk\UserBulkService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -286,5 +289,38 @@ class UserManagementController extends Controller
             'message' => "Akun pengguna {$user->username} berhasil dipulihkan.",
             'data' => $user->only(['id', 'uuid', 'username', 'name', 'email', 'role', 'division_id', 'is_active']),
         ]);
+    }
+
+    public function bulkPreview(BulkDeleteRequest $request, UserBulkService $bulkService): JsonResponse
+    {
+        $actor = $request->user();
+        abort_unless(in_array($actor?->role, ['super_admin', 'division_admin'], true), 403);
+
+        $isRestore = $request->isRestore();
+        $result = $isRestore
+            ? $bulkService->previewRestore($request, $actor)
+            : $bulkService->previewDelete($request, $actor);
+
+        return response()->json($result->toArray());
+    }
+
+    public function bulkDestroy(BulkDeleteRequest $request, UserBulkService $bulkService, AuditLogger $auditLogger): JsonResponse
+    {
+        $actor = $request->user();
+        abort_unless(in_array($actor?->role, ['super_admin', 'division_admin'], true), 403);
+
+        $result = $bulkService->bulkDelete($request, $actor, $auditLogger);
+
+        return response()->json($result->toArray());
+    }
+
+    public function bulkRestore(BulkDeleteRequest $request, UserBulkService $bulkService, AuditLogger $auditLogger): JsonResponse
+    {
+        $actor = $request->user();
+        abort_unless(in_array($actor?->role, ['super_admin', 'division_admin'], true), 403);
+
+        $result = $bulkService->bulkRestore($request, $actor, $auditLogger);
+
+        return response()->json($result->toArray());
     }
 }

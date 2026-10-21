@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BulkDeleteRequest;
 use App\Http\Requests\StoreOutgoingLetterRequest;
 use App\Models\OutgoingLetter;
 use App\Services\AttachmentStorageService;
 use App\Services\AuditLogger;
+use App\Services\Bulk\LetterBulkService;
 use App\Services\DivisionContext;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
@@ -321,5 +323,32 @@ class OutgoingLetterController extends Controller
     private function auditValues(OutgoingLetter $letter): array
     {
         return $letter->only(['division_id', 'letter_year', 'letter_number', 'letter_date', 'disseminated_date', 'subject']);
+    }
+
+    public function bulkPreview(BulkDeleteRequest $request, LetterBulkService $bulkService): JsonResponse
+    {
+        $actor = $request->user();
+        $isRestore = $request->isRestore();
+        $result = $isRestore
+            ? $bulkService->previewRestoreOutgoing($request, $actor)
+            : $bulkService->previewDeleteOutgoing($request, $actor);
+
+        return response()->json($result->toArray());
+    }
+
+    public function bulkDestroy(BulkDeleteRequest $request, LetterBulkService $bulkService, AuditLogger $auditLogger): JsonResponse
+    {
+        $actor = $request->user();
+        $result = $bulkService->bulkDeleteOutgoing($request, $actor, $auditLogger);
+
+        return response()->json($result->toArray());
+    }
+
+    public function bulkRestore(BulkDeleteRequest $request, LetterBulkService $bulkService, AuditLogger $auditLogger): JsonResponse
+    {
+        $actor = $request->user();
+        $result = $bulkService->bulkRestoreOutgoing($request, $actor, $auditLogger);
+
+        return response()->json($result->toArray());
     }
 }

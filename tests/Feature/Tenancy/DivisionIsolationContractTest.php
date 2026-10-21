@@ -176,4 +176,3 @@ class DivisionIsolationContractTest extends TestCase
         ]);
     }
 }
-

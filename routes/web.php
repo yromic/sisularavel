@@ -21,7 +21,6 @@ use App\Http\Controllers\Web\DashboardController as WebDashboardController;
 use App\Http\Controllers\Web\UnifiedWorkspaceController;
 use App\Http\Middleware\EnsureActiveAccount;
 use App\Http\Middleware\EnsurePasswordIsActivated;
-use App\Models\AuditLog;
 use App\Models\CompetitionCategory;
 use App\Models\Division;
 use App\Models\IncomingLetter;
@@ -33,7 +32,6 @@ use App\Models\User;
 use App\Models\WorkUnit;
 use App\Services\AuditLogger;
 use App\Services\DivisionContext;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Route;
@@ -287,12 +285,26 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
 
     Route::get('/master/sekolah', function (Request $request) {
         $q = $request->string('q')->toString();
-        $schools = School::query()
-            ->when($q !== '', fn ($query) => $query->where('name', 'like', "%{$q}%")->orWhere('npsn', 'like', "%{$q}%"))
-            ->orderBy('name')
-            ->paginate(15);
+        $status = $request->query('status', 'active');
+        $isTrashed = $status === 'trashed';
 
-        return view('master.schools.index', ['schools' => $schools]);
+        $schools = ($isTrashed ? School::onlyTrashed() : School::query())
+            ->when($q !== '', fn ($query) => $query->where(function ($sub) use ($q) {
+                $sub->where('name', 'like', "%{$q}%")->orWhere('npsn', 'like', "%{$q}%");
+            }))
+            ->orderBy($isTrashed ? 'deleted_at' : 'name', $isTrashed ? 'desc' : 'asc')
+            ->paginate(15)
+            ->withQueryString();
+
+        $activeCount = School::query()->count();
+        $trashedCount = School::onlyTrashed()->count();
+
+        return view('master.schools.index', [
+            'schools' => $schools,
+            'status' => $status,
+            'activeCount' => $activeCount,
+            'trashedCount' => $trashedCount,
+        ]);
     });
 
     Route::get('/master/pengguna', function (Request $request, DivisionContext $divisionContext) {
@@ -336,32 +348,51 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
 
     Route::get('/master/kategori', function (Request $request, DivisionContext $divisionContext) {
         $divisionId = $divisionContext->activeDivisionId($request, $request->user());
+        $status = $request->query('status', 'active');
+        $isTrashed = $status === 'trashed';
 
-        $competitionCategories = CompetitionCategory::query()
+        $competitionQuery = $isTrashed ? CompetitionCategory::onlyTrashed() : CompetitionCategory::query();
+        $pickupQuery = $isTrashed ? PickupCategory::onlyTrashed() : PickupCategory::query();
+        $workUnitQuery = $isTrashed ? WorkUnit::onlyTrashed() : WorkUnit::query();
+
+        $competitionCategories = $competitionQuery
             ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
-            ->where('is_active', true)
             ->get();
 
-        $pickupCategories = PickupCategory::query()
+        $pickupCategories = $pickupQuery
             ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
-            ->where('is_active', true)
             ->get();
 
-        $workUnits = WorkUnit::query()->orderBy('name')->get();
+        $workUnits = $workUnitQuery->orderBy('name')->get();
+
+        $trashedCount = CompetitionCategory::onlyTrashed()->when($divisionId !== null, fn ($q) => $q->where('division_id', $divisionId))->count()
+            + PickupCategory::onlyTrashed()->when($divisionId !== null, fn ($q) => $q->where('division_id', $divisionId))->count()
+            + WorkUnit::onlyTrashed()->count();
+
+        $activeCount = CompetitionCategory::query()->when($divisionId !== null, fn ($q) => $q->where('division_id', $divisionId))->count()
+            + PickupCategory::query()->when($divisionId !== null, fn ($q) => $q->where('division_id', $divisionId))->count()
+            + WorkUnit::query()->count();
 
         return view('master.categories.index', [
             'competitionCategories' => $competitionCategories,
             'pickupCategories' => $pickupCategories,
             'workUnits' => $workUnits,
+            'status' => $status,
+            'activeCount' => $activeCount,
+            'trashedCount' => $trashedCount,
         ]);
     });
 
     Route::delete('/master/divisi/{division}', [DivisionManagementController::class, 'destroy']);
+    Route::post('/master/sekolah/{id}/restore', [SchoolController::class, 'restore']);
     Route::delete('/master/sekolah/{school}', [SchoolController::class, 'destroy']);
     Route::post('/master/pengguna/{id}/restore', [UserManagementController::class, 'restore']);
     Route::delete('/master/pengguna/{user}', [UserManagementController::class, 'destroy']);
+    Route::post('/master/kategori/lomba/{id}/restore', [ReferenceCategoryController::class, 'restoreCompetition']);
     Route::delete('/master/kategori/lomba/{category}', [ReferenceCategoryController::class, 'destroyCompetition']);
+    Route::post('/master/kategori/pengambilan/{id}/restore', [ReferenceCategoryController::class, 'restorePickup']);
     Route::delete('/master/kategori/pengambilan/{category}', [ReferenceCategoryController::class, 'destroyPickup']);
+    Route::post('/master/kategori/unit-kerja/{id}/restore', [ReferenceCategoryController::class, 'restoreWorkUnit']);
     Route::delete('/master/kategori/unit-kerja/{workUnit}', [ReferenceCategoryController::class, 'destroyWorkUnit']);
 
     Route::get('/laporan', function (Request $request, DivisionContext $divisionContext) {
@@ -573,6 +604,10 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
     Route::put('/api/v1/surat-masuk/{incomingLetter}', [IncomingLetterController::class, 'update']);
     Route::delete('/api/v1/surat-masuk/{incomingLetter}', [IncomingLetterController::class, 'destroy']);
     Route::post('/api/v1/surat-masuk/{incomingLetter}/restore', [IncomingLetterController::class, 'restore']);
+    Route::post('/api/v1/surat-masuk/bulk-delete/preview', [IncomingLetterController::class, 'bulkPreview'])->middleware('throttle:bulk');
+    Route::post('/api/v1/surat-masuk/bulk-restore/preview', [IncomingLetterController::class, 'bulkPreview'])->middleware('throttle:bulk');
+    Route::post('/api/v1/surat-masuk/bulk-delete', [IncomingLetterController::class, 'bulkDestroy'])->middleware(['idempotent', 'throttle:bulk']);
+    Route::post('/api/v1/surat-masuk/bulk-restore', [IncomingLetterController::class, 'bulkRestore'])->middleware(['idempotent', 'throttle:bulk']);
     Route::post('/api/v1/surat-masuk/{incomingLetter}/remediate-attachment', [IncomingLetterController::class, 'remediateAttachment']);
     Route::get('/api/v1/surat-masuk/{incomingLetter}', [IncomingLetterController::class, 'show']);
     Route::get('/api/v1/surat-keluar', [OutgoingLetterController::class, 'index']);
@@ -580,21 +615,48 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
     Route::put('/api/v1/surat-keluar/{outgoingLetter}', [OutgoingLetterController::class, 'update']);
     Route::delete('/api/v1/surat-keluar/{outgoingLetter}', [OutgoingLetterController::class, 'destroy']);
     Route::post('/api/v1/surat-keluar/{outgoingLetter}/restore', [OutgoingLetterController::class, 'restore']);
+    Route::post('/api/v1/surat-keluar/bulk-delete/preview', [OutgoingLetterController::class, 'bulkPreview'])->middleware('throttle:bulk');
+    Route::post('/api/v1/surat-keluar/bulk-restore/preview', [OutgoingLetterController::class, 'bulkPreview'])->middleware('throttle:bulk');
+    Route::post('/api/v1/surat-keluar/bulk-delete', [OutgoingLetterController::class, 'bulkDestroy'])->middleware(['idempotent', 'throttle:bulk']);
+    Route::post('/api/v1/surat-keluar/bulk-restore', [OutgoingLetterController::class, 'bulkRestore'])->middleware(['idempotent', 'throttle:bulk']);
     Route::get('/api/v1/surat-keluar/{outgoingLetter}', [OutgoingLetterController::class, 'show']);
     Route::get('/api/v1/attachments/{uuid}/preview', [AttachmentController::class, 'preview']);
     Route::get('/api/v1/attachments/{uuid}/download', [AttachmentController::class, 'download']);
     Route::post('/api/v1/schools', [SchoolController::class, 'store']);
     Route::put('/api/v1/schools/{school}', [SchoolController::class, 'update']);
+    Route::post('/api/v1/schools/{id}/restore', [SchoolController::class, 'restore']);
     Route::delete('/api/v1/schools/{school}', [SchoolController::class, 'destroy']);
+    Route::post('/api/v1/schools/bulk-delete/preview', [SchoolController::class, 'bulkPreview'])->middleware('throttle:bulk');
+    Route::post('/api/v1/schools/bulk-restore/preview', [SchoolController::class, 'bulkPreview'])->middleware('throttle:bulk');
+    Route::post('/api/v1/schools/bulk-delete', [SchoolController::class, 'bulkDestroy'])->middleware(['idempotent', 'throttle:bulk']);
+    Route::post('/api/v1/schools/bulk-restore', [SchoolController::class, 'bulkRestore'])->middleware(['idempotent', 'throttle:bulk']);
+
     Route::post('/api/v1/reference/pickup-categories', [ReferenceCategoryController::class, 'storePickup']);
     Route::put('/api/v1/reference/pickup-categories/{category}', [ReferenceCategoryController::class, 'updatePickup']);
+    Route::post('/api/v1/reference/pickup-categories/{id}/restore', [ReferenceCategoryController::class, 'restorePickup']);
     Route::delete('/api/v1/reference/pickup-categories/{category}', [ReferenceCategoryController::class, 'destroyPickup']);
+    Route::post('/api/v1/reference/pickup-categories/bulk-delete/preview', [ReferenceCategoryController::class, 'bulkPreviewPickup'])->middleware('throttle:bulk');
+    Route::post('/api/v1/reference/pickup-categories/bulk-restore/preview', [ReferenceCategoryController::class, 'bulkPreviewPickup'])->middleware('throttle:bulk');
+    Route::post('/api/v1/reference/pickup-categories/bulk-delete', [ReferenceCategoryController::class, 'bulkDestroyPickup'])->middleware(['idempotent', 'throttle:bulk']);
+    Route::post('/api/v1/reference/pickup-categories/bulk-restore', [ReferenceCategoryController::class, 'bulkRestorePickup'])->middleware(['idempotent', 'throttle:bulk']);
+
     Route::post('/api/v1/reference/competition-categories', [ReferenceCategoryController::class, 'storeCompetition']);
     Route::put('/api/v1/reference/competition-categories/{category}', [ReferenceCategoryController::class, 'updateCompetition']);
+    Route::post('/api/v1/reference/competition-categories/{id}/restore', [ReferenceCategoryController::class, 'restoreCompetition']);
     Route::delete('/api/v1/reference/competition-categories/{category}', [ReferenceCategoryController::class, 'destroyCompetition']);
+    Route::post('/api/v1/reference/competition-categories/bulk-delete/preview', [ReferenceCategoryController::class, 'bulkPreviewCompetition'])->middleware('throttle:bulk');
+    Route::post('/api/v1/reference/competition-categories/bulk-restore/preview', [ReferenceCategoryController::class, 'bulkPreviewCompetition'])->middleware('throttle:bulk');
+    Route::post('/api/v1/reference/competition-categories/bulk-delete', [ReferenceCategoryController::class, 'bulkDestroyCompetition'])->middleware(['idempotent', 'throttle:bulk']);
+    Route::post('/api/v1/reference/competition-categories/bulk-restore', [ReferenceCategoryController::class, 'bulkRestoreCompetition'])->middleware(['idempotent', 'throttle:bulk']);
+
     Route::post('/api/v1/reference/work-units', [ReferenceCategoryController::class, 'storeWorkUnit']);
     Route::put('/api/v1/reference/work-units/{workUnit}', [ReferenceCategoryController::class, 'updateWorkUnit']);
+    Route::post('/api/v1/reference/work-units/{id}/restore', [ReferenceCategoryController::class, 'restoreWorkUnit']);
     Route::delete('/api/v1/reference/work-units/{workUnit}', [ReferenceCategoryController::class, 'destroyWorkUnit']);
+    Route::post('/api/v1/reference/work-units/bulk-delete/preview', [ReferenceCategoryController::class, 'bulkPreviewWorkUnit'])->middleware('throttle:bulk');
+    Route::post('/api/v1/reference/work-units/bulk-restore/preview', [ReferenceCategoryController::class, 'bulkPreviewWorkUnit'])->middleware('throttle:bulk');
+    Route::post('/api/v1/reference/work-units/bulk-delete', [ReferenceCategoryController::class, 'bulkDestroyWorkUnit'])->middleware(['idempotent', 'throttle:bulk']);
+    Route::post('/api/v1/reference/work-units/bulk-restore', [ReferenceCategoryController::class, 'bulkRestoreWorkUnit'])->middleware(['idempotent', 'throttle:bulk']);
     Route::post('/api/v1/divisions', [DivisionManagementController::class, 'store']);
     Route::put('/api/v1/divisions/{division}', [DivisionManagementController::class, 'update']);
     Route::patch('/api/v1/divisions/{division}/status', [DivisionManagementController::class, 'updateStatus']);
@@ -604,6 +666,10 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
     Route::put('/api/v1/users/{user}', [UserManagementController::class, 'update']);
     Route::post('/api/v1/users/{id}/restore', [UserManagementController::class, 'restore']);
     Route::delete('/api/v1/users/{user}', [UserManagementController::class, 'destroy']);
+    Route::post('/api/v1/users/bulk-delete/preview', [UserManagementController::class, 'bulkPreview'])->middleware('throttle:bulk');
+    Route::post('/api/v1/users/bulk-restore/preview', [UserManagementController::class, 'bulkPreview'])->middleware('throttle:bulk');
+    Route::post('/api/v1/users/bulk-delete', [UserManagementController::class, 'bulkDestroy'])->middleware(['idempotent', 'throttle:bulk']);
+    Route::post('/api/v1/users/bulk-restore', [UserManagementController::class, 'bulkRestore'])->middleware(['idempotent', 'throttle:bulk']);
     Route::get('/api/v1/piagam', [PiagamController::class, 'index']);
     Route::get('/api/v1/piagam/{piagam}', [PiagamController::class, 'show']);
     Route::post('/api/v1/piagam', [PiagamController::class, 'store'])->middleware('idempotent');

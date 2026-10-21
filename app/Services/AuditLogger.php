@@ -155,6 +155,60 @@ class AuditLogger
         ]);
     }
 
+    public function referenceEvent(string $eventCode, User $actor, Model $model, string $description, array $newValues = []): void
+    {
+        AuditLog::query()->create([
+            'user_id' => $actor->id,
+            'username' => $actor->username,
+            'role' => $actor->role,
+            'division_id' => $model->division_id ?? $actor->division_id,
+            'event_code' => $eventCode,
+            'auditable_type' => $model::class,
+            'auditable_id' => $model->getKey(),
+            'new_values' => $this->redact($newValues),
+            'ip_address' => request()?->ip() ?? '127.0.0.1',
+            'user_agent' => request()?->userAgent(),
+            'description' => $description,
+        ]);
+    }
+
+    public function log(string $eventCode, User $actor, string $description, ?Model $model = null, array $newValues = []): void
+    {
+        AuditLog::query()->create([
+            'user_id' => $actor->id,
+            'username' => $actor->username,
+            'role' => $actor->role,
+            'division_id' => $model?->division_id ?? $actor->division_id,
+            'event_code' => $eventCode,
+            'auditable_type' => $model ? $model::class : null,
+            'auditable_id' => $model?->getKey(),
+            'new_values' => $this->redact($newValues),
+            'ip_address' => request()?->ip() ?? '127.0.0.1',
+            'user_agent' => request()?->userAgent(),
+            'description' => $description,
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $metadata
+     */
+    public function bulkEvent(string $eventCode, User $actor, string $auditableType, int $count, string $description, array $metadata = []): void
+    {
+        AuditLog::query()->create([
+            'user_id' => $actor->id,
+            'username' => $actor->username,
+            'role' => $actor->role,
+            'division_id' => $actor->division_id,
+            'event_code' => $eventCode,
+            'auditable_type' => $auditableType,
+            'auditable_id' => null,
+            'new_values' => $this->redact(array_merge(['count' => $count], $metadata)),
+            'ip_address' => request()?->ip() ?? '127.0.0.1',
+            'user_agent' => request()?->userAgent(),
+            'description' => $description,
+        ]);
+    }
+
     /**
      * @param  array<string, mixed>  $values
      * @return array<string, mixed>

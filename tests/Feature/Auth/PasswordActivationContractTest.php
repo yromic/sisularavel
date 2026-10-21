@@ -4,8 +4,10 @@ namespace Tests\Feature\Auth;
 
 use App\Models\Division;
 use App\Models\User;
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -21,7 +23,7 @@ class PasswordActivationContractTest extends TestCase
             'password_reset_expires_at' => null,
         ]);
 
-        \Illuminate\Support\Facades\Notification::fake();
+        Notification::fake();
 
         $this->postJson('/forgot-password', [
             'email' => 'operator@example.test',
@@ -31,9 +33,9 @@ class PasswordActivationContractTest extends TestCase
             ->assertJsonMissing(['email' => 'operator@example.test'])
             ->assertJsonMissing(['token']);
 
-        \Illuminate\Support\Facades\Notification::assertSentTo(
+        Notification::assertSentTo(
             $user,
-            \App\Notifications\ResetPasswordNotification::class
+            ResetPasswordNotification::class
         );
 
         $user->refresh();

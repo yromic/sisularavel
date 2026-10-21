@@ -61,4 +61,11 @@ class UserFactory extends Factory
             'role' => 'division_admin',
         ]);
     }
+
+    public function operator(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'operator',
+        ]);
+    }
 }

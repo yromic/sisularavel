@@ -123,6 +123,11 @@
             <table data-testid="desktop-letter-grid" class="w-full min-w-[1024px] border-collapse bg-white text-sm shadow-xs rounded-md border border-slate-200">
                 <thead>
                     <tr class="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                        @if (in_array(auth()->user()->role, ['super_admin', 'division_admin'], true))
+                            <th class="p-3 w-10 text-center">
+                                <input type="checkbox" id="bulk-select-all-page" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer" title="Pilih Semua di Halaman Ini">
+                            </th>
+                        @endif
                         <th class="p-3">No. Agenda</th>
                         <th class="p-3">Nomor Surat</th>
                         <th class="p-3">Tanggal Surat</th>
@@ -147,6 +152,11 @@
                             ];
                         @endphp
                         <tr class="hover:bg-slate-50/75 cursor-pointer transition-colors" onclick="if (!event.target.closest('a, button, form, input')) openLetterDetailModal('surat-masuk', '{{ $letter->id }}')">
+                            @if (in_array(auth()->user()->role, ['super_admin', 'division_admin'], true))
+                                <td class="p-3 w-10 text-center" onclick="event.stopPropagation()">
+                                    <input type="checkbox" value="{{ $letter->id }}" class="bulk-row-checkbox rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer" aria-label="Pilih surat {{ $letter->letter_number }}">
+                                </td>
+                            @endif
                             <td class="p-3 font-mono text-xs">{{ $letter->id }}</td>
                             <td class="p-3 font-medium text-slate-900">
                                 {{ $letter->letter_number }}
@@ -198,7 +208,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="p-6 text-center text-sm text-slate-500">Tidak ada surat masuk ditemukan.</td>
+                            <td colspan="{{ in_array(auth()->user()->role, ['super_admin', 'division_admin'], true) ? 9 : 8 }}" class="p-6 text-center text-sm text-slate-500">Tidak ada surat masuk ditemukan.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -214,4 +224,33 @@
     <x-letters.split-modal-detail />
     <x-letters.form-modal />
     <x-letters.delete-modal />
+
+    @if (in_array(auth()->user()->role, ['super_admin', 'division_admin'], true))
+        <!-- Bulk Operations UI (UX-BULK-001) -->
+        <x-bulk.table-toolbar entity-label="surat masuk" :can-restore="true" :is-trashed="($status ?? 'active') === 'trashed'" />
+        <x-bulk.impact-modal />
+        <x-bulk.result-modal />
+
+        <script src="/js/bulk-select.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const isTrashed = {{ ($status ?? 'active') === 'trashed' ? 'true' : 'false' }};
+                window.bulkEngine = new BulkSelectEngine({
+                    entityName: 'surat masuk',
+                    previewUrl: '/api/v1/surat-masuk/bulk-delete/preview',
+                    previewRestoreUrl: '/api/v1/surat-masuk/bulk-restore/preview',
+                    deleteUrl: '/api/v1/surat-masuk/bulk-delete',
+                    restoreUrl: '/api/v1/surat-masuk/bulk-restore',
+                    totalFilteredCount: {{ $letters->total() ?? count($letters) }},
+                    confirmThreshold: 50,
+                    filterParams: {
+                        status: '{{ $status ?? 'active' }}',
+                        q: '{{ request('q', '') }}',
+                        date_from: '{{ request('date_from', '') }}',
+                        date_to: '{{ request('date_to', '') }}'
+                    }
+                });
+            });
+        </script>
+    @endif
 </x-layouts.app>

@@ -4,6 +4,40 @@ All notable changes, version ratifications, and schema revisions to the **SISURA
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] — 2026-10-21 — Non-Mutating Bulk Restore Preview & Idempotency Decoupling
+
+### Fixed
+* **Bulk Restore Preview 422 Error (`DEC-BULK-002`):** Resolved `"The given data was invalid."` error when previewing restore operations from Trash views. Decoupled read-only dry-run preview endpoints (`/bulk-restore/preview`) from state-mutating `EnsureIdempotentMutation` middleware, eliminating premature rejection caused by missing `Idempotency-Key` headers during impact analysis.
+* **Confirmation Phrase Bypassing on Restore:** Updated `BulkDeleteRequest::withValidator` to skip the destructive `HAPUS {N}` confirmation phrase requirement when executing restore operations (`$request->isRestore()`).
+* **Restore Impact Preview Routing:** Added explicit `/bulk-restore/preview` routes across all entities (Users, Incoming Letters, Outgoing Letters, Schools, Categories), wired `previewRestore()` in controllers, and updated JavaScript `BulkSelectEngine` to dynamically render emerald badges and `"Dapat Dipulihkan"` labels.
+
+## [1.6.0] — 2026-10-21 — Reference Master Soft Delete & Bulk Operations (Tahap 3)
+
+### Added
+* **Reference Master Soft Deletes (`DEC-REF-001`):** Enabled `SoftDeletes` on `schools`, `competition_categories`, `pickup_categories`, and `work_units` tables.
+* **NPSN Integrity & Restore Guidance Strategy (Option A):** Preserved strict physical `UNIQUE(npsn)` constraint in MySQL. Attempting to create a school with an NPSN residing in Trash returns HTTP 422 with an explicit instruction to restore the existing record rather than corrupting history.
+* **Bulk Reference Operations:** Added dry-run preview, bulk delete, and bulk restore endpoints and UI for Schools, Competition Categories, Pickup Categories, and Work Units.
+* **Trash & Restore UI for Reference Masters:** Added "Tempat Sampah" tabs, restore modal confirmations, and status filters on `/master/sekolah` and `/master/kategori`.
+* **Category Division Tenancy Scoping:** Strictly enforced division tenancy on category bulk operations; cross-division modification attempts trigger instant HTTP 403 Forbidden.
+
+## [1.5.0] — 2026-10-21 — Bulk Operations Engine & School Foreign Key Safety
+
+### Added
+* **Bulk Delete & Restore Engine (`DEC-BULK-001`, `UX-BULK-001`):** High-efficiency multi-record operations for Users, Incoming Letters, and Outgoing Letters. Features:
+  * Two-level selection (page-level checkboxes and all-filtered-records toggle).
+  * Server-side dynamic query re-verification protecting against mid-session dataset drift (HTTP 409 Conflict).
+  * Pre-execution dry-run impact preview (`/preview`) detailing deletable vs. protected/skipped records.
+  * Progressive cognitive friction requiring explicit confirmation phrase (`HAPUS {N}`) for high-volume operations (>= 50 items).
+  * Resilient chunked database transactions (`DB::transaction`) with partial execution reporting and client CSV export of skipped items.
+  * Server-side mutation idempotency via `Idempotency-Key` headers preventing double deletion upon network lag or double-clicking.
+  * Rate limiting (`throttle:bulk`, 30 requests/minute) and summary audit logging (`USER_BULK_DELETED`, `LETTER_INCOMING_BULK_DELETED`, etc.).
+  * Accessible floating action toolbar, WAI-ARIA dialogs with keyboard trap, and Escape dismissal.
+
+### Fixed
+* **School Delete Foreign Key Safety (`DEC-SCH-001`, `BUG-SCH-001`):** Corrected `SchoolController::destroy` to check for linked piagams using `Piagam::withTrashed()`. Prevents MySQL 1451 RESTRICT integrity violations and 500 server crashes when a school's linked piagam is soft-deleted; safely marks the school as inactive with HTTP 422 warning.
+
+---
+
 ## [1.4.0] — 2026-10-15 — Modernized UI, Digital Handover Rework, Unified Workspace & Smart Search
 
 ### Added

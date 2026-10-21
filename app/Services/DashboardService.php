@@ -9,7 +9,6 @@ use App\Models\Division;
 use App\Models\IncomingLetter;
 use App\Models\OutgoingLetter;
 use App\Models\Piagam;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -126,6 +125,7 @@ class DashboardService
             $row['max_global'] = $maxGlobal;
             $row['incoming_width'] = round(($row['incoming'] / $maxGlobal) * 100, 2);
             $row['outgoing_width'] = round(($row['outgoing'] / $maxGlobal) * 100, 2);
+
             return $row;
         })->all();
 
@@ -218,6 +218,7 @@ class DashboardService
 
         return $logs->map(function (AuditLog $log) {
             $log->human_event = $this->humanizeEventCode($log->event_code);
+
             return $log;
         });
     }

@@ -219,17 +219,17 @@ class MasterReferenceDataContractTest extends TestCase
         $this->actingAs($superAdmin)
             ->deleteJson("/api/v1/reference/competition-categories/{$competitionCategory->id}")
             ->assertOk();
-        $this->assertDatabaseMissing('competition_categories', ['id' => $competitionCategory->id]);
+        $this->assertSoftDeleted('competition_categories', ['id' => $competitionCategory->id]);
 
         $this->actingAs($superAdmin)
             ->deleteJson("/api/v1/reference/pickup-categories/{$pickupCategory->id}")
             ->assertOk();
-        $this->assertDatabaseMissing('pickup_categories', ['id' => $pickupCategory->id]);
+        $this->assertSoftDeleted('pickup_categories', ['id' => $pickupCategory->id]);
 
         $this->actingAs($superAdmin)
             ->deleteJson("/api/v1/schools/{$school->id}")
             ->assertOk();
-        $this->assertDatabaseMissing('schools', ['id' => $school->id]);
+        $this->assertSoftDeleted('schools', ['id' => $school->id]);
     }
 
     public function test_schools_divisions_users_and_categories_can_be_updated_by_authorized_roles(): void

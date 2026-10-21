@@ -107,7 +107,7 @@ class RuntimeRemediationRegressionTest extends TestCase
         $response->assertSee('name="piagam_id"', false);
         $response->assertSee('name="signature_canvas"', false);
         $response->assertSee('Bersihkan Tanda Tangan');
-        $response->assertSee('Konfirmasi & Ambil Piagam', false);
+        $response->assertSee('Simpan tanda terima', false);
     }
 
     /**
