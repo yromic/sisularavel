@@ -70,7 +70,7 @@ class ReferenceCategoryController extends Controller
     public function storeWorkUnit(Request $request): Response
     {
         $user = $request->user();
-        abort_unless(in_array($user?->role, ['super_admin', 'division_admin'], true), 403);
+        abort_unless($user?->role === 'super_admin', 403, 'Pengelolaan Unit Kerja Dinas hanya diizinkan untuk Super Admin.');
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
@@ -94,7 +94,7 @@ class ReferenceCategoryController extends Controller
     public function updateWorkUnit(Request $request, WorkUnit $workUnit): Response
     {
         $user = $request->user();
-        abort_unless(in_array($user?->role, ['super_admin', 'division_admin'], true), 403);
+        abort_unless($user?->role === 'super_admin', 403, 'Pengelolaan Unit Kerja Dinas hanya diizinkan untuk Super Admin.');
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
@@ -118,7 +118,7 @@ class ReferenceCategoryController extends Controller
     public function destroyWorkUnit(Request $request, WorkUnit $workUnit): Response
     {
         $user = $request->user();
-        abort_unless(in_array($user?->role, ['super_admin', 'division_admin'], true), 403);
+        abort_unless($user?->role === 'super_admin', 403, 'Pengelolaan Unit Kerja Dinas hanya diizinkan untuk Super Admin.');
 
         $workUnit->delete();
 

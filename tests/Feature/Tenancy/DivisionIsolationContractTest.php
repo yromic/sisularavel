@@ -111,6 +111,58 @@ class DivisionIsolationContractTest extends TestCase
             ->assertUnauthorized();
     }
 
+    public function test_division_admin_and_operator_cannot_access_master_divisi_view(): void
+    {
+        $division = Division::factory()->create();
+        $divisionAdmin = User::factory()->for($division)->create(['role' => 'division_admin']);
+        $operator = User::factory()->for($division)->create(['role' => 'operator']);
+        $superAdmin = User::factory()->superAdmin()->create();
+
+        // Division Admin blocked with 403
+        $this->actingAs($divisionAdmin)
+            ->get('/master/divisi')
+            ->assertForbidden();
+
+        // Operator blocked with 403
+        $this->actingAs($operator)
+            ->get('/master/divisi')
+            ->assertForbidden();
+
+        // Super Admin allowed
+        $this->actingAs($superAdmin)
+            ->get('/master/divisi')
+            ->assertOk();
+    }
+
+    public function test_data_divisi_sidebar_link_is_hidden_from_division_admin(): void
+    {
+        $division = Division::factory()->create();
+        $divisionAdmin = User::factory()->for($division)->create(['role' => 'division_admin']);
+        $superAdmin = User::factory()->superAdmin()->create();
+
+        // Division Admin does NOT see Data Divisi link
+        $this->actingAs($divisionAdmin)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertDontSee('/master/divisi');
+
+        // Super Admin sees Data Divisi link
+        $this->actingAs($superAdmin)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSee('/master/divisi');
+    }
+
+    public function test_non_super_admin_cannot_mutate_work_units(): void
+    {
+        $division = Division::factory()->create();
+        $divisionAdmin = User::factory()->for($division)->create(['role' => 'division_admin']);
+
+        $this->actingAs($divisionAdmin)
+            ->postJson('/api/v1/reference/work-units', ['name' => 'Unit Ilegal'])
+            ->assertForbidden();
+    }
+
     private function incomingLetter(Division $division, string $number): IncomingLetter
     {
         return IncomingLetter::query()->create([
@@ -124,3 +176,4 @@ class DivisionIsolationContractTest extends TestCase
         ]);
     }
 }
+

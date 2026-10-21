@@ -116,13 +116,17 @@
                     </div>
                 </div>
 
-                <form method="post" action="/api/v1/reference/work-units" class="mb-4 flex gap-2">
-                    @csrf
-                    <input name="name" id="input-work-unit-name" aria-label="Nama unit kerja baru" class="min-h-[44px] flex-1 rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Nama unit kerja baru..." required>
-                    <button type="submit" class="min-h-[44px] rounded-md bg-emerald-700 px-4 text-xs font-semibold text-white hover:bg-emerald-800">
-                        + Tambah
-                    </button>
-                </form>
+                @if (auth()->user()->role === 'super_admin')
+                    <form method="post" action="/api/v1/reference/work-units" class="mb-4 flex gap-2">
+                        @csrf
+                        <input name="name" id="input-work-unit-name" aria-label="Nama unit kerja baru" class="min-h-[44px] flex-1 rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Nama unit kerja baru..." required>
+                        <button type="submit" class="min-h-[44px] rounded-md bg-emerald-700 px-4 text-xs font-semibold text-white hover:bg-emerald-800">
+                            + Tambah
+                        </button>
+                    </form>
+                @else
+                    <p class="mb-4 text-xs text-slate-500 italic">Daftar referensi unit kerja dinas (dikelola oleh Super Admin).</p>
+                @endif
 
                 <div class="divide-y divide-slate-100">
                     @forelse ($workUnits as $unit)
@@ -131,13 +135,15 @@
                                 <span class="text-sm font-medium text-slate-800">{{ $unit->name }}</span>
                                 <span class="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Aktif</span>
                             </div>
-                            <form method="post" action="/master/kategori/unit-kerja/{{ $unit->id }}" onsubmit="return confirmAction(event, 'Hapus unit kerja {{ $unit->name }}?', 'Konfirmasi Hapus Unit Kerja', 'danger', 'Ya, Hapus')" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50" title="Hapus unit kerja">
-                                    <x-icon name="trash" class="h-4 w-4" />
-                                </button>
-                            </form>
+                            @if (auth()->user()->role === 'super_admin')
+                                <form method="post" action="/master/kategori/unit-kerja/{{ $unit->id }}" onsubmit="return confirmAction(event, 'Hapus unit kerja {{ $unit->name }}?', 'Konfirmasi Hapus Unit Kerja', 'danger', 'Ya, Hapus')" class="inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50" title="Hapus unit kerja">
+                                        <x-icon name="trash" class="h-4 w-4" />
+                                    </button>
+                                </form>
+                            @endif
                         </div>
                     @empty
                         <p class="py-4 text-center text-xs text-slate-500">Belum ada unit kerja.</p>

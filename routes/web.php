@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\UserManagementController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\PasswordActivationController;
+use App\Http\Controllers\Web\DashboardController as WebDashboardController;
 use App\Http\Controllers\Web\UnifiedWorkspaceController;
 use App\Http\Middleware\EnsureActiveAccount;
 use App\Http\Middleware\EnsurePasswordIsActivated;
@@ -104,79 +105,7 @@ Route::post('/admin/users/{user}/activation-secret', [PasswordActivationControll
 Route::post('/api/v1/piagam/ambil', [PublicPiagamController::class, 'claim'])->middleware(['idempotent', 'throttle:10,1']);
 
 Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated::class])->group(function () {
-    Route::get('/dashboard', function (Request $request, DivisionContext $divisionContext) {
-        if ($request->expectsJson()) {
-            return response()->json(['success' => true]);
-        }
-
-        $user = $request->user();
-        $divisionId = $divisionContext->activeDivisionId($request, $user);
-        $activeDivision = $divisionId ? Division::find($divisionId) : null;
-
-        $scopedIncoming = IncomingLetter::query()
-            ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId));
-        $scopedOutgoing = OutgoingLetter::query()
-            ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId));
-        $scopedPiagam = Piagam::query()
-            ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId));
-
-        $totalIncoming = (clone $scopedIncoming)->count();
-        $totalOutgoing = (clone $scopedOutgoing)->count();
-        $totalPiagam = (clone $scopedPiagam)->count();
-        $totalRekap = $totalIncoming + $totalOutgoing + $totalPiagam;
-
-        $percentIncoming = $totalRekap > 0 ? round(($totalIncoming / $totalRekap) * 100, 1) : 0;
-        $percentOutgoing = $totalRekap > 0 ? round(($totalOutgoing / $totalRekap) * 100, 1) : 0;
-        $percentPiagam = $totalRekap > 0 ? round(($totalPiagam / $totalRekap) * 100, 1) : 0;
-
-        // Division Summary Matrix (for Super Admin)
-        $divisionMatrix = $user->role === 'super_admin'
-            ? Division::query()->withCount(['incomingLetters', 'outgoingLetters', 'piagams'])->orderBy('name')->get()
-            : collect();
-
-        // 6-Month Trend Data
-        $months = collect(range(5, 0))->map(fn ($i) => now()->subMonths($i)->format('Y-m'));
-        $monthlyIncoming = (clone $scopedIncoming)
-            ->where('letter_date', '>=', now()->subMonths(6)->startOfMonth())
-            ->get()
-            ->groupBy(fn ($l) => $l->letter_date ? $l->letter_date->format('Y-m') : '')
-            ->map->count();
-        $monthlyOutgoing = (clone $scopedOutgoing)
-            ->where('letter_date', '>=', now()->subMonths(6)->startOfMonth())
-            ->get()
-            ->groupBy(fn ($l) => $l->letter_date ? $l->letter_date->format('Y-m') : '')
-            ->map->count();
-
-        $trendData = $months->map(fn ($m) => [
-            'month' => $m,
-            'label' => Carbon::createFromFormat('Y-m', $m)->format('M Y'),
-            'incoming' => $monthlyIncoming->get($m, 0),
-            'outgoing' => $monthlyOutgoing->get($m, 0),
-        ]);
-
-        // Recent Audit Activity Log
-        $recentActivities = AuditLog::query()
-            ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
-            ->latest('id')
-            ->limit(8)
-            ->get();
-
-        return view('dashboard', [
-            'activeDivision' => $activeDivision,
-            'totalIncoming' => $totalIncoming,
-            'totalOutgoing' => $totalOutgoing,
-            'totalPiagam' => $totalPiagam,
-            'totalRekap' => $totalRekap,
-            'percentIncoming' => $percentIncoming,
-            'percentOutgoing' => $percentOutgoing,
-            'percentPiagam' => $percentPiagam,
-            'divisionMatrix' => $divisionMatrix,
-            'trendData' => $trendData,
-            'recentActivities' => $recentActivities,
-            'recentIncoming' => (clone $scopedIncoming)->latest('received_date')->limit(5)->get(),
-            'recentOutgoing' => (clone $scopedOutgoing)->latest('letter_date')->limit(5)->get(),
-        ]);
-    });
+    Route::get('/dashboard', [WebDashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/persuratan', [UnifiedWorkspaceController::class, 'index'])->name('persuratan.index');
 
@@ -344,6 +273,8 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
     });
 
     Route::get('/master/divisi', function (Request $request) {
+        abort_unless($request->user()?->role === 'super_admin', 403, 'Hanya Super Administrator yang berhak mengelola master divisi.');
+
         $q = $request->string('q')->toString();
         $divisions = Division::query()
             ->withCount(['users', 'incomingLetters', 'outgoingLetters', 'piagams'])
@@ -635,6 +566,7 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
 });
 
 Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated::class])->group(function () {
+    Route::post('/switch-division', [DivisionContextController::class, 'switch'])->name('switch-division');
     Route::post('/api/v1/session/switch-division', [DivisionContextController::class, 'switch']);
     Route::get('/api/v1/surat-masuk', [IncomingLetterController::class, 'index']);
     Route::post('/api/v1/surat-masuk', [IncomingLetterController::class, 'store'])->middleware('idempotent');

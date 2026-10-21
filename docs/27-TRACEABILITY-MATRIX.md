@@ -54,6 +54,8 @@ Every requirement in the system is verified to possess empirical evidence or an 
 | **UX-REM-005**| `UX2-006`, `DEC-LOC-001` | Full Indonesian Application Localization | `BR-USER-001` | All | All Roles | `TEST-UX-REM-005` (`UxHeuristicRemediationTest`) | `lang/id` (Complete dictionaries) | `VERIFIED` |
 | **UX-REM-006**| `UX2-008`, `UX2-009`, `DEC-UI-009` | Accessible Modal Dialog & Symmetrical Master Popups | `UI-001` | `User`, `School`, `Division` | Admin+ | `TEST-UX-REM-006` (`UxHeuristicRemediationTest`) | (Blade components) | `VERIFIED` |
 | **UX-REM-007**| `UX2-010`, `UX2-012`, `UX2-019`, `DEC-UI-009` | Form Accessibility, Mobile Filter Drawer & Canvas Redraw Guard | `UI-001`, `UI-002` | `School`, `Piagam` | All Roles & Guests | `TEST-UX-REM-007` (`UxHeuristicRemediationTest`) | (UI Ergonomics) | `VERIFIED` |
+| **UX-DASH-01** | `docs/dashboard_ux_analysis.md`, `DEC-UI-010` | Role-Specific Dashboard & Consolidated DashboardService | `BR-TEN-001`, `DEC-UI-010` | `Division`, `IncomingLetter`, `OutgoingLetter`, `Piagam`, `BackupRun`, `AuditLog` | Scoped per role (Operator, Division Admin, Super Admin) | `DashboardRoleSpecificViewTest`, `UxHeuristicRemediationTest` | N/A (UI / Architecture) | `VERIFIED` |
+| **SEC-TEN-001** | Audit Finding, `DEC-TEN-001` | Master Divisi & Global WorkUnit RBAC Isolation | `BR-TEN-001`, `BR-TEN-003` | `Division`, `WorkUnit` | Strictly Super Admin only; 403 on non-super-admin access; hidden from sidebar | `DivisionIsolationContractTest` | N/A (Security Remediation) | `VERIFIED` |
 
 
 ---

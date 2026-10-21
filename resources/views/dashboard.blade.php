@@ -6,11 +6,11 @@
         $isOperator = $user->role === 'operator';
     @endphp
 
-    <section class="px-4 py-4 sm:px-6 sm:py-6 md:px-8">
+    <section class="px-4 py-4 sm:px-6 sm:py-6 md:px-8 flex flex-col gap-4 sm:gap-5">
         <!-- ============================================================ -->
-        <!-- REFINED WORKSPACE HEADER (STANDARDIZED)                      -->
+        <!-- 1. WORKSPACE HEADER & PRIMARY ACTIONS                        -->
         <!-- ============================================================ -->
-        <x-page-header
+        <x-page-header class="mb-0"
             :badge="$activeDivision ? $activeDivision->code . ' — ' . $activeDivision->name : 'Semua Divisi (Konteks Global)'"
             :meta="'Peran: ' . ucwords(str_replace('_', ' ', $user->role))"
             title="Dashboard Pengarsipan Surat"
@@ -18,16 +18,19 @@
         >
             <x-slot:actions>
                 <a href="/surat-masuk/create" 
+                   id="btn-quick-incoming"
                    class="flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#147D73] px-4 text-xs font-semibold text-white shadow-xs hover:bg-[#0F635B] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
                     <x-icon name="plus" class="h-4 w-4" />
                     <span>Surat Masuk</span>
                 </a>
                 <a href="/surat-keluar/create" 
+                   id="btn-quick-outgoing"
                    class="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-[#E3E8EE] bg-white px-3.5 text-xs font-semibold text-[#17243A] shadow-2xs hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
                     <x-icon name="plus" class="h-4 w-4 text-slate-500" />
                     <span>Surat Keluar</span>
                 </a>
                 <a href="/piagam/create" 
+                   id="btn-quick-piagam"
                    class="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-[#E3E8EE] bg-white px-3.5 text-xs font-semibold text-[#17243A] shadow-2xs hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
                     <x-icon name="plus" class="h-4 w-4 text-slate-500" />
                     <span>Catat Piagam</span>
@@ -35,207 +38,201 @@
             </x-slot:actions>
         </x-page-header>
 
+        <!-- ============================================================ -->
+        <!-- OPERATOR FAST TRACK: PENCARIAN PINTAR QUICK BAR              -->
+        <!-- ============================================================ -->
+        @if ($isOperator)
+            <div class="rounded-xl border border-[#E3E8EE] bg-white p-3 sm:p-3.5 shadow-2xs">
+                <form action="/laporan" method="GET" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div class="relative flex-1">
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                            <x-icon name="search" class="h-4 w-4 text-teal-600" />
+                        </div>
+                        <input type="search" 
+                               name="q" 
+                               id="operator-quick-search-input"
+                               placeholder="Cari nomor surat, instansi asal, perihal arsip... (Tekan '/' untuk fokus)" 
+                               class="w-full rounded-lg border border-[#E3E8EE] bg-[#F7F8FA] py-2.5 pl-10 pr-12 text-sm text-[#17243A] placeholder:text-slate-400 focus:border-[#147D73] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#147D73] transition-colors" />
+                        <div class="pointer-events-none absolute inset-y-0 right-0 hidden sm:flex items-center pr-3">
+                            <kbd class="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 shadow-2xs">/</kbd>
+                        </div>
+                    </div>
+                    <button type="submit" 
+                            class="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-[#147D73] px-5 text-xs font-semibold text-white shadow-xs hover:bg-[#0F635B] transition-colors">
+                        <x-icon name="search" class="h-4 w-4" />
+                        <span>Pencarian Pintar</span>
+                    </button>
+                </form>
+            </div>
+        @endif
 
         <!-- ============================================================ -->
-        <!-- QUICK NAVIGATION CARDS (UX-018)                              -->
+        <!-- SUPER ADMIN: SYSTEM HEALTH & BACKUP MONITOR                  -->
         <!-- ============================================================ -->
-        <div class="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-            <!-- 1. Pusat Persuratan -->
-            <a href="/persuratan" class="group flex flex-col justify-between rounded-xl border border-[#E3E8EE] bg-white p-4 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-teal-500 hover:shadow-md">
-                <div class="flex items-start justify-between">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-50 text-[#147D73] transition-colors group-hover:bg-[#147D73] group-hover:text-white">
-                        <x-icon name="layers" class="h-5 w-5" />
+        @if ($isSuperAdmin && isset($systemHealth))
+            <div class="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-[#147D73] border border-teal-200">
+                            <x-icon name="database" class="h-5 w-5" />
+                        </div>
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h3 class="font-bold text-sm tracking-tight text-slate-900">Status Cadangan Data Sistem</h3>
+                                @if ($systemHealth['is_healthy'])
+                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800 border border-emerald-200">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span> Operasional Aman
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-semibold text-rose-800 border border-rose-200">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-rose-600"></span> Perhatian Backup
+                                    </span>
+                                @endif
+                            </div>
+                            <p class="mt-1 text-xs text-slate-600">
+                                @if ($systemHealth['last_backup'])
+                                    Cadangan terakhir: <strong class="text-slate-800">{{ $systemHealth['last_backup']->created_at->diffForHumans() }}</strong> 
+                                    ({{ $systemHealth['last_backup']->created_at->format('d/m/Y H:i') }} WIB) &bull; 
+                                    Ukuran: {{ round(($systemHealth['last_backup']->archive_size_bytes ?? 0) / 1024 / 1024, 2) }} MB
+                                @else
+                                    Belum ada catatan snapshot cadangan. Sistem siap dilakukan backup perdana.
+                                @endif
+                            </p>
+                        </div>
                     </div>
-                    <span class="rounded bg-teal-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-[#0F635B] border border-teal-200">Terpadu</span>
-                </div>
-                <div class="mt-3">
-                    <h3 class="font-bold text-sm text-[#17243A] group-hover:text-[#147D73] transition-colors">Pusat Persuratan</h3>
-                    <p class="mt-0.5 text-xs text-[#657184] line-clamp-1">Workspace terpadu kearsipan dinas</p>
-                </div>
-                <div class="mt-3 flex items-center gap-1 text-xs font-semibold text-[#147D73]">
-                    <span>Buka Workspace</span>
-                    <x-icon name="arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-                </div>
-            </a>
-
-            <!-- 2. Surat Masuk -->
-            <a href="/persuratan?tab=masuk" class="group flex flex-col justify-between rounded-xl border border-[#E3E8EE] bg-white p-4 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-500 hover:shadow-md">
-                <div class="flex items-start justify-between">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 transition-colors group-hover:bg-emerald-700 group-hover:text-white">
-                        <x-icon name="mail" class="h-5 w-5" />
+                    <div class="flex items-center gap-2">
+                        <a href="/admin/backups" 
+                           class="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 hover:border-teal-500 hover:text-[#147D73] hover:bg-slate-50 transition-colors shadow-2xs">
+                            <span>Kelola Backup & Pemulihan</span>
+                            <x-icon name="arrow-right" class="h-3.5 w-3.5" />
+                        </a>
                     </div>
-                    <span class="text-xs font-bold text-[#657184] tabular-nums">{{ number_format($totalIncoming) }} Arsip</span>
                 </div>
-                <div class="mt-3">
-                    <h3 class="font-bold text-sm text-[#17243A] group-hover:text-emerald-700 transition-colors">Surat Masuk</h3>
-                    <p class="mt-0.5 text-xs text-[#657184] line-clamp-1">Register arsip surat masuk</p>
-                </div>
-                <div class="mt-3 flex items-center gap-1 text-xs font-semibold text-emerald-700">
-                    <span>Lihat Register</span>
-                    <x-icon name="arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-                </div>
-            </a>
-
-            <!-- 3. Surat Keluar -->
-            <a href="/persuratan?tab=keluar" class="group flex flex-col justify-between rounded-xl border border-[#E3E8EE] bg-white p-4 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-500 hover:shadow-md">
-                <div class="flex items-start justify-between">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-700 transition-colors group-hover:bg-blue-700 group-hover:text-white">
-                        <x-icon name="send" class="h-5 w-5" />
-                    </div>
-                    <span class="text-xs font-bold text-[#657184] tabular-nums">{{ number_format($totalOutgoing) }} Arsip</span>
-                </div>
-                <div class="mt-3">
-                    <h3 class="font-bold text-sm text-[#17243A] group-hover:text-blue-700 transition-colors">Surat Keluar</h3>
-                    <p class="mt-0.5 text-xs text-[#657184] line-clamp-1">Buku nomor & arsip surat keluar</p>
-                </div>
-                <div class="mt-3 flex items-center gap-1 text-xs font-semibold text-blue-700">
-                    <span>Lihat Register</span>
-                    <x-icon name="arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-                </div>
-            </a>
-
-            <!-- 4. Pencarian Pintar -->
-            <a href="/laporan" class="group flex flex-col justify-between rounded-xl border border-[#E3E8EE] bg-white p-4 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-500 hover:shadow-md">
-                <div class="flex items-start justify-between">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-700 transition-colors group-hover:bg-amber-700 group-hover:text-white">
-                        <x-icon name="search" class="h-5 w-5" />
-                    </div>
-                    <span class="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-800 border border-amber-200">Pencarian</span>
-                </div>
-                <div class="mt-3">
-                    <h3 class="font-bold text-sm text-[#17243A] group-hover:text-amber-800 transition-colors">Pencarian Pintar</h3>
-                    <p class="mt-0.5 text-xs text-[#657184] line-clamp-1">Cari arsip & ekspor rekap resmi</p>
-                </div>
-                <div class="mt-3 flex items-center gap-1 text-xs font-semibold text-amber-700">
-                    <span>Mulai Cari</span>
-                    <x-icon name="arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-                </div>
-            </a>
-        </div>
+            </div>
+        @endif
 
         <!-- ============================================================ -->
-        <!-- METRIC SUMMARY TILES (INTEGRATED RATIOS, NO DUPLICATION)     -->
+        <!-- ADMIN DIVISI: DATA ATTENTION WARNING (IF ANY)                -->
         <!-- ============================================================ -->
-        <div class="mb-6 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
-            <!-- 1. Total Rekap Arsip -->
-            <article class="rounded-xl border border-[#E3E8EE] bg-white p-4 sm:p-5 shadow-2xs transition-shadow hover:shadow-xs">
+        @if ($isDivisionAdmin && isset($attentionItems) && ($attentionItems['missing_attachments_count'] ?? 0) > 0)
+            <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900 shadow-2xs">
+                <div class="flex items-start gap-3">
+                    <x-icon name="alert-circle" class="h-5 w-5 shrink-0 text-amber-700 mt-0.5" />
+                    <div class="flex-1 text-xs">
+                        <h4 class="font-bold text-sm text-amber-900">Perhatian Integritas Lampiran Arsip</h4>
+                        <p class="mt-0.5 text-amber-800">
+                            Terdapat <strong>{{ $attentionItems['missing_attachments_count'] }}</strong> arsip lampiran yang terdata belum lengkap atau perlu diunggah ulang.
+                        </p>
+                    </div>
+                    <a href="/persuratan?tab=masuk" class="rounded-lg bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-800 transition-colors">
+                        Tinjau Arsip
+                    </a>
+                </div>
+            </div>
+        @endif
+
+        <!-- ============================================================ -->
+        <!-- 2. INTERACTIVE METRIC ENTRY CARDS (ZERO REDUNDANCY)          -->
+        <!-- ============================================================ -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 sm:gap-5">
+            <!-- 1. Total Rekap / Pusat Persuratan -->
+            <a href="/persuratan" 
+               id="metric-card-total"
+               class="group block rounded-xl border border-[#E3E8EE] bg-white p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-teal-500 hover:shadow-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-[#657184]">Total Rekap Arsip</span>
-                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
-                        <x-icon name="file-text" class="h-4.5 w-4.5" />
+                    <span class="text-xs font-bold uppercase tracking-wider text-[#657184] group-hover:text-[#147D73] transition-colors">Pusat Persuratan</span>
+                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-50 text-[#147D73] group-hover:bg-[#147D73] group-hover:text-white transition-colors">
+                        <x-icon name="layers" class="h-4.5 w-4.5" />
                     </div>
                 </div>
                 <div class="mt-3">
                     <p class="text-2xl sm:text-3xl font-extrabold text-[#17243A] tabular-nums">{{ number_format($totalRekap) }}</p>
-                    <p class="mt-1 text-xs text-[#657184]">Seluruh surat & piagam terdata</p>
+                    <p class="mt-1 text-xs text-[#657184] line-clamp-1">Total seluruh arsip terpadu</p>
                 </div>
-            </article>
+                <div class="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 text-xs font-semibold text-[#147D73]">
+                    <span>Buka Arsip</span>
+                    <x-icon name="arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                </div>
+            </a>
 
             <!-- 2. Surat Masuk -->
-            <article class="rounded-xl border border-[#E3E8EE] bg-white p-4 sm:p-5 shadow-2xs transition-shadow hover:shadow-xs">
+            <a href="/persuratan?tab=masuk" 
+               id="metric-card-incoming"
+               class="group block rounded-xl border border-[#E3E8EE] bg-white p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-500 hover:shadow-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-[#0F635B]">Surat Masuk</span>
-                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-50 text-[#147D73]">
+                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-800">Surat Masuk</span>
+                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 group-hover:bg-emerald-700 group-hover:text-white transition-colors">
                         <x-icon name="mail" class="h-4.5 w-4.5" />
                     </div>
                 </div>
                 <div class="mt-3">
                     <p class="text-2xl sm:text-3xl font-extrabold text-[#17243A] tabular-nums">{{ number_format($totalIncoming) }}</p>
-                    <div class="mt-1 flex items-center justify-between text-xs">
-                        <span class="font-medium text-[#0F635B]">{{ $percentIncoming }}% total</span>
-                        <a href="/persuratan?tab=masuk" class="font-semibold text-[#147D73] hover:underline">
-                            Buka arsip &rarr;
-                        </a>
-                    </div>
+                    <p class="mt-1 text-xs text-[#657184] line-clamp-1">Register arsip surat masuk</p>
                 </div>
-            </article>
+                <div class="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 text-xs font-semibold text-emerald-700">
+                    <span>Lihat Register</span>
+                    <x-icon name="arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                </div>
+            </a>
 
             <!-- 3. Surat Keluar -->
-            <article class="rounded-xl border border-[#E3E8EE] bg-white p-4 sm:p-5 shadow-2xs transition-shadow hover:shadow-xs">
+            <a href="/persuratan?tab=keluar" 
+               id="metric-card-outgoing"
+               class="group block rounded-xl border border-[#E3E8EE] bg-white p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-500 hover:shadow-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-blue-700">Surat Keluar</span>
-                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                    <span class="text-xs font-bold uppercase tracking-wider text-blue-800">Surat Keluar</span>
+                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700 group-hover:bg-blue-700 group-hover:text-white transition-colors">
                         <x-icon name="send" class="h-4.5 w-4.5" />
                     </div>
                 </div>
                 <div class="mt-3">
                     <p class="text-2xl sm:text-3xl font-extrabold text-[#17243A] tabular-nums">{{ number_format($totalOutgoing) }}</p>
-                    <div class="mt-1 flex items-center justify-between text-xs">
-                        <span class="font-medium text-blue-700">{{ $percentOutgoing }}% total</span>
-                        <a href="/persuratan?tab=keluar" class="font-semibold text-blue-700 hover:underline">
-                            Buka arsip &rarr;
-                        </a>
-                    </div>
+                    <p class="mt-1 text-xs text-[#657184] line-clamp-1">Buku nomor & arsip surat keluar</p>
                 </div>
-            </article>
+                <div class="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 text-xs font-semibold text-blue-700">
+                    <span>Lihat Register</span>
+                    <x-icon name="arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                </div>
+            </a>
 
-            <!-- 4. Piagam & Sertifikat (Required exact label) -->
-            <article class="rounded-xl border border-[#E3E8EE] bg-white p-4 sm:p-5 shadow-2xs transition-shadow hover:shadow-xs">
+            <!-- 4. Piagam & Sertifikat -->
+            <a href="/persuratan?tab=piagam" 
+               id="metric-card-piagam"
+               class="group block rounded-xl border border-[#E3E8EE] bg-white p-4 sm:p-5 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-500 hover:shadow-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-amber-700">Piagam & Sertifikat</span>
-                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50 text-amber-700">
+                    <span class="text-xs font-bold uppercase tracking-wider text-amber-800">Piagam & Sertifikat</span>
+                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50 text-amber-700 group-hover:bg-amber-700 group-hover:text-white transition-colors">
                         <x-icon name="award" class="h-4.5 w-4.5" />
                     </div>
                 </div>
                 <div class="mt-3">
                     <p class="text-2xl sm:text-3xl font-extrabold text-[#17243A] tabular-nums">{{ number_format($totalPiagam) }}</p>
-                    <div class="mt-1 flex items-center justify-between text-xs">
-                        <span class="font-medium text-amber-700">{{ $percentPiagam }}% total</span>
-                        <a href="/persuratan?tab=piagam" class="font-semibold text-amber-700 hover:underline">
-                            Buka log &rarr;
-                        </a>
-                    </div>
+                    <p class="mt-1 text-xs text-[#657184] line-clamp-1">Buku serah terima & piagam dinas</p>
                 </div>
-            </article>
+                <div class="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 text-xs font-semibold text-amber-700">
+                    <span>Buka Register</span>
+                    <x-icon name="arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                </div>
+            </a>
         </div>
 
         <!-- ============================================================ -->
-        <!-- SUPER ADMIN: CROSS-DIVISION AGGREGATION MATRIX               -->
+        <!-- 3. SUPER ADMIN: INTERACTIVE CROSS-DIVISION MATRIX            -->
         <!-- ============================================================ -->
         @if ($isSuperAdmin && $divisionMatrix->isNotEmpty())
-            <div class="mb-6 rounded-xl border border-[#E3E8EE] bg-white p-4 sm:p-5 shadow-2xs">
+            <div class="rounded-xl border border-[#E3E8EE] bg-white p-4 sm:p-5 shadow-2xs">
                 <div class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between border-b border-[#E3E8EE] pb-3">
                     <div>
                         <h2 class="font-bold text-base text-[#17243A]">Matriks Agregasi Lintas Divisi</h2>
-                        <p class="text-xs text-[#657184]">Ringkasan volume kearsipan di seluruh bidang kerja dinas.</p>
+                        <p class="text-xs text-[#657184]">Klik nama bidang untuk langsung beralih konteks kerja kearsipan.</p>
                     </div>
                     <span class="self-start sm:self-auto rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                        {{ $divisionMatrix->count() }} Divisi Terdata
+                        {{ $divisionMatrix->count() }} Bidang Kerja Terdata
                     </span>
                 </div>
 
-                <!-- Mobile Card Summary (< md) -->
-                <div class="space-y-2.5 md:hidden">
-                    @foreach ($divisionMatrix as $div)
-                        @php
-                            $totalDiv = $div->incoming_letters_count + $div->outgoing_letters_count + $div->piagams_count;
-                        @endphp
-                        <div class="rounded-lg border border-[#E3E8EE] bg-[#F7F8FA] p-3 text-xs">
-                            <div class="flex items-center justify-between border-b border-slate-200 pb-1.5">
-                                <span class="font-bold text-[#147D73]">{{ $div->code }}</span>
-                                <span class="font-extrabold text-[#17243A] tabular-nums">{{ number_format($totalDiv) }} Arsip</span>
-                            </div>
-                            <p class="mt-1 font-medium text-slate-800">{{ $div->name }}</p>
-                            <div class="mt-2 grid grid-cols-3 gap-1 text-center text-[11px] text-[#657184]">
-                                <div class="rounded bg-white p-1 border border-slate-200">
-                                    <span class="block font-bold text-teal-800 tabular-nums">{{ number_format($div->incoming_letters_count) }}</span>
-                                    <span>Masuk</span>
-                                </div>
-                                <div class="rounded bg-white p-1 border border-slate-200">
-                                    <span class="block font-bold text-blue-800 tabular-nums">{{ number_format($div->outgoing_letters_count) }}</span>
-                                    <span>Keluar</span>
-                                </div>
-                                <div class="rounded bg-white p-1 border border-slate-200">
-                                    <span class="block font-bold text-amber-800 tabular-nums">{{ number_format($div->piagams_count) }}</span>
-                                    <span>Piagam</span>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-
                 <!-- Desktop Table View (>= md) -->
-                <div class="hidden overflow-x-auto md:block">
+                <div class="overflow-x-auto">
                     <table class="w-full min-w-[640px] border-collapse text-xs sm:text-sm">
                         <thead>
                             <tr class="border-b border-[#E3E8EE] bg-[#F7F8FA] text-left text-xs font-semibold uppercase tracking-wider text-[#657184]">
@@ -244,23 +241,46 @@
                                 <th class="p-3 text-right">Surat Keluar</th>
                                 <th class="p-3 text-right">Piagam</th>
                                 <th class="p-3 text-right font-bold text-[#17243A]">Total Arsip</th>
+                                <th class="p-3 text-center">Aksi Cepat</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-[#E3E8EE]">
                             @foreach ($divisionMatrix as $div)
                                 @php
                                     $totalDiv = $div->incoming_letters_count + $div->outgoing_letters_count + $div->piagams_count;
+                                    $isCurrent = $activeDivision && $activeDivision->id === $div->id;
                                 @endphp
-                                <tr class="hover:bg-slate-50/80 transition-colors">
+                                <tr class="hover:bg-slate-50/80 transition-colors {{ $isCurrent ? 'bg-teal-50/40' : '' }}">
                                     <td class="p-3 font-medium text-[#17243A]">
-                                        <span class="font-bold text-[#147D73] font-mono">{{ $div->code }}</span>
-                                        <span class="mx-1.5 text-slate-300">&bull;</span>
-                                        <span>{{ $div->name }}</span>
+                                        <form action="/switch-division" method="POST" class="inline">
+                                            @csrf
+                                            <input type="hidden" name="division_id" value="{{ $div->id }}" />
+                                            <button type="submit" 
+                                                    class="text-left group flex items-center gap-1.5 hover:underline focus-visible:outline-hidden">
+                                                <span class="font-bold text-[#147D73] font-mono group-hover:text-[#0F635B]">{{ $div->code }}</span>
+                                                <span class="text-slate-300">&bull;</span>
+                                                <span class="font-semibold text-slate-800 group-hover:text-[#147D73]">{{ $div->name }}</span>
+                                                @if ($isCurrent)
+                                                    <span class="rounded bg-teal-100 px-1.5 py-0.2 text-[10px] font-bold text-teal-800">Aktif</span>
+                                                @endif
+                                            </button>
+                                        </form>
                                     </td>
                                     <td class="p-3 text-right text-slate-700 tabular-nums">{{ number_format($div->incoming_letters_count) }}</td>
                                     <td class="p-3 text-right text-slate-700 tabular-nums">{{ number_format($div->outgoing_letters_count) }}</td>
                                     <td class="p-3 text-right text-slate-700 tabular-nums">{{ number_format($div->piagams_count) }}</td>
                                     <td class="p-3 text-right font-extrabold text-[#17243A] tabular-nums">{{ number_format($totalDiv) }}</td>
+                                    <td class="p-3 text-center">
+                                        <form action="/switch-division" method="POST" class="inline">
+                                            @csrf
+                                            <input type="hidden" name="division_id" value="{{ $div->id }}" />
+                                            <button type="submit" 
+                                                    class="inline-flex items-center gap-1 rounded border border-[#E3E8EE] bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:border-teal-500 hover:text-[#147D73] transition-colors">
+                                                <span>Buka</span>
+                                                <x-icon name="arrow-right" class="h-3 w-3" />
+                                            </button>
+                                        </form>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -270,19 +290,19 @@
         @endif
 
         <!-- ============================================================ -->
-        <!-- ANALYTICS: 6-MONTH CORRESPONDENCE TREND                      -->
+        <!-- 4. ANALYTICS: 6-MONTH COMPARATIVE TREND                      -->
         <!-- (Visible to Super Admin & Admin Divisi)                      -->
         <!-- ============================================================ -->
         @if ($isSuperAdmin || $isDivisionAdmin)
-            <div class="mb-6 rounded-xl border border-[#E3E8EE] bg-white p-4 sm:p-5 shadow-2xs">
-                <div class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between border-b border-[#E3E8EE] pb-3">
+            <div class="rounded-xl border border-[#E3E8EE] bg-white p-4 sm:p-5 shadow-2xs">
+                <div class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between border-b border-[#E3E8EE] pb-3">
                     <div>
-                        <h2 class="font-bold text-base text-[#17243A]">Tren Persuratan (6 Bulan Terakhir)</h2>
-                        <p class="text-xs text-[#657184]">Volume surat masuk dan surat keluar tercatat per bulan kalender.</p>
+                        <h2 class="font-bold text-base text-[#17243A]">Tren Volume Persuratan (6 Bulan Terakhir)</h2>
+                        <p class="text-xs text-[#657184]">Skala bar terstandarisasi absolut berdasarkan volume puncak kalender.</p>
                     </div>
-                    <div class="flex items-center gap-3 text-xs">
-                        <span class="flex items-center gap-1.5 text-[#0F635B] font-semibold">
-                            <span class="h-2.5 w-2.5 rounded-full bg-[#147D73]"></span> Surat Masuk
+                    <div class="flex items-center gap-4 text-xs">
+                        <span class="flex items-center gap-1.5 text-emerald-800 font-semibold">
+                            <span class="h-2.5 w-2.5 rounded-full bg-emerald-600"></span> Surat Masuk
                         </span>
                         <span class="flex items-center gap-1.5 text-blue-700 font-semibold">
                             <span class="h-2.5 w-2.5 rounded-full bg-blue-600"></span> Surat Keluar
@@ -290,28 +310,30 @@
                     </div>
                 </div>
 
-                <div class="space-y-3 pt-1">
+                <div class="space-y-4 pt-1">
                     @foreach ($trendData as $trend)
-                        @php
-                            $max = max(1, $trend['incoming'] + $trend['outgoing']);
-                            $wIn = ($trend['incoming'] / $max) * 100;
-                            $wOut = ($trend['outgoing'] / $max) * 100;
-                        @endphp
                         <div>
-                            <div class="mb-1 flex justify-between text-xs font-medium text-[#17243A]">
-                                <span class="font-semibold">{{ $trend['label'] }}</span>
-                                <span class="text-[#657184] text-[11px] tabular-nums">
-                                    <span class="text-[#0F635B] font-bold">SM: {{ $trend['incoming'] }}</span>
+                            <div class="mb-1.5 flex items-center justify-between text-xs">
+                                <span class="font-bold text-slate-800">{{ $trend['label'] }}</span>
+                                <span class="text-slate-600 text-xs tabular-nums">
+                                    <span class="text-emerald-700 font-bold">SM: {{ number_format($trend['incoming']) }}</span>
                                     <span class="mx-1 text-slate-300">&bull;</span>
-                                    <span class="text-blue-700 font-bold">SK: {{ $trend['outgoing'] }}</span>
+                                    <span class="text-blue-700 font-bold">SK: {{ number_format($trend['outgoing']) }}</span>
+                                    <span class="mx-1 text-slate-300">&bull;</span>
+                                    <span class="font-semibold text-slate-500">Total: {{ number_format($trend['total']) }}</span>
                                 </span>
                             </div>
-                            <div class="flex h-2.5 w-full gap-1 overflow-hidden rounded-full bg-[#F7F8FA] border border-[#E3E8EE]">
+                            <!-- Bar scale normalized to max global -->
+                            <div class="flex h-3 w-full gap-1 overflow-hidden rounded-full bg-slate-100 border border-slate-200">
                                 @if ($trend['incoming'] > 0)
-                                    <div style="width: {{ $wIn }}%" class="rounded-full bg-[#147D73]" title="Surat Masuk: {{ $trend['incoming'] }}"></div>
+                                    <div style="width: {{ $trend['incoming_width'] }}%" 
+                                         class="rounded-full bg-emerald-600 transition-all duration-300" 
+                                         title="Surat Masuk: {{ $trend['incoming'] }}"></div>
                                 @endif
                                 @if ($trend['outgoing'] > 0)
-                                    <div style="width: {{ $wOut }}%" class="rounded-full bg-blue-600" title="Surat Keluar: {{ $trend['outgoing'] }}"></div>
+                                    <div style="width: {{ $trend['outgoing_width'] }}%" 
+                                         class="rounded-full bg-blue-600 transition-all duration-300" 
+                                         title="Surat Keluar: {{ $trend['outgoing'] }}"></div>
                                 @endif
                             </div>
                         </div>
@@ -321,28 +343,39 @@
         @endif
 
         <!-- ============================================================ -->
-        <!-- OPERATIONAL WORKSPACE: RECENT CORRESPONDENCE & ACTIVITY      -->
+        <!-- 5. OPERATIONAL WORKSPACE: RECENT CORRESPONDENCE & AUDIT      -->
         <!-- ============================================================ -->
-        <div class="grid grid-cols-1 gap-6 {{ $isOperator ? 'lg:grid-cols-2' : 'lg:grid-cols-12' }}">
-            <!-- Recent Letters Workspace (Incoming & Outgoing) -->
+        <div class="grid grid-cols-1 gap-4 sm:gap-5 {{ $isOperator ? 'lg:grid-cols-2' : 'lg:grid-cols-12' }}">
+            <!-- Left Workspace: Tabbed Recent Letters -->
             <div class="rounded-xl border border-[#E3E8EE] bg-white p-4 sm:p-5 shadow-2xs {{ $isOperator ? '' : 'lg:col-span-7' }}">
-                <!-- Tab/Section: Recent Incoming -->
                 <div class="mb-3 flex items-center justify-between border-b border-[#E3E8EE] pb-2.5">
                     <div class="flex items-center gap-2">
-                        <x-icon name="mail" class="h-4 w-4 text-[#147D73]" />
-                        <h2 class="font-bold text-sm text-[#17243A]">Arsip Masuk Terkini</h2>
+                        <button type="button" 
+                                onclick="switchRecentTab('incoming')" 
+                                id="tab-btn-incoming"
+                                class="rounded-lg bg-teal-50 px-3 py-1.5 text-xs font-bold text-[#147D73] border border-teal-200 transition-colors">
+                            Surat Masuk Terkini
+                        </button>
+                        <button type="button" 
+                                onclick="switchRecentTab('outgoing')" 
+                                id="tab-btn-outgoing"
+                                class="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 border border-transparent transition-colors">
+                            Surat Keluar Terkini
+                        </button>
                     </div>
-                    <a href="/persuratan?tab=masuk" class="text-xs font-semibold text-[#147D73] hover:underline">
+                    <a href="/persuratan" class="text-xs font-semibold text-[#147D73] hover:underline">
                         Lihat semua &rarr;
                     </a>
                 </div>
-                <div class="divide-y divide-[#E3E8EE]">
+
+                <!-- Tab Content: Surat Masuk -->
+                <div id="tab-content-incoming" class="divide-y divide-[#E3E8EE]">
                     @forelse ($recentIncoming as $letter)
                         <div class="py-2.5 first:pt-0 last:pb-0">
                             <div class="flex items-start justify-between gap-2">
                                 <div class="min-w-0 flex-1">
                                     <div class="flex items-center gap-2">
-                                        <span class="rounded bg-teal-50 px-1.5 py-0.2 text-[10px] font-bold text-[#0F635B] border border-teal-200">MASUK</span>
+                                        <span class="rounded bg-teal-50 px-1.5 py-0.5 text-[10px] font-bold text-[#0F635B] border border-teal-200">MASUK</span>
                                         <a href="/surat-masuk/{{ $letter->id }}" class="truncate font-semibold text-xs sm:text-sm text-[#17243A] hover:text-[#147D73] hover:underline">
                                             {{ $letter->letter_number }}
                                         </a>
@@ -350,32 +383,29 @@
                                     <p class="truncate text-xs text-[#657184] mt-0.5">{{ $letter->origin_agency }}</p>
                                 </div>
                                 <span class="shrink-0 text-xs font-medium text-slate-500 tabular-nums">
-                                    {{ $letter->received_date->format('d/m/Y') }}
+                                    {{ $letter->received_date ? $letter->received_date->format('d/m/Y') : '-' }}
                                 </span>
                             </div>
                         </div>
                     @empty
-                        <p class="py-3 text-center text-xs text-[#657184]">Belum ada catatan arsip masuk.</p>
+                        <div class="py-6 text-center text-xs text-[#657184]">
+                            <p>Belum ada catatan arsip surat masuk.</p>
+                            <a href="/surat-masuk/create" class="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#147D73] hover:underline">
+                                <x-icon name="plus" class="h-3.5 w-3.5" />
+                                <span>Catat Surat Masuk Pertama</span>
+                            </a>
+                        </div>
                     @endforelse
                 </div>
 
-                <!-- Tab/Section: Recent Outgoing -->
-                <div class="mb-3 mt-6 flex items-center justify-between border-b border-[#E3E8EE] pb-2.5">
-                    <div class="flex items-center gap-2">
-                        <x-icon name="send" class="h-4 w-4 text-blue-700" />
-                        <h2 class="font-bold text-sm text-[#17243A]">Arsip Keluar Terkini</h2>
-                    </div>
-                    <a href="/persuratan?tab=keluar" class="text-xs font-semibold text-blue-700 hover:underline">
-                        Lihat semua &rarr;
-                    </a>
-                </div>
-                <div class="divide-y divide-[#E3E8EE]">
+                <!-- Tab Content: Surat Keluar -->
+                <div id="tab-content-outgoing" class="hidden divide-y divide-[#E3E8EE]">
                     @forelse ($recentOutgoing as $letter)
                         <div class="py-2.5 first:pt-0 last:pb-0">
                             <div class="flex items-start justify-between gap-2">
                                 <div class="min-w-0 flex-1">
                                     <div class="flex items-center gap-2">
-                                        <span class="rounded bg-blue-50 px-1.5 py-0.2 text-[10px] font-bold text-blue-800 border border-blue-200">KELUAR</span>
+                                        <span class="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-800 border border-blue-200">KELUAR</span>
                                         <a href="/surat-keluar/{{ $letter->id }}" class="truncate font-semibold text-xs sm:text-sm text-[#17243A] hover:text-blue-700 hover:underline">
                                             {{ $letter->letter_number }}
                                         </a>
@@ -383,24 +413,32 @@
                                     <p class="truncate text-xs text-[#657184] mt-0.5">{{ $letter->subject }}</p>
                                 </div>
                                 <span class="shrink-0 text-xs font-medium text-slate-500 tabular-nums">
-                                    {{ $letter->letter_date->format('d/m/Y') }}
+                                    {{ $letter->letter_date ? $letter->letter_date->format('d/m/Y') : '-' }}
                                 </span>
                             </div>
                         </div>
                     @empty
-                        <p class="py-3 text-center text-xs text-[#657184]">Belum ada catatan arsip keluar.</p>
+                        <div class="py-6 text-center text-xs text-[#657184]">
+                            <p>Belum ada catatan arsip surat keluar.</p>
+                            <a href="/surat-keluar/create" class="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:underline">
+                                <x-icon name="plus" class="h-3.5 w-3.5" />
+                                <span>Buat Nomor Surat Keluar</span>
+                            </a>
+                        </div>
                     @endforelse
                 </div>
             </div>
 
-            <!-- Activity & Audit Log Feed -->
+            <!-- Right Workspace: Activity Feed / Audit Log -->
             <div class="rounded-xl border border-[#E3E8EE] bg-white p-4 sm:p-5 shadow-2xs {{ $isOperator ? '' : 'lg:col-span-5' }}">
                 <div class="mb-3 flex items-center justify-between border-b border-[#E3E8EE] pb-2.5">
                     <div class="flex items-center gap-2">
-                        <x-icon name="settings" class="h-4 w-4 text-slate-500" />
-                        <h2 class="font-bold text-sm text-[#17243A]">Aktivitas Sistem Terkini</h2>
+                        <x-icon name="clock" class="h-4 w-4 text-slate-500" />
+                        <h2 class="font-bold text-sm text-[#17243A]">
+                            {{ $isOperator ? 'Aktivitas Kearsipan Terkini' : 'Aktivitas Sistem (Audit Log)' }}
+                        </h2>
                     </div>
-                    <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">Audit Log</span>
+                    <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">Terkini</span>
                 </div>
 
                 <div class="divide-y divide-[#E3E8EE]">
@@ -408,16 +446,19 @@
                         <div class="py-2.5 first:pt-0 last:pb-0">
                             <div class="flex items-start justify-between gap-2">
                                 <div class="min-w-0 flex-1">
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="rounded bg-[#F7F8FA] px-1.5 py-0.2 font-mono text-[10px] font-bold text-slate-700 border border-slate-200">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="rounded bg-teal-50 px-1.5 py-0.2 text-[10px] font-bold text-[#0F635B] border border-teal-200">
+                                            {{ $act->human_event ?? $act->event_code }}
+                                        </span>
+                                        <span class="rounded bg-slate-100 px-1.5 py-0.2 font-mono text-[9px] text-slate-500">
                                             {{ $act->event_code }}
                                         </span>
                                     </div>
                                     <p class="mt-1 text-xs font-medium text-[#17243A] line-clamp-2">{{ $act->description }}</p>
                                     <p class="mt-0.5 text-[11px] text-[#657184]">
-                                        Oleh: <strong class="text-slate-700">{{ $act->username ?? 'Publik' }}</strong>
+                                        Oleh: <strong class="text-slate-700">{{ $act->username ?? 'Sistem' }}</strong>
                                         @if ($act->role)
-                                            <span class="text-slate-400">({{ $act->role }})</span>
+                                            <span class="text-slate-400">({{ ucwords(str_replace('_', ' ', $act->role)) }})</span>
                                         @endif
                                     </p>
                                 </div>
@@ -437,4 +478,40 @@
             </div>
         </div>
     </section>
+
+    <!-- Client-side Interactive Behaviors -->
+    <script>
+        function switchRecentTab(tab) {
+            const inContent = document.getElementById('tab-content-incoming');
+            const outContent = document.getElementById('tab-content-outgoing');
+            const inBtn = document.getElementById('tab-btn-incoming');
+            const outBtn = document.getElementById('tab-btn-outgoing');
+
+            if (!inContent || !outContent || !inBtn || !outBtn) return;
+
+            if (tab === 'incoming') {
+                inContent.classList.remove('hidden');
+                outContent.classList.add('hidden');
+                inBtn.className = 'rounded-lg bg-teal-50 px-3 py-1.5 text-xs font-bold text-[#147D73] border border-teal-200 transition-colors';
+                outBtn.className = 'rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 border border-transparent transition-colors';
+            } else {
+                inContent.classList.add('hidden');
+                outContent.classList.remove('hidden');
+                outBtn.className = 'rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 border border-blue-200 transition-colors';
+                inBtn.className = 'rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 border border-transparent transition-colors';
+            }
+        }
+
+        // Keyboard Shortcut: '/' to focus search
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+                e.preventDefault();
+                const searchInput = document.getElementById('operator-quick-search-input');
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.select();
+                }
+            }
+        });
+    </script>
 </x-layouts.app>

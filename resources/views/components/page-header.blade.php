@@ -6,7 +6,12 @@
     'subtitle' => null,
 ])
 
-<header {{ $attributes->merge(['class' => 'mb-6 rounded-xl border border-[#E3E8EE] bg-white p-4 sm:p-5 shadow-2xs']) }}>
+@php
+    $customClass = $attributes->get('class', '');
+    $defaultMargin = str_contains($customClass, 'mb-') ? '' : 'mb-6 ';
+@endphp
+
+<header {{ $attributes->merge(['class' => $defaultMargin . 'rounded-xl border border-[#E3E8EE] bg-white p-4 sm:p-5 shadow-2xs']) }}>
     <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div class="space-y-1">
             @if (isset($breadcrumbs))

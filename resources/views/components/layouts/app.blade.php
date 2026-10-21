@@ -78,11 +78,13 @@
                                     <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Master Data</p>
                                 </div>
                                 <div class="space-y-0.5">
-                                    <a href="/master/divisi" 
-                                       class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('master/divisi*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
-                                        <x-icon name="building" class="h-4 w-4 shrink-0 text-slate-400" />
-                                        <span>Data Divisi</span>
-                                    </a>
+                                    @if ($user->role === 'super_admin')
+                                        <a href="/master/divisi" 
+                                           class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('master/divisi*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                            <x-icon name="building" class="h-4 w-4 shrink-0 text-slate-400" />
+                                            <span>Data Divisi</span>
+                                        </a>
+                                    @endif
                                     <a href="/master/pengguna" 
                                        class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('master/pengguna*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
                                         <x-icon name="users" class="h-4 w-4 shrink-0 text-slate-400" />
@@ -188,9 +190,11 @@
                                 <div class="pt-2 border-t border-[#23344E] space-y-1">
                                     <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Master Data</p>
                                     <div class="space-y-0.5">
-                                        <a href="/master/divisi" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('master/divisi*') ? 'bg-[#147D73]/25 text-teal-300 font-semibold' : 'text-slate-300' }}">
-                                            <x-icon name="building" class="h-4 w-4" /> Data Divisi
-                                        </a>
+                                        @if ($user->role === 'super_admin')
+                                            <a href="/master/divisi" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('master/divisi*') ? 'bg-[#147D73]/25 text-teal-300 font-semibold' : 'text-slate-300' }}">
+                                                <x-icon name="building" class="h-4 w-4" /> Data Divisi
+                                            </a>
+                                        @endif
                                         <a href="/master/pengguna" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('master/pengguna*') ? 'bg-[#147D73]/25 text-teal-300 font-semibold' : 'text-slate-300' }}">
                                             <x-icon name="users" class="h-4 w-4" /> Data Pengguna
                                         </a>
@@ -261,7 +265,7 @@
                                     <option value="" @selected(session('active_division_id') === null)>
                                         Semua Divisi (Global)
                                     </option>
-                                    @foreach (\App\Models\Division::where('status', 'active')->orderBy('name')->get() as $div)
+                                    @foreach (\Illuminate\Support\Facades\Cache::remember('active_divisions_dropdown', 300, fn () => \App\Models\Division::where('status', 'active')->orderBy('name')->get()) as $div)
                                         <option value="{{ $div->id }}" @selected(session('active_division_id') == $div->id)>
                                             {{ $div->code }} — {{ $div->name }}
                                         </option>
