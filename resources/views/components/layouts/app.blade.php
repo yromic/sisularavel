@@ -20,10 +20,10 @@
             <!-- ============================================================ -->
             <!-- DESKTOP SIDEBAR (PRIMARY NAVIGATION)                         -->
             <!-- ============================================================ -->
-            <aside class="hidden w-64 shrink-0 flex-col justify-between border-r border-[#23344E] bg-[#17243A] text-slate-200 md:flex" aria-label="Navigasi Utama Desktop">
-                <div class="flex flex-col">
+            <aside class="sticky top-0 z-30 hidden h-screen w-64 shrink-0 flex-col justify-between border-r border-[#23344E] bg-[#17243A] text-slate-200 md:flex" aria-label="Navigasi Utama Desktop">
+                <div class="flex flex-1 flex-col min-h-0">
                     <!-- Brand Header -->
-                    <div class="flex items-center gap-3 border-b border-[#23344E] px-5 py-4">
+                    <div class="flex items-center gap-3 border-b border-[#23344E] px-5 py-4 shrink-0">
                         <img src="{{ asset('images/icon/icon.svg') }}" alt="Logo SISURAT" class="h-10 w-10 shrink-0 object-contain drop-shadow-xs" />
                         <div class="min-w-0">
                             <div class="flex items-center gap-1.5">
@@ -35,7 +35,7 @@
                     </div>
 
                     <!-- Navigation Links -->
-                    <nav class="space-y-4 px-3 py-4 text-sm" aria-label="Menu Utama">
+                    <nav class="space-y-4 px-3 py-4 text-sm flex-1 overflow-y-auto" aria-label="Menu Utama">
                         <!-- Dashboard Link -->
                         <div>
                             <a href="/dashboard" 
@@ -123,7 +123,7 @@
                 </div>
 
                 <!-- Sidebar Bottom: Portal Tamu Utility -->
-                <div class="border-t border-[#23344E] p-3">
+                <div class="border-t border-[#23344E] p-3 shrink-0">
                     <a href="/" target="_blank" class="flex min-h-[44px] items-center justify-between rounded-lg border border-[#23344E] bg-[#0F1725]/60 px-3 text-xs font-semibold text-slate-300 hover:bg-[#23344E] hover:text-white transition-colors">
                         <span class="flex items-center gap-2">
                             <x-icon name="signature" class="h-4 w-4 text-teal-400" />
@@ -237,7 +237,7 @@
                 <!-- ======================================================== -->
                 <!-- REFINED INSTITUTIONAL TOPBAR                             -->
                 <!-- ======================================================== -->
-                <header class="flex min-h-[58px] items-center justify-between border-b border-[#E3E8EE] bg-white px-4 py-2 shadow-2xs sm:px-6">
+                <header class="sticky top-0 z-20 flex min-h-[58px] items-center justify-between border-b border-[#E3E8EE] bg-white/95 px-4 py-2 shadow-2xs backdrop-blur-xs sm:px-6">
                     <!-- Left: Mobile Toggle & Division Context -->
                     <div class="flex items-center gap-2 sm:gap-4 min-w-0 flex-1 mr-2">
                         <button type="button" 

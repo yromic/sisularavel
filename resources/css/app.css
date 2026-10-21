@@ -28,5 +28,19 @@
     .tabular-nums {
         font-variant-numeric: tabular-nums;
     }
+
+    aside nav::-webkit-scrollbar {
+        width: 4px;
+    }
+    aside nav::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    aside nav::-webkit-scrollbar-thumb {
+        background: #23344E;
+        border-radius: 4px;
+    }
+    aside nav::-webkit-scrollbar-thumb:hover {
+        background: #334b6e;
+    }
 }
 
