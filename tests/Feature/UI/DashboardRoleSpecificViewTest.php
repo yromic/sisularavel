@@ -93,7 +93,7 @@ class DashboardRoleSpecificViewTest extends TestCase
 
         // Super Admin sees backup health monitor and link
         $response->assertSee('Status Cadangan Data Sistem');
-        $response->assertSee('Kelola Backup', false);
+        $response->assertSee('Kelola Cadangan', false);
         $response->assertSee('Pemulihan', false);
 
         // Super Admin sees cross division matrix

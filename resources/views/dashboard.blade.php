@@ -85,7 +85,7 @@
                                     </span>
                                 @else
                                     <span class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-semibold text-rose-800 border border-rose-200">
-                                        <span class="h-1.5 w-1.5 rounded-full bg-rose-600"></span> Perhatian Backup
+                                        <span class="h-1.5 w-1.5 rounded-full bg-rose-600"></span> Perhatian Cadangan
                                     </span>
                                 @endif
                             </div>
@@ -95,7 +95,7 @@
                                     ({{ $systemHealth['last_backup']->created_at->format('d/m/Y H:i') }} WIB) &bull; 
                                     Ukuran: {{ round(($systemHealth['last_backup']->archive_size_bytes ?? 0) / 1024 / 1024, 2) }} MB
                                 @else
-                                    Belum ada catatan snapshot cadangan. Sistem siap dilakukan backup perdana.
+                                    Belum ada cadangan data. Silakan buat cadangan pertama.
                                 @endif
                             </p>
                         </div>
@@ -103,7 +103,7 @@
                     <div class="flex items-center gap-2">
                         <a href="/admin/backups" 
                            class="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 hover:border-teal-500 hover:text-[#147D73] hover:bg-slate-50 transition-colors shadow-2xs">
-                            <span>Kelola Backup & Pemulihan</span>
+                            <span>Kelola Cadangan & Pemulihan</span>
                             <x-icon name="arrow-right" class="h-3.5 w-3.5" />
                         </a>
                     </div>

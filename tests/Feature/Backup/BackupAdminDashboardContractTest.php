@@ -78,9 +78,9 @@ class BackupAdminDashboardContractTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertViewIs('admin.backups.index');
-        $response->assertSee('Backup & Disaster Recovery');
-        $response->assertSee('Kapasitas SSD Hosting');
-        $response->assertSee('Replikasi Off-site Cloud');
+        $response->assertSee('Cadangan Data & Pemulihan');
+        $response->assertSee('Ruang Penyimpanan Server');
+        $response->assertSee('Salinan di Google Drive');
         $response->assertSee('bkp-20261016-100000');
     }
 

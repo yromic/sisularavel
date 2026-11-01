@@ -167,7 +167,7 @@ class BackupController extends Controller
 
             return redirect()
                 ->route('admin.backups.index')
-                ->with('success', "Pencadangan manual berhasil diselesaikan. ID: {$run->backup_id} ({$sizeFormatted}).");
+                ->with('success', "Cadangan berhasil dibuat. Kode: {$run->backup_id} ({$sizeFormatted}).");
         } catch (\Throwable $e) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => $e->getMessage()], 422);
@@ -175,7 +175,7 @@ class BackupController extends Controller
 
             return redirect()
                 ->route('admin.backups.index')
-                ->with('error', "Gagal menjalankan pencadangan manual: {$e->getMessage()}");
+                ->with('error', "Cadangan gagal dibuat: {$e->getMessage()}");
         }
     }
 
@@ -237,13 +237,13 @@ class BackupController extends Controller
         }
 
         if ($result['pruned_count'] === 0) {
-            $msg = 'Tidak ada arsip yang dibersihkan. '.($result['reason'] ?? 'Seluruh cadangan berada dalam kuota retensi.');
+            $msg = 'Tidak ada cadangan lama yang perlu dibersihkan. '.($result['reason'] ?? '');
 
             return redirect()->route('admin.backups.index')->with('info', $msg);
         }
 
         $mbReclaimed = round($result['reclaimed_bytes'] / (1024 * 1024), 2);
-        $msg = "Pembersihan retensi selesai: {$result['pruned_count']} arsip lama berhasil dihapus ({$mbReclaimed} MB ruang disk dibebaskan).";
+        $msg = "Pembersihan selesai: {$result['pruned_count']} cadangan lama dihapus ({$mbReclaimed} MB ruang dibebaskan).";
 
         return redirect()->route('admin.backups.index')->with('success', $msg);
     }
@@ -295,12 +295,12 @@ class BackupController extends Controller
         if ($result['status'] === 'skipped') {
             return redirect()
                 ->route('admin.backups.index')
-                ->with('error', "Gagal menyinkronkan berkas: {$result['reason']}");
+                ->with('error', "Berkas belum bisa disimpan ke Google Drive: {$result['reason']}");
         }
 
-        $msg = "Sinkronisasi Google Drive selesai: {$result['synced']} berkas berhasil ditautkan ke Google Drive.";
+        $msg = "Penyimpanan ke Google Drive selesai: {$result['synced']} berkas berhasil disimpan.";
         if ($result['failed'] > 0) {
-            $msg .= " ({$result['failed']} berkas mengalami kendala).";
+            $msg .= " ({$result['failed']} berkas belum berhasil disimpan).";
         }
 
         return redirect()->route('admin.backups.index')->with('success', $msg);

@@ -114,7 +114,7 @@
                                     <a href="/admin/backups" 
                                        class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-400 {{ request()->is('admin/backups*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
                                         <x-icon name="database" class="h-4 w-4 shrink-0 text-slate-400" />
-                                        <span>Backup & Pemulihan</span>
+                                        <span>Cadangan & Pemulihan</span>
                                     </a>
                                 </div>
                             </div>
@@ -213,7 +213,7 @@
                                     <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Sistem & Pemulihan</p>
                                     <div class="space-y-0.5">
                                         <a href="/admin/backups" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('admin/backups*') ? 'bg-[#147D73]/25 text-teal-300 font-semibold' : 'text-slate-300' }}">
-                                            <x-icon name="database" class="h-4 w-4" /> Backup & Pemulihan
+                                            <x-icon name="database" class="h-4 w-4" /> Cadangan & Pemulihan
                                         </a>
                                     </div>
                                 </div>
