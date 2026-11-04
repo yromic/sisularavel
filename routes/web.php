@@ -269,7 +269,7 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
 
         return view('piagam.show', ['piagam' => $piagam]);
     });
-    Route::delete('/piagam/{piagam}', [PiagamController::class, 'destroy']);
+    Route::match(['delete', 'post'], '/piagam/{piagam}', [PiagamController::class, 'destroy']);
     Route::post('/piagam/{piagam}/restore', [PiagamController::class, 'restore']);
 
     Route::get('/master/divisi', function (Request $request) {
@@ -678,7 +678,7 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
     Route::get('/api/v1/piagam', [PiagamController::class, 'index']);
     Route::get('/api/v1/piagam/{piagam}', [PiagamController::class, 'show']);
     Route::post('/api/v1/piagam', [PiagamController::class, 'store'])->middleware('idempotent');
-    Route::delete('/api/v1/piagam/{piagam}', [PiagamController::class, 'destroy']);
+    Route::match(['delete', 'post'], '/api/v1/piagam/{piagam}', [PiagamController::class, 'destroy']);
     Route::post('/api/v1/piagam/{piagam}/restore', [PiagamController::class, 'restore']);
     Route::get('/api/v1/dashboard', [DashboardController::class, 'show']);
     Route::get('/api/v1/search', [SearchController::class, 'index']);
