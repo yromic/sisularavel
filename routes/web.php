@@ -269,6 +269,8 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
 
         return view('piagam.show', ['piagam' => $piagam]);
     });
+    Route::delete('/piagam/{piagam}', [PiagamController::class, 'destroy']);
+    Route::post('/piagam/{piagam}/restore', [PiagamController::class, 'restore']);
 
     Route::get('/master/divisi', function (Request $request) {
         abort_unless($request->user()?->role === 'super_admin', 403, 'Hanya Super Administrator yang berhak mengelola master divisi.');
@@ -676,6 +678,8 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
     Route::get('/api/v1/piagam', [PiagamController::class, 'index']);
     Route::get('/api/v1/piagam/{piagam}', [PiagamController::class, 'show']);
     Route::post('/api/v1/piagam', [PiagamController::class, 'store'])->middleware('idempotent');
+    Route::delete('/api/v1/piagam/{piagam}', [PiagamController::class, 'destroy']);
+    Route::post('/api/v1/piagam/{piagam}/restore', [PiagamController::class, 'restore']);
     Route::get('/api/v1/dashboard', [DashboardController::class, 'show']);
     Route::get('/api/v1/search', [SearchController::class, 'index']);
     Route::get('/api/v1/reports/export.csv', [ReportExportController::class, 'csv']);

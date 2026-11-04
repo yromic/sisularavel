@@ -100,18 +100,19 @@
             });
 
             if (res.ok) {
-                sessionStorage.setItem('sisurat_toast', JSON.stringify({ message: 'Arsip surat berhasil dipindahkan ke kotak sampah.', type: 'success' }));
+                const label = pendingDeleteType === 'piagam' ? 'Catatan tanda terima piagam' : 'Arsip surat';
+                sessionStorage.setItem('sisurat_toast', JSON.stringify({ message: `${label} berhasil dipindahkan ke kotak sampah.`, type: 'success' }));
                 closeLetterDeleteModal();
                 window.location.reload();
             } else {
                 const data = await res.json();
-                errorBox.textContent = data.message || 'Gagal menghapus surat. Anda mungkin tidak memiliki izin.';
+                errorBox.textContent = data.message || 'Gagal menghapus data. Anda mungkin tidak memiliki izin.';
                 errorBox.classList.remove('hidden');
                 btn.disabled = false;
                 btnText.textContent = 'Ya, Hapus Arsip';
             }
         } catch (err) {
-            errorBox.textContent = 'Terjadi kesalahan jaringan saat menghapus surat.';
+            errorBox.textContent = 'Terjadi kesalahan jaringan saat menghapus data.';
             errorBox.classList.remove('hidden');
             btn.disabled = false;
             btnText.textContent = 'Ya, Hapus Arsip';

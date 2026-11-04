@@ -97,6 +97,12 @@
 
                     <!-- Aksi Metadata Footer -->
                     <div class="mt-5 pt-4 border-t border-slate-200 flex flex-wrap items-center gap-2">
+                        @if (auth()->check() && in_array(auth()->user()->role, ['super_admin', 'division_admin']))
+                            <button type="button" id="modal-piagam-btn-delete" onclick="triggerDeletePiagamFromModal()" class="inline-flex min-h-[38px] items-center gap-1.5 rounded-md border border-rose-300 bg-rose-50 px-3.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 shadow-xs">
+                                <x-icon name="trash" class="h-4 w-4 text-rose-600" />
+                                <span>Hapus Piagam</span>
+                            </button>
+                        @endif
                         <a id="modal-piagam-print-btn" href="#" target="_blank" class="inline-flex min-h-[38px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs">
                             <x-icon name="file-text" class="h-4 w-4 text-slate-500" />
                             <span>Buka Halaman Penuh</span>
@@ -215,6 +221,7 @@
 
 <script>
     let currentPiagamDetailId = null;
+    let currentPiagamTitle = '';
     let previousPiagamFocusedElement = null;
 
     function trapPiagamModalFocus(e) {
@@ -294,6 +301,7 @@
 
             const result = await response.json();
             const data = result.data;
+            currentPiagamTitle = data.piagam_description || data.student_name;
 
             // Populate Metadata
             document.getElementById('modal-piagam-title').textContent = data.piagam_description || data.student_name;
@@ -355,6 +363,34 @@
             currentPiagamDetailId = null;
             if (previousPiagamFocusedElement && typeof previousPiagamFocusedElement.focus === 'function') {
                 previousPiagamFocusedElement.focus();
+            }
+        }
+    }
+
+    function triggerDeletePiagamFromModal() {
+        if (!currentPiagamDetailId) return;
+        const id = currentPiagamDetailId;
+        const title = currentPiagamTitle || `#${id}`;
+        closePiagamDetailModal();
+        if (typeof openLetterDeleteModal === 'function') {
+            openLetterDeleteModal('piagam', id, title);
+        } else {
+            if (confirm(`Apakah Anda yakin ingin menghapus data piagam "${title}"? Data akan dipindahkan ke arsip terhapus.`)) {
+                fetch(`/piagam/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json'
+                    }
+                }).then(res => {
+                    if (res.ok) {
+                        window.location.reload();
+                    } else {
+                        alert('Gagal menghapus piagam.');
+                    }
+                }).catch(() => {
+                    alert('Terjadi kesalahan jaringan.');
+                });
             }
         }
     }

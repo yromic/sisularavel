@@ -70,6 +70,7 @@ class UnifiedWorkspaceController extends Controller
 
         // 3. Piagams Query
         $piagamQuery = Piagam::query()
+            ->when($canViewTrashed && $status === 'trashed', fn ($query) => $query->onlyTrashed())
             ->when($activeDivisionId !== null, fn ($query) => $query->where('division_id', $activeDivisionId))
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
@@ -101,12 +102,19 @@ class UnifiedWorkspaceController extends Controller
                 ->count()
             : 0;
 
+        $trashedPiagamCount = $canViewTrashed
+            ? Piagam::onlyTrashed()
+                ->when($activeDivisionId !== null, fn ($query) => $query->where('division_id', $activeDivisionId))
+                ->count()
+            : 0;
+
         return view('workspace.index', [
             'tab' => $tab,
             'status' => $status,
             'canViewTrashed' => $canViewTrashed,
             'trashedIncomingCount' => $trashedIncomingCount,
             'trashedOutgoingCount' => $trashedOutgoingCount,
+            'trashedPiagamCount' => $trashedPiagamCount,
             'incomingLetters' => $incomingLetters,
             'totalIncoming' => $totalIncoming,
             'outgoingLetters' => $outgoingLetters,

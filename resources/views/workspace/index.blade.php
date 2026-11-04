@@ -77,7 +77,7 @@
                         <x-icon name="trash" class="h-3.5 w-3.5" />
                         <span>Kotak Sampah</span>
                         @php
-                            $trashedTotal = $trashedIncomingCount + $trashedOutgoingCount;
+                            $trashedTotal = $trashedIncomingCount + $trashedOutgoingCount + ($trashedPiagamCount ?? 0);
                         @endphp
                         @if ($trashedTotal > 0)
                             <span class="rounded-full {{ $status === 'trashed' ? 'bg-rose-800 text-rose-100' : 'bg-rose-200 text-rose-800' }} px-1.5 py-0.2 text-[10px] font-mono font-bold">{{ $trashedTotal }}</span>
@@ -482,7 +482,12 @@
                             <span class="text-xs text-slate-400 font-mono">{{ $piagam->created_at->format('d/m/Y H:i') }}</span>
                         </div>
                         <div>
-                            <h2 class="font-bold text-sm text-slate-900 leading-snug">{{ $piagam->piagam_description ?: $piagam->student_name }}</h2>
+                            <h2 class="font-bold text-sm text-slate-900 leading-snug">
+                                {{ $piagam->piagam_description ?: $piagam->student_name }}
+                                @if ($piagam->trashed())
+                                    <span class="rounded bg-rose-100 text-rose-800 px-1.5 py-0.5 text-[10px] font-bold ml-1">Terhapus</span>
+                                @endif
+                            </h2>
                             <p class="text-xs font-medium text-slate-600 mt-0.5">Asal: <strong class="text-slate-800">{{ $piagam->unit_display_name }}</strong></p>
                         </div>
                         <div class="rounded-md bg-slate-50 p-2.5 text-xs text-slate-700 space-y-0.5 border border-slate-100">
@@ -498,10 +503,27 @@
                                     <span class="text-slate-400">Tanpa TTD</span>
                                 @endif
                             </div>
-                            <button type="button" onclick="event.stopPropagation(); openPiagamDetailModal({{ $piagam->id }})" class="inline-flex min-h-[32px] items-center gap-1 rounded-md border border-teal-300 bg-teal-50 px-3 text-xs font-semibold text-teal-800 hover:bg-teal-100 shadow-2xs">
-                                <x-icon name="signature" class="h-3.5 w-3.5 text-teal-700" />
-                                Detail & TTD &rarr;
-                            </button>
+                            <div class="flex items-center gap-1.5">
+                                @if ($piagam->trashed())
+                                    <form method="post" action="/piagam/{{ $piagam->id }}/restore" class="inline" onsubmit="return confirmAction(event, 'Pulihkan kembali piagam ini?', 'Konfirmasi Pemulihan Piagam', 'emerald', 'Ya, Pulihkan')">
+                                        @csrf
+                                        <button type="submit" class="inline-flex min-h-[32px] items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 shadow-2xs">
+                                            <x-icon name="rotate-ccw" class="h-3.5 w-3.5 text-emerald-700" />
+                                            <span>Pulihkan</span>
+                                        </button>
+                                    </form>
+                                @else
+                                    <button type="button" onclick="event.stopPropagation(); openPiagamDetailModal({{ $piagam->id }})" class="inline-flex min-h-[32px] items-center gap-1 rounded-md border border-teal-300 bg-teal-50 px-3 text-xs font-semibold text-teal-800 hover:bg-teal-100 shadow-2xs">
+                                        <x-icon name="signature" class="h-3.5 w-3.5 text-teal-700" />
+                                        Detail & TTD &rarr;
+                                    </button>
+                                    @if (in_array(auth()->user()->role, ['super_admin', 'division_admin']))
+                                        <button type="button" onclick="event.stopPropagation(); openLetterDeleteModal('piagam', {{ $piagam->id }}, '{{ addslashes($piagam->piagam_description ?: $piagam->student_name) }}')" class="inline-flex min-h-[32px] items-center gap-1 rounded-md border border-rose-300 bg-rose-50 px-2.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 shadow-2xs">
+                                            Hapus
+                                        </button>
+                                    @endif
+                                @endif
+                            </div>
                         </div>
                     </article>
                 @empty
@@ -531,7 +553,12 @@
                         @forelse ($piagams as $piagam)
                             <tr class="hover:bg-slate-50/75 cursor-pointer transition-colors" onclick="openPiagamDetailModal({{ $piagam->id }})">
                                 <td class="p-3 font-mono text-xs text-slate-600 whitespace-nowrap">{{ $piagam->created_at->format('d/m/Y H:i') }}</td>
-                                <td class="p-3 font-medium text-slate-900 max-w-xs">{{ $piagam->piagam_description ?: $piagam->student_name }}</td>
+                                <td class="p-3 font-medium text-slate-900 max-w-xs">
+                                    {{ $piagam->piagam_description ?: $piagam->student_name }}
+                                    @if ($piagam->trashed())
+                                        <span class="rounded bg-rose-100 text-rose-800 px-1.5 py-0.5 text-[10px] font-bold ml-1">Terhapus</span>
+                                    @endif
+                                </td>
                                 <td class="p-3 text-slate-700">{{ $piagam->unit_display_name }}</td>
                                 <td class="p-3 font-semibold text-slate-800">{{ $piagam->recipient_name ?? '-' }}</td>
                                 <td class="p-3 text-xs text-slate-600">
@@ -555,9 +582,26 @@
                                     @endif
                                 </td>
                                 <td class="p-3 text-center">
-                                    <button type="button" onclick="event.stopPropagation(); openPiagamDetailModal({{ $piagam->id }})" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs">
-                                        Detail
-                                    </button>
+                                    <div class="flex items-center justify-center gap-1.5" onclick="event.stopPropagation()">
+                                        @if ($piagam->trashed())
+                                            <form method="post" action="/piagam/{{ $piagam->id }}/restore" class="inline" onsubmit="return confirmAction(event, 'Pulihkan kembali piagam ini?', 'Konfirmasi Pemulihan Piagam', 'emerald', 'Ya, Pulihkan')">
+                                                @csrf
+                                                <button type="submit" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 shadow-2xs">
+                                                    <x-icon name="rotate-ccw" class="h-3.5 w-3.5 text-emerald-700" />
+                                                    <span>Pulihkan</span>
+                                                </button>
+                                            </form>
+                                        @else
+                                            <button type="button" onclick="openPiagamDetailModal({{ $piagam->id }})" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs">
+                                                Detail
+                                            </button>
+                                            @if (in_array(auth()->user()->role, ['super_admin', 'division_admin']))
+                                                <button type="button" onclick="openLetterDeleteModal('piagam', {{ $piagam->id }}, '{{ addslashes($piagam->piagam_description ?: $piagam->student_name) }}')" class="inline-flex min-h-[30px] items-center gap-1 rounded border border-rose-300 bg-rose-50 px-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 shadow-2xs">
+                                                    Hapus
+                                                </button>
+                                            @endif
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty

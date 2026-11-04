@@ -96,6 +96,117 @@ class PiagamController extends Controller
         ]);
     }
 
+    public function destroy(Request $request, Piagam $piagam, AuditLogger $auditLogger): Response
+    {
+        $user = $request->user();
+
+        if ($user->role === 'operator') {
+            if (! $request->expectsJson()) {
+                abort(403, 'Operator tidak memiliki wewenang untuk menghapus piagam.');
+            }
+
+            return response()->json([
+                'success' => false,
+                'code' => 'ERR_403_ROLE',
+                'message' => 'Operator tidak memiliki wewenang untuk menghapus piagam.',
+            ], 403);
+        }
+
+        if ($user->role !== 'super_admin' && $user->division_id !== $piagam->division_id) {
+            $auditLogger->crossDivisionBlocked($user, $piagam, 'Unauthorized piagam deletion attempt.');
+
+            if (! $request->expectsJson()) {
+                abort(403, 'Anda tidak memiliki izin untuk menghapus data divisi ini.');
+            }
+
+            return response()->json([
+                'success' => false,
+                'code' => 'ERR_403_DIVISI',
+                'message' => 'Anda tidak memiliki izin untuk menghapus data divisi ini.',
+            ], 403);
+        }
+
+        DB::transaction(function () use ($user, $piagam, $auditLogger): void {
+            $piagam->delete();
+
+            $auditLogger->piagamEvent(
+                'PIAGAM_DELETED',
+                $user,
+                $piagam,
+                'Piagam soft deleted.'
+            );
+        });
+
+        if (! $request->expectsJson()) {
+            return redirect('/persuratan?tab=piagam')->with('success', 'Piagam berhasil dihapus.');
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Piagam berhasil dihapus.',
+            'data' => [
+                'id' => $piagam->id,
+                'deleted' => true,
+            ],
+        ]);
+    }
+
+    public function restore(Request $request, int $piagam, AuditLogger $auditLogger): Response
+    {
+        $user = $request->user();
+        $record = Piagam::withTrashed()->findOrFail($piagam);
+
+        if ($user->role === 'operator') {
+            if (! $request->expectsJson()) {
+                abort(403, 'Operator tidak memiliki wewenang untuk memulihkan piagam.');
+            }
+
+            return response()->json([
+                'success' => false,
+                'code' => 'ERR_403_ROLE',
+                'message' => 'Operator tidak memiliki wewenang untuk memulihkan piagam.',
+            ], 403);
+        }
+
+        if ($user->role !== 'super_admin' && $user->division_id !== $record->division_id) {
+            $auditLogger->crossDivisionBlocked($user, $record, 'Unauthorized piagam restoration attempt.');
+
+            if (! $request->expectsJson()) {
+                abort(403, 'Anda tidak memiliki izin untuk mengakses data divisi ini.');
+            }
+
+            return response()->json([
+                'success' => false,
+                'code' => 'ERR_403_DIVISI',
+                'message' => 'Anda tidak memiliki izin untuk mengakses data divisi ini.',
+            ], 403);
+        }
+
+        DB::transaction(function () use ($user, $record, $auditLogger): void {
+            $record->restore();
+
+            $auditLogger->piagamEvent(
+                'PIAGAM_RESTORED',
+                $user,
+                $record,
+                'Piagam restored.'
+            );
+        });
+
+        if (! $request->expectsJson()) {
+            return redirect('/persuratan?tab=piagam')->with('success', 'Piagam berhasil dipulihkan.');
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Piagam berhasil dipulihkan.',
+            'data' => [
+                'id' => $record->id,
+                'restored' => true,
+            ],
+        ]);
+    }
+
     /**
      * @return array<string, mixed>
      */

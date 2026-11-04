@@ -18,6 +18,16 @@
                 </p>
             </div>
             <div class="flex items-center gap-2">
+                @if (auth()->check() && (auth()->user()->role === 'super_admin' || (auth()->user()->role === 'division_admin' && auth()->user()->division_id === $piagam->division_id)))
+                    <form method="post" action="/piagam/{{ $piagam->id }}" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data tanda terima piagam ini? Data akan dipindahkan ke arsip terhapus.')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="flex min-h-[40px] items-center gap-1.5 rounded-md border border-rose-300 bg-rose-50 px-3.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 shadow-2xs">
+                            <x-icon name="trash" class="h-4 w-4 text-rose-600" />
+                            Hapus Tanda Terima
+                        </button>
+                    </form>
+                @endif
                 <a href="/piagam" class="flex min-h-[40px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
                     <x-icon name="arrow-left" class="h-4 w-4" />
                     Kembali ke Buku Ekspedisi
