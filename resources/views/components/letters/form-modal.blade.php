@@ -121,13 +121,23 @@
                         </label>
                     </div>
 
-                    <!-- Single File Document Pill (e.g. PDF/DOCX) -->
-                    <div id="form-file-preview-pill" class="hidden flex items-center justify-between rounded-md bg-emerald-100/70 px-3 py-1.5 text-xs text-emerald-900 border border-emerald-300">
-                        <div class="flex items-center gap-2 min-w-0">
-                            <x-icon name="file-text" class="h-4 w-4 text-emerald-700 shrink-0" />
-                            <span id="form-file-preview-name" class="truncate font-medium"></span>
+                    <!-- Single File Document Pill (e.g. PDF/DOCX/Image) -->
+                    <div id="form-file-preview-pill" class="hidden flex flex-col gap-2 rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-950 border border-emerald-300">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <x-icon name="file-text" class="h-4 w-4 text-emerald-700 shrink-0" />
+                                <span id="form-file-preview-name" class="truncate font-medium"></span>
+                            </div>
+                            <button type="button" onclick="clearModalAttachment()" class="text-emerald-700 hover:text-emerald-900 font-bold ml-2">×</button>
                         </div>
-                        <button type="button" onclick="clearModalAttachment()" class="text-emerald-700 hover:text-emerald-900 font-bold ml-2">×</button>
+                        
+                        <!-- AI Scan Button (Quick Extract) -->
+                        <div class="pt-1.5 border-t border-emerald-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <span class="text-[11px] font-medium text-emerald-900">Ekstrak otomatis nomor, tanggal & pengirim:</span>
+                            <button type="button" id="btn-modal-ocr-scan" onclick="triggerModalOcrScan()" class="inline-flex min-h-[32px] items-center justify-center rounded-md bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-emerald-800 transition-colors">
+                                <span id="btn-modal-ocr-scan-text">Pindai Gambar</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Smart Image Compression Prompt Card -->
@@ -196,6 +206,14 @@
 
                         <!-- Thumbnail Grid -->
                         <div id="gallery-thumbnails-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
+
+                        <!-- AI Scan Button for Captured Photos -->
+                        <div class="pt-2 border-t border-teal-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-teal-100/60 p-2.5 rounded-md">
+                            <span class="text-[11px] font-medium text-teal-900">Ekstrak otomatis teks dokumen:</span>
+                            <button type="button" id="btn-gallery-ocr-scan" onclick="triggerModalOcrScan()" class="inline-flex min-h-[32px] items-center justify-center rounded-md bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-emerald-800 transition-colors">
+                                <span id="btn-gallery-ocr-scan-text">Pindai Gambar</span>
+                            </button>
+                        </div>
 
                         <!-- Button to take next page -->
                         <button type="button" onclick="document.getElementById('form-camera-input').click()" class="w-full flex items-center justify-center gap-1.5 rounded-md border border-dashed border-teal-600 bg-white py-2 text-xs font-semibold text-teal-800 hover:bg-teal-50 shadow-2xs">
@@ -739,6 +757,92 @@
         if (resetCards) {
             cancelCompressionPrompt();
             hideOversizeDocCard();
+        }
+    }
+
+    async function triggerModalOcrScan() {
+        const fileInput = document.getElementById('form-input-attachment');
+        let fileToScan = null;
+
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+            fileToScan = fileInput.files[0];
+        } else if (capturedPhotos.length > 0) {
+            fileToScan = capturedPhotos[0].file;
+        }
+
+        if (!fileToScan) {
+            alert('Silakan pilih berkas dokumen atau ambil foto terlebih dahulu sebelum memindai.');
+            return;
+        }
+
+        const buttons = [
+            { btn: document.getElementById('btn-modal-ocr-scan'), text: document.getElementById('btn-modal-ocr-scan-text'), orig: 'Pindai Gambar' },
+            { btn: document.getElementById('btn-gallery-ocr-scan'), text: document.getElementById('btn-gallery-ocr-scan-text'), orig: 'Pindai Gambar' }
+        ];
+
+        buttons.forEach(b => {
+            if (b.btn) b.btn.disabled = true;
+            if (b.text) b.text.textContent = 'Memindai...';
+        });
+
+        try {
+            const formData = new FormData();
+            formData.append('file', fileToScan);
+            formData.append('type', 'surat');
+
+            const res = await fetch('/api/v1/ocr/scan', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+
+            const json = await res.json();
+
+            if (res.ok && json.success && json.data) {
+                const d = json.data;
+                const highlight = (id, val) => {
+                    const el = document.getElementById(id);
+                    if (el && val) {
+                        el.value = val;
+                        el.dispatchEvent(new Event('input', { bubbles: true }));
+                        el.classList.add('ring-2', 'ring-emerald-500', 'bg-emerald-50');
+                        setTimeout(() => el.classList.remove('ring-2', 'ring-emerald-500', 'bg-emerald-50'), 2500);
+                    }
+                };
+
+                // Populate correct form IDs
+                if (d.letter_number) highlight('form-input-nomor', d.letter_number);
+                if (d.letter_date) highlight('form-input-tanggal-surat', d.letter_date);
+                if (d.origin_agency) highlight('form-input-asal', d.origin_agency);
+                if (d.subject) highlight('form-input-perihal', d.subject);
+
+                buttons.forEach(b => {
+                    if (b.text) b.text.textContent = 'Selesai Dipindai';
+                });
+                setTimeout(() => {
+                    buttons.forEach(b => {
+                        if (b.text) b.text.textContent = b.orig;
+                    });
+                }, 2000);
+            } else {
+                alert(json.message || 'Layanan pemindai AI sedang sibuk. Silakan isi formulir secara manual.');
+                buttons.forEach(b => {
+                    if (b.text) b.text.textContent = b.orig;
+                });
+            }
+        } catch (e) {
+            console.error('OCR Error:', e);
+            alert('Tidak dapat terhubung ke layanan pemindai AI. Silakan isi formulir secara manual.');
+            buttons.forEach(b => {
+                if (b.text) b.text.textContent = b.orig;
+            });
+        } finally {
+            buttons.forEach(b => {
+                if (b.btn) b.btn.disabled = false;
+            });
         }
     }
 

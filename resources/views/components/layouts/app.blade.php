@@ -151,9 +151,10 @@
                      onclick="closeMobileSidebar()"></div>
 
                 <!-- Drawer Panel -->
-                <div class="fixed inset-y-0 left-0 flex w-72 flex-col justify-between border-r border-[#23344E] bg-[#17243A] p-4 text-slate-200 shadow-2xl">
-                    <div class="flex flex-col">
-                        <div class="flex items-center justify-between border-b border-[#23344E] pb-3">
+                <div class="fixed inset-y-0 left-0 flex w-72 flex-col justify-between border-r border-[#23344E] bg-[#17243A] text-slate-200 shadow-2xl">
+                    <div class="flex flex-1 flex-col min-h-0">
+                        <!-- Drawer Header -->
+                        <div class="flex items-center justify-between border-b border-[#23344E] px-4 py-3 shrink-0">
                             <div class="flex items-center gap-2.5">
                                 <img src="{{ asset('images/icon/icon.svg') }}" alt="Logo SISURAT" class="h-8 w-8 shrink-0 object-contain drop-shadow-xs" />
                                 <div>
@@ -170,54 +171,78 @@
                             </button>
                         </div>
 
-                        <nav class="mt-4 space-y-3 text-sm" aria-label="Menu Mobile">
-                            <a href="/dashboard" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('dashboard') ? 'bg-[#147D73] font-semibold text-white' : 'text-slate-300 hover:bg-[#23344E]' }}">
-                                <x-icon name="home" class="h-5 w-5" /> Dashboard
-                            </a>
+                        <!-- Drawer Navigation (Identical Order to Desktop, Scrollable) -->
+                        <nav class="space-y-4 px-3 py-4 text-sm flex-1 overflow-y-auto" aria-label="Menu Mobile">
+                            <!-- 1. Dashboard -->
+                            <div>
+                                <a href="/dashboard" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors {{ request()->is('dashboard') ? 'bg-[#147D73] font-semibold text-white shadow-xs' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                    <x-icon name="home" class="h-5 w-5 shrink-0" />
+                                    <span>Dashboard</span>
+                                </a>
+                            </div>
 
+                            <!-- 2. Pencarian Pintar (Tepat di bawah Dashboard) -->
+                            <div>
+                                <a href="/laporan" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors {{ request()->is('laporan*') || request()->is('pencarian*') ? 'bg-[#147D73] font-semibold text-white shadow-xs' : 'text-slate-200 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                    <x-icon name="search" class="h-5 w-5 shrink-0 text-teal-400" />
+                                    <span class="font-semibold">Pencarian Pintar</span>
+                                    <span class="ml-auto rounded bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-bold text-teal-300 uppercase">Utama</span>
+                                </a>
+                            </div>
+
+                            <!-- 3. Layanan Persuratan & Piagam -->
                             <div class="space-y-1">
-                                <p class="px-3 pt-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Layanan Persuratan & Piagam</p>
+                                <div class="px-3 pt-2 pb-1">
+                                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Layanan Persuratan & Piagam</p>
+                                </div>
                                 <div class="space-y-0.5">
-                                    <a href="/persuratan" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('persuratan*') ? 'bg-[#147D73] font-semibold text-white' : 'text-slate-300 hover:bg-[#23344E]' }}">
-                                        <x-icon name="layers" class="h-4 w-4 text-teal-400" />
+                                    <a href="/persuratan" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors {{ request()->is('persuratan*') ? 'bg-[#147D73] font-semibold text-white shadow-xs' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                        <x-icon name="layers" class="h-4 w-4 shrink-0 text-teal-400" />
                                         <span>Persuratan & Piagam</span>
                                         <span class="ml-auto rounded bg-teal-500/20 px-1.5 py-0.5 text-[9px] font-bold text-teal-300 uppercase">Terpadu</span>
                                     </a>
                                 </div>
                             </div>
 
-                            <a href="/laporan" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('laporan*') ? 'bg-[#147D73] font-semibold text-white' : 'text-slate-300' }}">
-                                <x-icon name="file-text" class="h-5 w-5" /> Pencarian & Laporan
-                            </a>
-
+                            <!-- 4. Master Data -->
                             @if ($user->role === 'super_admin' || $user->role === 'division_admin')
-                                <div class="pt-2 border-t border-[#23344E] space-y-1">
-                                    <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Master Data</p>
+                                <div class="space-y-1 pt-2">
+                                    <div class="px-3 pb-1">
+                                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Master Data</p>
+                                    </div>
                                     <div class="space-y-0.5">
                                         @if ($user->role === 'super_admin')
-                                            <a href="/master/divisi" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('master/divisi*') ? 'bg-[#147D73]/25 text-teal-300 font-semibold' : 'text-slate-300' }}">
-                                                <x-icon name="building" class="h-4 w-4" /> Data Divisi
+                                            <a href="/master/divisi" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors {{ request()->is('master/divisi*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                                <x-icon name="building" class="h-4 w-4 shrink-0 text-slate-400" />
+                                                <span>Data Divisi</span>
                                             </a>
                                         @endif
-                                        <a href="/master/pengguna" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('master/pengguna*') ? 'bg-[#147D73]/25 text-teal-300 font-semibold' : 'text-slate-300' }}">
-                                            <x-icon name="users" class="h-4 w-4" /> Data Pengguna
+                                        <a href="/master/pengguna" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors {{ request()->is('master/pengguna*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                            <x-icon name="users" class="h-4 w-4 shrink-0 text-slate-400" />
+                                            <span>Data Pengguna</span>
                                         </a>
-                                        <a href="/master/kategori" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('master/kategori*') ? 'bg-[#147D73]/25 text-teal-300 font-semibold' : 'text-slate-300' }}">
-                                            <x-icon name="settings" class="h-4 w-4" /> Kategori Referensi
+                                        <a href="/master/kategori" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors {{ request()->is('master/kategori*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                            <x-icon name="settings" class="h-4 w-4 shrink-0 text-slate-400" />
+                                            <span>Kategori Referensi</span>
                                         </a>
-                                        <a href="/master/sekolah" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('master/sekolah*') ? 'bg-[#147D73]/25 text-teal-300 font-semibold' : 'text-slate-300' }}">
-                                            <x-icon name="building" class="h-4 w-4" /> Data Sekolah
+                                        <a href="/master/sekolah" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors {{ request()->is('master/sekolah*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                            <x-icon name="building" class="h-4 w-4 shrink-0 text-slate-400" />
+                                            <span>Data Sekolah</span>
                                         </a>
                                     </div>
                                 </div>
                             @endif
 
+                            <!-- 5. Sistem & Pemulihan -->
                             @if ($user->role === 'super_admin')
-                                <div class="pt-2 border-t border-[#23344E] space-y-1">
-                                    <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Sistem & Pemulihan</p>
+                                <div class="space-y-1 pt-2">
+                                    <div class="px-3 pb-1">
+                                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sistem & Pemulihan</p>
+                                    </div>
                                     <div class="space-y-0.5">
-                                        <a href="/admin/backups" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium {{ request()->is('admin/backups*') ? 'bg-[#147D73]/25 text-teal-300 font-semibold' : 'text-slate-300' }}">
-                                            <x-icon name="database" class="h-4 w-4" /> Cadangan & Pemulihan
+                                        <a href="/admin/backups" class="flex min-h-[44px] items-center gap-3 rounded-lg px-3 font-medium transition-colors {{ request()->is('admin/backups*') ? 'bg-[#147D73]/25 font-semibold text-teal-300 border-l-2 border-teal-400' : 'text-slate-300 hover:bg-[#23344E]/60 hover:text-white' }}">
+                                            <x-icon name="database" class="h-4 w-4 shrink-0 text-slate-400" />
+                                            <span>Cadangan & Pemulihan</span>
                                         </a>
                                     </div>
                                 </div>
@@ -225,9 +250,13 @@
                         </nav>
                     </div>
 
-                    <div class="border-t border-[#23344E] pt-3">
-                        <a href="/" target="_blank" class="flex min-h-[44px] items-center justify-between rounded-lg border border-[#23344E] bg-[#0F1725]/60 px-3 text-xs font-semibold text-slate-300">
-                            <span>Portal Tamu (Ambil Piagam)</span>
+                    <!-- Drawer Footer: Portal Tamu -->
+                    <div class="border-t border-[#23344E] p-3 shrink-0">
+                        <a href="/" target="_blank" class="flex min-h-[44px] items-center justify-between rounded-lg border border-[#23344E] bg-[#0F1725]/60 px-3 text-xs font-semibold text-slate-300 hover:bg-[#23344E] hover:text-white transition-colors">
+                            <span class="flex items-center gap-2">
+                                <x-icon name="signature" class="h-4 w-4 text-teal-400" />
+                                Portal Tamu (Ambil Piagam)
+                            </span>
                             <x-icon name="external-link" class="h-3.5 w-3.5 text-slate-400" />
                         </a>
                     </div>

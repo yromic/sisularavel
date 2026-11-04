@@ -2,9 +2,11 @@
     <form data-testid="piagam-create-form" method="post" action="/api/v1/piagam" class="grid min-h-screen grid-cols-1 gap-4 px-4 pb-28 pt-4 md:grid-cols-2 md:px-8" data-idempotent-form>
         @csrf
         <header class="md:col-span-2">
-            <p class="text-sm font-semibold text-emerald-700">Piagam & Sertifikat</p>
-            <h1 class="text-2xl font-semibold text-slate-900">Tambah Piagam Baru</h1>
-            <p class="mt-1 text-xs text-slate-500">Daftarkan piagam siswa untuk dapat diklaim/diambil oleh pihak sekolah atau perwakilan.</p>
+            <div>
+                <p class="text-sm font-semibold text-emerald-700">Piagam & Sertifikat</p>
+                <h1 class="text-2xl font-semibold text-slate-900">Tambah Piagam Baru</h1>
+                <p class="mt-1 text-xs text-slate-500">Daftarkan piagam siswa untuk dapat diklaim/diambil oleh pihak sekolah atau perwakilan.</p>
+            </div>
         </header>
 
         <div id="form-error-banner" class="hidden rounded-md border border-rose-300 bg-rose-50 p-3 text-sm text-rose-800 md:col-span-2"></div>

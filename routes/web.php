@@ -680,6 +680,7 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
     Route::get('/api/v1/search', [SearchController::class, 'index']);
     Route::get('/api/v1/reports/export.csv', [ReportExportController::class, 'csv']);
     Route::get('/api/v1/reports/export.pdf', [ReportExportController::class, 'pdf']);
+    Route::post('/api/v1/ocr/scan', [\App\Http\Controllers\Api\DocumentOcrController::class, 'scan'])->middleware('throttle:30,1');
 
     // Admin Backup & Disaster Recovery Management (Fase 06 & Spesifikasi 30)
     Route::get('/admin/backups', [BackupController::class, 'index'])->name('admin.backups.index');

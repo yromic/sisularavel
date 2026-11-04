@@ -29,7 +29,7 @@
                     <x-icon name="plus" class="h-4 w-4 text-slate-500" />
                     <span>Surat Keluar</span>
                 </a>
-                <a href="/piagam/create" 
+                <a href="/persuratan?tab=piagam" 
                    id="btn-quick-piagam"
                    class="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-[#E3E8EE] bg-white px-3.5 text-xs font-semibold text-[#17243A] shadow-2xs hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
                     <x-icon name="plus" class="h-4 w-4 text-slate-500" />
