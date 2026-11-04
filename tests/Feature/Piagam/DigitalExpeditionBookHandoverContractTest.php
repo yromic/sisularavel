@@ -612,6 +612,22 @@ class DigitalExpeditionBookHandoverContractTest extends TestCase
             ->assertStatus(429);
     }
 
+    public function test_public_claim_page_renders_deduplicated_pickup_categories_even_with_multi_divisional_seeds(): void
+    {
+        $div1 = Division::factory()->create(['name' => 'Divisi A', 'status' => 'active']);
+        $div2 = Division::factory()->create(['name' => 'Divisi B', 'status' => 'active']);
+
+        PickupCategory::create(['division_id' => $div1->id, 'name' => 'Diambil Langsung oleh Pihak Sekolah', 'is_active' => true]);
+        PickupCategory::create(['division_id' => $div2->id, 'name' => 'Diambil Langsung oleh Pihak Sekolah', 'is_active' => true]);
+
+        $response = $this->get('/piagam/ambil');
+        $response->assertOk();
+
+        $content = $response->getContent();
+        $occurrences = substr_count($content, 'Diambil Langsung oleh Pihak Sekolah');
+        $this->assertSame(1, $occurrences, 'Pickup category should be deduplicated in the dropdown');
+    }
+
     private function pngDataUrl(): string
     {
         return 'data:image/png;base64,'.base64_encode(base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=').str_repeat('A', 150));

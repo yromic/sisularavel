@@ -130,6 +130,57 @@
                         <button type="button" onclick="clearModalAttachment()" class="text-emerald-700 hover:text-emerald-900 font-bold ml-2">×</button>
                     </div>
 
+                    <!-- Smart Image Compression Prompt Card -->
+                    <div id="form-compress-prompt-card" class="hidden rounded-lg border border-teal-200 bg-teal-50/70 p-3.5 space-y-2.5">
+                        <div class="flex items-start gap-2.5">
+                            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-teal-100 text-teal-700">
+                                <x-icon name="camera" class="h-4 w-4" />
+                            </span>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-xs font-bold text-teal-950">Foto Berukuran Besar Terdeteksi</h4>
+                                <p class="text-[11px] text-teal-800 mt-0.5 leading-relaxed">
+                                    Berkas <strong id="compress-prompt-filename" class="font-semibold text-teal-900 truncate inline-block max-w-[200px] align-bottom"></strong> 
+                                    berukuran <strong id="compress-prompt-filesize" class="font-bold text-teal-900"></strong> (melebihi batas aman 2 MB).
+                                    Sistem dapat mengecilkan foto ini secara otomatis agar pas dan cepat diunggah tanpa mengurangi kejelasan teks surat.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-2 pt-1">
+                            <button type="button" id="btn-execute-compress" onclick="executeModalCompression()" class="inline-flex min-h-[36px] items-center gap-1.5 rounded-md bg-[#147D73] px-3.5 text-xs font-semibold text-white shadow-2xs hover:bg-[#0F635B] transition-colors">
+                                <x-icon name="refresh-cw" class="h-3.5 w-3.5" />
+                                <span id="btn-execute-compress-text">Kompres & Pasang Foto</span>
+                            </button>
+                            <button type="button" onclick="cancelCompressionPrompt()" class="inline-flex min-h-[36px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+                                <x-icon name="x" class="h-3.5 w-3.5" />
+                                <span>Pilih Berkas Lain</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Oversize Non-Image Document Alert Card -->
+                    <div id="form-document-oversize-card" class="hidden rounded-lg border border-amber-200 bg-amber-50/80 p-3.5 space-y-2">
+                        <div class="flex items-start gap-2.5">
+                            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-800">
+                                <x-icon name="alert-triangle" class="h-4 w-4" />
+                            </span>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-xs font-bold text-amber-950">Ukuran Dokumen Melebihi 2 MB</h4>
+                                <p class="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                                    Dokumen <strong id="oversize-doc-filename" class="font-semibold text-amber-900 truncate inline-block max-w-[200px] align-bottom"></strong> 
+                                    berukuran <strong id="oversize-doc-filesize" class="font-bold text-amber-900"></strong>.
+                                    Format dokumen PDF/Word terstruktur tidak dapat diperkecil langsung di dalam peramban. Silakan gunakan berkas scan beresolusi standar (150–200 DPI) atau gunakan kompresor PDF sebelum mengunggah.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="pt-1">
+                            <button type="button" onclick="resetOversizeDocPrompt()" class="inline-flex min-h-[36px] items-center gap-1.5 rounded-md border border-amber-300 bg-white px-3 text-xs font-semibold text-amber-900 hover:bg-amber-100/50 transition-colors">
+                                <x-icon name="upload" class="h-3.5 w-3.5 text-amber-700" />
+                                <span>Pilih Berkas Lain</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Multi-Photo Gallery Container (Lembar 1, 2, 3...) -->
                     <div id="form-photos-gallery-container" class="hidden rounded-lg border border-teal-200 bg-teal-50/60 p-3 space-y-2.5">
                         <div class="flex items-center justify-between">
@@ -498,19 +549,93 @@
         });
     }
 
+    let pendingCompressFile = null;
+
     function handleModalFilePicked(input) {
+        cancelCompressionPrompt();
+        hideOversizeDocCard();
+
         if (input.files && input.files[0]) {
             const file = input.files[0];
-            if (file.size > 2 * 1024 * 1024) {
+            const maxBytes = 2 * 1024 * 1024;
+
+            if (file.size > maxBytes) {
                 const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
-                alert(`Ukuran berkas (${sizeMb} MB) melebihi batas maksimal 2 MB. Silakan pilih berkas yang lebih kecil.`);
-                input.value = '';
-                clearModalAttachment();
+                const isImage = file.type.startsWith('image/');
+
+                if (isImage) {
+                    pendingCompressFile = file;
+                    const nameEl = document.getElementById('compress-prompt-filename');
+                    const sizeEl = document.getElementById('compress-prompt-filesize');
+                    if (nameEl) nameEl.textContent = file.name;
+                    if (sizeEl) sizeEl.textContent = `${sizeMb} MB`;
+                    document.getElementById('form-compress-prompt-card')?.classList.remove('hidden');
+                    clearModalAttachment(false);
+                } else {
+                    const nameEl = document.getElementById('oversize-doc-filename');
+                    const sizeEl = document.getElementById('oversize-doc-filesize');
+                    if (nameEl) nameEl.textContent = file.name;
+                    if (sizeEl) sizeEl.textContent = `${sizeMb} MB`;
+                    document.getElementById('form-document-oversize-card')?.classList.remove('hidden');
+                    input.value = '';
+                    clearModalAttachment(false);
+                }
                 return;
             }
+
             clearAllCapturedPhotos();
             showModalFilePill(`${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
         }
+    }
+
+    async function executeModalCompression() {
+        if (!pendingCompressFile) return;
+
+        const btn = document.getElementById('btn-execute-compress');
+        const btnText = document.getElementById('btn-execute-compress-text');
+        const originalText = btnText ? btnText.textContent : 'Kompres & Pasang Foto';
+        if (btn) btn.disabled = true;
+        if (btnText) btnText.textContent = 'Mengompres Foto...';
+
+        try {
+            const compressedFile = await compressImageModal(pendingCompressFile);
+            const sizeKb = (compressedFile.size / 1024).toFixed(1);
+
+            const dt = new DataTransfer();
+            dt.items.add(compressedFile);
+            const input = document.getElementById('form-input-attachment');
+            if (input) {
+                input.files = dt.files;
+            }
+
+            cancelCompressionPrompt();
+            clearAllCapturedPhotos();
+            showModalFilePill(`${compressedFile.name} (${sizeKb} KB - Terkompresi)`);
+        } catch (e) {
+            console.error('Gagal mengompres gambar:', e);
+            alert('Gagal mengompres foto. Silakan coba pilih berkas lain.');
+        } finally {
+            if (btn) btn.disabled = false;
+            if (btnText) btnText.textContent = originalText;
+        }
+    }
+
+    function cancelCompressionPrompt() {
+        pendingCompressFile = null;
+        document.getElementById('form-compress-prompt-card')?.classList.add('hidden');
+        const input = document.getElementById('form-input-attachment');
+        if (input && (!input.files || input.files.length === 0)) {
+            input.value = '';
+        }
+    }
+
+    function hideOversizeDocCard() {
+        document.getElementById('form-document-oversize-card')?.classList.add('hidden');
+    }
+
+    function resetOversizeDocPrompt() {
+        hideOversizeDocCard();
+        document.getElementById('form-input-attachment')?.click();
     }
 
     async function handleModalCameraCaptured(input) {
@@ -606,11 +731,15 @@
         pill.classList.remove('hidden');
     }
 
-    function clearModalAttachment() {
+    function clearModalAttachment(resetCards = true) {
         const attInput = document.getElementById('form-input-attachment');
         if (attInput) attInput.value = '';
         const pill = document.getElementById('form-file-preview-pill');
         if (pill) pill.classList.add('hidden');
+        if (resetCards) {
+            cancelCompressionPrompt();
+            hideOversizeDocCard();
+        }
     }
 
     // Form Submit Handler with Idempotency & Error Handling
@@ -626,6 +755,31 @@
 
         errorBanner.classList.add('hidden');
         errorBanner.textContent = '';
+
+        // GUARD: Cegah penyimpanan jika ada foto berukuran besar yang belum dikompres
+        if (pendingCompressFile !== null) {
+            const compressCard = document.getElementById('form-compress-prompt-card');
+            if (compressCard) {
+                compressCard.classList.remove('hidden');
+                compressCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                compressCard.classList.add('ring-2', 'ring-rose-500', 'transition-all');
+                setTimeout(() => compressCard.classList.remove('ring-2', 'ring-rose-500'), 2500);
+            }
+            errorBanner.textContent = 'Foto yang Anda pilih melebihi batas 2 MB. Silakan klik tombol "Kompres & Pasang Foto" terlebih dahulu, atau klik "Pilih Berkas Lain" jika tidak ingin melampirkan foto ini.';
+            errorBanner.classList.remove('hidden');
+            return;
+        }
+
+        // GUARD: Cegah penyimpanan jika card dokumen oversize non-image masih aktif terpampang
+        const docOversizeCard = document.getElementById('form-document-oversize-card');
+        if (docOversizeCard && !docOversizeCard.classList.contains('hidden')) {
+            docOversizeCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            docOversizeCard.classList.add('ring-2', 'ring-rose-500', 'transition-all');
+            setTimeout(() => docOversizeCard.classList.remove('ring-2', 'ring-rose-500'), 2500);
+            errorBanner.textContent = 'Dokumen lampiran yang Anda pilih melebihi batas 2 MB dan tidak dapat diproses. Silakan pilih dokumen lain yang berukuran di bawah 2 MB atau tutup peringatan terlebih dahulu.';
+            errorBanner.classList.remove('hidden');
+            return;
+        }
 
         submitBtn.disabled = true;
         submitText.textContent = capturedPhotos.length > 0 ? 'Menggabungkan foto & menyimpan...' : 'Menyimpan...';

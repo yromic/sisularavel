@@ -14,6 +14,10 @@
             $user = auth()->user();
             $activeDivisionId = session('active_division_id', $user->division_id);
             $currentDivision = $activeDivisionId ? \App\Models\Division::find($activeDivisionId) : null;
+            if ($activeDivisionId && ! $currentDivision && $user->role === 'super_admin') {
+                session()->forget('active_division_id');
+                $activeDivisionId = null;
+            }
         @endphp
 
         <div class="flex min-h-screen">

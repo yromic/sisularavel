@@ -94,6 +94,11 @@
                             <div class="flex items-center gap-2.5">
                                 <input type="checkbox" class="cat-check-competition rounded border-slate-300 text-emerald-700 focus:ring-emerald-600" value="{{ $cat->id }}" onchange="updateCategoryCount('competition')">
                                 <span class="text-sm font-medium text-slate-800">{{ $cat->name }}</span>
+                                @if (empty($divisionId) && $cat->division)
+                                    <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 border border-slate-200">
+                                        {{ $cat->division->name }}
+                                    </span>
+                                @endif
                                 @if ($cat->trashed())
                                     <span class="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-800">Terhapus</span>
                                 @else
@@ -173,6 +178,11 @@
                             <div class="flex items-center gap-2.5">
                                 <input type="checkbox" class="cat-check-pickup rounded border-slate-300 text-emerald-700 focus:ring-emerald-600" value="{{ $cat->id }}" onchange="updateCategoryCount('pickup')">
                                 <span class="text-sm font-medium text-slate-800">{{ $cat->name }}</span>
+                                @if (empty($divisionId) && $cat->division)
+                                    <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 border border-slate-200">
+                                        {{ $cat->division->name }}
+                                    </span>
+                                @endif
                                 @if ($cat->trashed())
                                     <span class="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-800">Terhapus</span>
                                 @else

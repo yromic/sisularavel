@@ -98,6 +98,13 @@ class DivisionManagementController extends Controller
 
         $division->delete();
 
+        // If the Super Admin was currently focused on this deleted division, reset session to global
+        if ($request->session()->get('active_division_id') == $division->id) {
+            $request->session()->forget('active_division_id');
+        }
+
+        \Illuminate\Support\Facades\Cache::forget('active_divisions_dropdown');
+
         if (! $request->expectsJson()) {
             return redirect('/master/divisi')->with('success', "Divisi {$division->code} berhasil dihapus permanen.");
         }

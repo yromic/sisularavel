@@ -86,6 +86,14 @@
                         </div>
                     </label>
 
+                    <div class="flex items-center justify-between pt-1">
+                        <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                            <input type="hidden" name="remember" value="0">
+                            <input type="checkbox" name="remember" value="1" checked class="h-4 w-4 rounded border-slate-300 text-emerald-700 focus:ring-emerald-600 focus:ring-offset-0">
+                            <span class="text-xs font-medium text-slate-700">Tetap masuk di perangkat ini</span>
+                        </label>
+                    </div>
+
                     <button class="mt-2 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 font-bold text-white shadow-md shadow-emerald-950/20 hover:bg-emerald-800 focus:outline-hidden focus:ring-2 focus:ring-emerald-300 transition-all" type="submit">
                         <x-icon name="key" class="h-4 w-4 text-emerald-200" />
                         <span>Masuk</span>

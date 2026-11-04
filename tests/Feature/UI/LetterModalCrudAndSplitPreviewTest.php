@@ -183,4 +183,18 @@ class LetterModalCrudAndSplitPreviewTest extends TestCase
         $this->assertStringContainsString('3_lembar', $attachment->original_name);
         $this->assertTrue(Storage::disk('private_documents')->exists($attachment->file_path));
     }
+
+    public function test_letter_form_modal_renders_smart_compression_and_oversize_document_cards(): void
+    {
+        $division = Division::factory()->create(['code' => 'SMP']);
+        $operator = User::factory()->for($division)->create(['role' => 'operator']);
+
+        $this->actingAs($operator)
+            ->get('/surat-masuk')
+            ->assertOk()
+            ->assertSee('id="form-compress-prompt-card"', false)
+            ->assertSee('id="form-document-oversize-card"', false)
+            ->assertSee('Kompres & Pasang Foto', false)
+            ->assertSee('Ukuran Dokumen Melebihi 2 MB', false);
+    }
 }

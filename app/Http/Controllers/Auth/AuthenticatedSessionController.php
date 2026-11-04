@@ -61,7 +61,8 @@ class AuthenticatedSessionController extends Controller
         }
 
         RateLimiter::clear($rateLimitKey);
-        Auth::login($user);
+        $remember = $request->has('remember') ? $request->boolean('remember') : true;
+        Auth::login($user, $remember);
         $request->session()->regenerate();
 
         if ($user->must_reset_password) {

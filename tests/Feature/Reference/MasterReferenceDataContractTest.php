@@ -168,10 +168,11 @@ class MasterReferenceDataContractTest extends TestCase
 
         // Empty division gets deleted
         $this->actingAs($superAdmin)
-            ->deleteJson("/api/v1/divisions/{$emptyDivision->id}")
-            ->assertOk()
-            ->assertJsonPath('success', true);
+            ->withSession(['active_division_id' => $emptyDivision->id])
+            ->delete("/api/v1/divisions/{$emptyDivision->id}")
+            ->assertRedirect('/master/divisi');
         $this->assertSoftDeleted('divisions', ['id' => $emptyDivision->id]);
+        $this->assertNull(session('active_division_id'));
 
         // Division with user is protected and switched to inactive
         $this->actingAs($superAdmin)
@@ -279,5 +280,22 @@ class MasterReferenceDataContractTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.name', 'Kategori Baru Diperbarui');
         $this->assertDatabaseHas('competition_categories', ['id' => $cat->id, 'name' => 'Kategori Baru Diperbarui']);
+    }
+
+    public function test_super_admin_in_global_mode_sees_division_badges_on_categories(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+        $division = Division::factory()->create(['name' => 'Bidang Pembinaan SD']);
+
+        PickupCategory::create([
+            'division_id' => $division->id,
+            'name' => 'Diambil Orang Tua Khusus',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($superAdmin)->get('/master/kategori');
+        $response->assertOk();
+        $response->assertSee('Diambil Orang Tua Khusus');
+        $response->assertSee('Bidang Pembinaan SD');
     }
 }

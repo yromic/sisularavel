@@ -124,13 +124,33 @@
             });
         }
 
-        function handleFileSelected(input) {
+        async function handleFileSelected(input) {
             const info = document.getElementById('file-info');
             if (input.files && input.files[0]) {
                 const file = input.files[0];
                 if (file.size > 2 * 1024 * 1024) {
                     const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
-                    alert(`Ukuran berkas (${sizeMb} MB) melebihi batas maksimal 2 MB. Silakan pilih berkas yang lebih kecil.`);
+                    if (file.type.startsWith('image/')) {
+                        if (confirm(`Foto terpilih berukuran ${sizeMb} MB (melebihi batas aman 2 MB).\n\nApakah Anda ingin mengecilkan/mengompres foto ini secara otomatis agar pas dan cepat diunggah?`)) {
+                            info.textContent = 'Mengompres foto terpilih...';
+                            info.classList.remove('hidden');
+                            try {
+                                const compressed = await compressImage(file);
+                                const sizeKb = (compressed.size / 1024).toFixed(1);
+                                info.textContent = `Foto terkompresi: ${compressed.name} (${sizeKb} KB)`;
+                                const dt = new DataTransfer();
+                                dt.items.add(compressed);
+                                input.files = dt.files;
+                                const cam = document.getElementById('attachment_camera');
+                                if (cam) cam.value = '';
+                                return;
+                            } catch (e) {
+                                console.error('Gagal mengompres gambar:', e);
+                            }
+                        }
+                    } else {
+                        alert(`Dokumen PDF/Word (${sizeMb} MB) melebihi batas 2 MB. Format dokumen terstruktur tidak dapat diperkecil langsung di peramban. Silakan gunakan berkas scan berukuran di bawah 2 MB.`);
+                    }
                     input.value = '';
                     info.textContent = '';
                     info.classList.add('hidden');

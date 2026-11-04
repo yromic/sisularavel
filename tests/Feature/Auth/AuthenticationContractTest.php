@@ -5,6 +5,7 @@ namespace Tests\Feature\Auth;
 use App\Models\Division;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -116,5 +117,76 @@ class AuthenticationContractTest extends TestCase
             ->assertRedirect('/login');
 
         $this->assertGuest();
+    }
+
+    public function test_login_issues_remember_cookie_by_default(): void
+    {
+        $user = User::factory()->create([
+            'username' => 'persisted_user',
+            'password' => Hash::make('secret-password'),
+        ]);
+
+        $response = $this->post('/login', [
+            'username' => 'persisted_user',
+            'password' => 'secret-password',
+        ]);
+
+        $response->assertRedirect('/dashboard');
+        $this->assertAuthenticatedAs($user);
+        $user->refresh();
+        $this->assertNotNull($user->remember_token);
+        $response->assertCookie(Auth::guard('web')->getRecallerName());
+    }
+
+    public function test_login_respects_opt_out_when_remember_is_false(): void
+    {
+        $user = User::factory()->create([
+            'username' => 'temporary_user',
+            'password' => Hash::make('secret-password'),
+            'remember_token' => null,
+        ]);
+
+        $response = $this->post('/login', [
+            'username' => 'temporary_user',
+            'password' => 'secret-password',
+            'remember' => '0',
+        ]);
+
+        $response->assertRedirect('/dashboard');
+        $this->assertAuthenticatedAs($user);
+        $response->assertCookieMissing(Auth::guard('web')->getRecallerName());
+    }
+
+    public function test_user_is_seamlessly_reauthenticated_via_remember_cookie_when_session_is_lost(): void
+    {
+        $division = Division::factory()->create();
+        $user = User::factory()->for($division)->create([
+            'username' => 'durable_operator',
+            'password' => Hash::make('secret-password'),
+        ]);
+
+        // 1. Initial Login
+        $loginResponse = $this->post('/login', [
+            'username' => 'durable_operator',
+            'password' => 'secret-password',
+            'remember' => '1',
+        ]);
+        $loginResponse->assertRedirect('/dashboard');
+
+        $recallerName = Auth::guard('web')->getRecallerName();
+        $recallerCookie = $loginResponse->getCookie($recallerName);
+        $this->assertNotNull($recallerCookie);
+
+        // 2. Simulate complete loss of server session (e.g. browser restart / session garbage collection)
+        $this->flushSession();
+        Auth::guard('web')->forgetUser();
+
+        // 3. User visits protected dashboard with ONLY the remember cookie
+        // In Laravel testing, cookies on the response from the test client can be sent directly using withCookie()
+        $subsequentResponse = $this->withCookie($recallerName, $recallerCookie->getValue())
+            ->get('/dashboard');
+
+        $subsequentResponse->assertOk();
+        $this->assertAuthenticatedAs($user);
     }
 }

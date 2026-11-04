@@ -54,7 +54,7 @@ Route::get('/piagam/ambil', function () {
     $schools = School::query()->where('is_active', true)->orderBy('name')->get(['id', 'npsn', 'name']);
     $divisions = Division::query()->where('status', 'active')->orderBy('id')->get(['id', 'code', 'name']);
     $workUnits = WorkUnit::query()->where('is_active', true)->orderBy('name')->get(['id', 'code', 'name']);
-    $pickupCategories = PickupCategory::query()->where('is_active', true)->orderBy('name')->get(['id', 'division_id', 'name']);
+    $pickupCategories = PickupCategory::query()->where('is_active', true)->orderBy('id')->get(['id', 'division_id', 'name'])->unique('name')->values();
     $competitionCategories = CompetitionCategory::query()->where('is_active', true)->orderBy('name')->get(['id', 'division_id', 'name']);
 
     return view('piagam.claim', [
@@ -356,10 +356,12 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
         $workUnitQuery = $isTrashed ? WorkUnit::onlyTrashed() : WorkUnit::query();
 
         $competitionCategories = $competitionQuery
+            ->with('division')
             ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
             ->get();
 
         $pickupCategories = $pickupQuery
+            ->with('division')
             ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
             ->get();
 
@@ -378,6 +380,7 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
             'pickupCategories' => $pickupCategories,
             'workUnits' => $workUnits,
             'status' => $status,
+            'divisionId' => $divisionId,
             'activeCount' => $activeCount,
             'trashedCount' => $trashedCount,
         ]);

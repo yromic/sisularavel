@@ -14,7 +14,9 @@
         $workUnits = \App\Models\WorkUnit::query()->where('is_active', true)->orderBy('name')->get(['id', 'code', 'name']);
     }
     if ($pickupCategories->isEmpty()) {
-        $pickupCategories = \App\Models\PickupCategory::query()->where('is_active', true)->orderBy('name')->get(['id', 'division_id', 'name']);
+        $pickupCategories = \App\Models\PickupCategory::query()->where('is_active', true)->orderBy('id')->get(['id', 'division_id', 'name'])->unique('name')->values();
+    } else {
+        $pickupCategories = $pickupCategories->unique('name')->values();
     }
     if ($competitionCategories->isEmpty()) {
         $competitionCategories = \App\Models\CompetitionCategory::query()->where('is_active', true)->orderBy('name')->get(['id', 'division_id', 'name']);

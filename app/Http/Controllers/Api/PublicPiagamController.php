@@ -7,6 +7,7 @@ use App\Http\Requests\PublicClaimPiagamRequest;
 use App\Models\Attachment;
 use App\Models\Division;
 use App\Models\Piagam;
+use App\Models\PickupCategory;
 use App\Models\School;
 use App\Services\AuditLogger;
 use Illuminate\Http\JsonResponse;
@@ -49,6 +50,16 @@ class PublicPiagamController extends Controller
         $npsn = $request->input('npsn');
         $pickupCategoryId = $request->input('pickup_category_id');
         $pickupCategoryName = $request->input('pickup_category_name');
+        if ($pickupCategoryId && $pickupCategoryName) {
+            $divisionPickup = PickupCategory::query()
+                ->where('division_id', $division->id)
+                ->where('name', $pickupCategoryName)
+                ->where('is_active', true)
+                ->first();
+            if ($divisionPickup) {
+                $pickupCategoryId = $divisionPickup->id;
+            }
+        }
         $competitionCategoryId = $request->input('competition_category_id');
         $competitionCategoryName = $request->input('competition_category_name');
 
