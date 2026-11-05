@@ -144,7 +144,7 @@
                         <!-- Smart Actions Bar: Pindai OCR & Perkecil Berkas -->
                         <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
                             <div class="flex items-center gap-2 flex-wrap">
-                                <!-- Tombol Pindai AI/OCR -->
+                                <!-- Tombol Pindai Otomatis -->
                                 <button type="button" id="btn-modal-ocr-scan" onclick="triggerModalOcrScan()" class="inline-flex min-h-[32px] items-center gap-1.5 rounded-md bg-emerald-700 px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-emerald-800 focus:outline-hidden transition-all">
                                     <x-icon name="search" class="h-3.5 w-3.5 text-emerald-100" />
                                     <span id="btn-modal-ocr-scan-text">Pindai Data Otomatis</span>
@@ -228,7 +228,7 @@
                         <!-- Thumbnail Grid -->
                         <div id="gallery-thumbnails-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
 
-                        <!-- AI Scan Button for Captured Photos -->
+                        <!-- Scan Button for Captured Photos -->
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-teal-100/70 p-2.5 rounded-lg border border-teal-200">
                             <span class="text-[11px] font-medium text-teal-900">Ekstrak otomatis teks dokumen:</span>
                             <button type="button" id="btn-gallery-ocr-scan" onclick="triggerModalOcrScan()" class="inline-flex min-h-[32px] items-center justify-center gap-1.5 rounded-md bg-emerald-700 px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-emerald-800 transition-colors">
@@ -1074,14 +1074,14 @@
                     });
                 }, 2000);
             } else {
-                alert(json.message || 'Layanan pemindai AI sedang sibuk. Silakan isi formulir secara manual.');
+                alert(json.message || 'Layanan pemindai otomatis sedang sibuk. Silakan isi formulir secara manual.');
                 buttons.forEach(b => {
                     if (b.text) b.text.textContent = b.orig;
                 });
             }
         } catch (e) {
             console.error('OCR Error:', e);
-            alert('Tidak dapat terhubung ke layanan pemindai AI. Silakan isi formulir secara manual.');
+            alert('Tidak dapat terhubung ke layanan pemindai otomatis. Silakan isi formulir secara manual.');
             buttons.forEach(b => {
                 if (b.text) b.text.textContent = b.orig;
             });

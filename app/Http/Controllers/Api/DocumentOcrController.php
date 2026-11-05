@@ -30,7 +30,7 @@ class DocumentOcrController extends Controller
             if ($extracted === null) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Layanan pemindai AI sedang sibuk atau tidak dapat mengenali teks pada gambar ini. Silakan isi formulir secara manual.',
+                    'message' => 'Layanan pemindai otomatis sedang sibuk atau tidak dapat mengenali teks pada berkas ini. Silakan isi formulir secara manual.',
                 ], 422);
             }
 
