@@ -123,12 +123,19 @@
 
                     <!-- Single File Document Pill (e.g. PDF/DOCX/Image) -->
                     <div id="form-file-preview-pill" class="hidden flex flex-col gap-2 rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-950 border border-emerald-300">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2 min-w-0">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 min-w-0 flex-1">
                                 <x-icon name="file-text" class="h-4 w-4 text-emerald-700 shrink-0" />
                                 <span id="form-file-preview-name" class="truncate font-medium"></span>
                             </div>
-                            <button type="button" onclick="clearModalAttachment()" class="text-emerald-700 hover:text-emerald-900 font-bold ml-2">×</button>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <!-- Tombol Opsional Perkecil Berkas (Muncul untuk Image / PDF berukuran >= 300 KB) -->
+                                <button type="button" id="btn-modal-optional-compress" onclick="executeModalOptionalCompression()" class="hidden inline-flex items-center gap-1 rounded-md border border-teal-400 bg-white px-2.5 py-1 text-[11px] font-semibold text-teal-800 hover:bg-teal-50 shadow-2xs transition-colors">
+                                    <x-icon name="refresh-cw" class="h-3 w-3 text-teal-600" />
+                                    <span id="btn-modal-optional-compress-text">Perkecil Berkas</span>
+                                </button>
+                                <button type="button" onclick="clearModalAttachment()" class="text-emerald-700 hover:text-emerald-900 font-bold px-1" title="Hapus berkas">×</button>
+                            </div>
                         </div>
                         
                         <!-- AI Scan Button (Quick Extract) -->
@@ -140,18 +147,18 @@
                         </div>
                     </div>
 
-                    <!-- Smart Image Compression Prompt Card -->
+                    <!-- Smart Universal Compression Prompt Card (Gambar & PDF > 2 MB) -->
                     <div id="form-compress-prompt-card" class="hidden rounded-lg border border-teal-200 bg-teal-50/70 p-3.5 space-y-2.5">
                         <div class="flex items-start gap-2.5">
                             <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-teal-100 text-teal-700">
-                                <x-icon name="camera" class="h-4 w-4" />
+                                <x-icon name="refresh-cw" class="h-4 w-4" />
                             </span>
                             <div class="flex-1 min-w-0">
-                                <h4 class="text-xs font-bold text-teal-950">Foto Berukuran Besar Terdeteksi</h4>
+                                <h4 id="compress-prompt-title" class="text-xs font-bold text-teal-950">Berkas Berukuran Besar Terdeteksi</h4>
                                 <p class="text-[11px] text-teal-800 mt-0.5 leading-relaxed">
                                     Berkas <strong id="compress-prompt-filename" class="font-semibold text-teal-900 truncate inline-block max-w-[200px] align-bottom"></strong> 
                                     berukuran <strong id="compress-prompt-filesize" class="font-bold text-teal-900"></strong> (melebihi batas aman 2 MB).
-                                    Sistem dapat mengecilkan foto ini secara otomatis agar pas dan cepat diunggah tanpa mengurangi kejelasan teks surat.
+                                    Sistem dapat mengecilkan resolusi berkas ini secara otomatis agar pas dan cepat diunggah tanpa mengurangi kejelasan teks surat.
                                 </p>
                             </div>
                         </div>
@@ -159,7 +166,7 @@
                         <div class="flex items-center gap-2 pt-1">
                             <button type="button" id="btn-execute-compress" onclick="executeModalCompression()" class="inline-flex min-h-[36px] items-center gap-1.5 rounded-md bg-[#147D73] px-3.5 text-xs font-semibold text-white shadow-2xs hover:bg-[#0F635B] transition-colors">
                                 <x-icon name="refresh-cw" class="h-3.5 w-3.5" />
-                                <span id="btn-execute-compress-text">Kompres & Pasang Foto</span>
+                                <span id="btn-execute-compress-text">Kompres & Pasang Berkas</span>
                             </button>
                             <button type="button" onclick="cancelCompressionPrompt()" class="inline-flex min-h-[36px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
                                 <x-icon name="x" class="h-3.5 w-3.5" />
@@ -168,18 +175,18 @@
                         </div>
                     </div>
 
-                    <!-- Oversize Non-Image Document Alert Card -->
+                    <!-- Oversize Word Document Alert Card -->
                     <div id="form-document-oversize-card" class="hidden rounded-lg border border-amber-200 bg-amber-50/80 p-3.5 space-y-2">
                         <div class="flex items-start gap-2.5">
                             <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-800">
                                 <x-icon name="alert-triangle" class="h-4 w-4" />
                             </span>
                             <div class="flex-1 min-w-0">
-                                <h4 class="text-xs font-bold text-amber-950">Ukuran Dokumen Melebihi 2 MB</h4>
+                                <h4 class="text-xs font-bold text-amber-950">Ukuran Dokumen Word Melebihi 2 MB</h4>
                                 <p class="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
-                                    Dokumen <strong id="oversize-doc-filename" class="font-semibold text-amber-900 truncate inline-block max-w-[200px] align-bottom"></strong> 
+                                    Dokumen Word <strong id="oversize-doc-filename" class="font-semibold text-amber-900 truncate inline-block max-w-[200px] align-bottom"></strong> 
                                     berukuran <strong id="oversize-doc-filesize" class="font-bold text-amber-900"></strong>.
-                                    Format dokumen PDF/Word terstruktur tidak dapat diperkecil langsung di dalam peramban. Silakan gunakan berkas scan beresolusi standar (150–200 DPI) atau gunakan kompresor PDF sebelum mengunggah.
+                                    Format dokumen Word tidak dapat diperkecil langsung di dalam peramban. Silakan gunakan berkas Word berukuran di bawah 2 MB atau simpan sebagai PDF sebelum mengunggah.
                                 </p>
                             </div>
                         </div>
@@ -526,6 +533,107 @@
         }
     }
 
+    let pdfCompressionLibsLoaded = false;
+    async function loadPdfCompressionLibraries() {
+        if (pdfCompressionLibsLoaded && window.pdfjsLib && window.jspdf) {
+            return true;
+        }
+
+        return new Promise((resolve, reject) => {
+            let loadedCount = 0;
+            function checkDone() {
+                loadedCount++;
+                if (loadedCount === 2) {
+                    if (window.pdfjsLib) {
+                        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                    }
+                    pdfCompressionLibsLoaded = true;
+                    resolve(true);
+                }
+            }
+
+            if (!window.pdfjsLib) {
+                const s1 = document.createElement('script');
+                s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+                s1.onload = checkDone;
+                s1.onerror = () => reject(new Error('Gagal memuat pustaka pembaca PDF.'));
+                document.head.appendChild(s1);
+            } else {
+                checkDone();
+            }
+
+            if (!window.jspdf) {
+                const s2 = document.createElement('script');
+                s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                s2.onload = checkDone;
+                s2.onerror = () => reject(new Error('Gagal memuat pustaka generator PDF.'));
+                document.head.appendChild(s2);
+            } else {
+                checkDone();
+            }
+        });
+    }
+
+    async function compressPdfClient(file, onProgress) {
+        await loadPdfCompressionLibraries();
+
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfDoc = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const numPages = pdfDoc.numPages;
+
+        const { jsPDF } = window.jspdf;
+        let newPdf = null;
+
+        for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+            if (typeof onProgress === 'function') {
+                onProgress(pageNum, numPages);
+            }
+
+            const page = await pdfDoc.getPage(pageNum);
+            const unscaledViewport = page.getViewport({ scale: 1.0 });
+            let targetScale = 1.5;
+            const maxDim = Math.max(unscaledViewport.width, unscaledViewport.height);
+            if (maxDim * targetScale > 1600) {
+                targetScale = 1600 / maxDim;
+            }
+
+            const viewport = page.getViewport({ scale: targetScale });
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(viewport.width);
+            canvas.height = Math.round(viewport.height);
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            await page.render({
+                canvasContext: ctx,
+                viewport: viewport
+            }).promise;
+
+            const imgData = canvas.toDataURL('image/jpeg', 0.75);
+            const orientation = viewport.width > viewport.height ? 'landscape' : 'portrait';
+            const pageWidthPt = unscaledViewport.width;
+            const pageHeightPt = unscaledViewport.height;
+
+            if (pageNum === 1) {
+                newPdf = new jsPDF({
+                    orientation: orientation,
+                    unit: 'pt',
+                    format: [pageWidthPt, pageHeightPt],
+                    compress: true
+                });
+                newPdf.addImage(imgData, 'JPEG', 0, 0, pageWidthPt, pageHeightPt, undefined, 'FAST');
+            } else {
+                newPdf.addPage([pageWidthPt, pageHeightPt], orientation);
+                newPdf.addImage(imgData, 'JPEG', 0, 0, pageWidthPt, pageHeightPt, undefined, 'FAST');
+            }
+        }
+
+        const outputBlob = newPdf.output('blob');
+        return new File([outputBlob], file.name.replace(/\.[^.]+$/, '.pdf'), { type: 'application/pdf' });
+    }
+
     function compressImageModal(file, maxDimension = 1600, quality = 0.8) {
         return new Promise((resolve) => {
             if (!file.type.startsWith('image/')) {
@@ -551,6 +659,8 @@
                     canvas.width = width;
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, width, height);
                     ctx.drawImage(img, 0, 0, width, height);
                     canvas.toBlob(function(blob) {
                         if (blob && blob.size < file.size) {
@@ -576,17 +686,28 @@
         if (input.files && input.files[0]) {
             const file = input.files[0];
             const maxBytes = 2 * 1024 * 1024;
+            const isImage = file.type.startsWith('image/');
+            const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
 
             if (file.size > maxBytes) {
                 const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
-                const isImage = file.type.startsWith('image/');
 
-                if (isImage) {
+                if (isImage || isPdf) {
                     pendingCompressFile = file;
+                    const titleEl = document.getElementById('compress-prompt-title');
                     const nameEl = document.getElementById('compress-prompt-filename');
                     const sizeEl = document.getElementById('compress-prompt-filesize');
+                    const btnText = document.getElementById('btn-execute-compress-text');
+
+                    if (titleEl) {
+                        titleEl.textContent = isPdf ? 'Dokumen PDF Berukuran Besar Terdeteksi' : 'Berkas Gambar Berukuran Besar Terdeteksi';
+                    }
                     if (nameEl) nameEl.textContent = file.name;
                     if (sizeEl) sizeEl.textContent = `${sizeMb} MB`;
+                    if (btnText) {
+                        btnText.textContent = isPdf ? 'Kompres & Pasang PDF' : 'Kompres & Pasang Gambar';
+                    }
+
                     document.getElementById('form-compress-prompt-card')?.classList.remove('hidden');
                     clearModalAttachment(false);
                 } else {
@@ -602,7 +723,7 @@
             }
 
             clearAllCapturedPhotos();
-            showModalFilePill(`${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
+            showModalFilePill(`${file.name} (${(file.size / 1024).toFixed(1)} KB)`, file);
         }
     }
 
@@ -611,14 +732,23 @@
 
         const btn = document.getElementById('btn-execute-compress');
         const btnText = document.getElementById('btn-execute-compress-text');
-        const originalText = btnText ? btnText.textContent : 'Kompres & Pasang Foto';
+        const isPdf = pendingCompressFile.type === 'application/pdf' || pendingCompressFile.name.toLowerCase().endsWith('.pdf');
+        const originalText = btnText ? btnText.textContent : 'Kompres & Pasang Berkas';
+
         if (btn) btn.disabled = true;
-        if (btnText) btnText.textContent = 'Mengompres Foto...';
+        if (btnText) btnText.textContent = isPdf ? 'Memuat Kompresor PDF...' : 'Mengompres Gambar...';
 
         try {
-            const compressedFile = await compressImageModal(pendingCompressFile);
-            const sizeKb = (compressedFile.size / 1024).toFixed(1);
+            let compressedFile = null;
+            if (isPdf) {
+                compressedFile = await compressPdfClient(pendingCompressFile, (cur, total) => {
+                    if (btnText) btnText.textContent = `Mengompres Halaman ${cur}/${total}...`;
+                });
+            } else {
+                compressedFile = await compressImageModal(pendingCompressFile);
+            }
 
+            const sizeKb = (compressedFile.size / 1024).toFixed(1);
             const dt = new DataTransfer();
             dt.items.add(compressedFile);
             const input = document.getElementById('form-input-attachment');
@@ -628,13 +758,63 @@
 
             cancelCompressionPrompt();
             clearAllCapturedPhotos();
-            showModalFilePill(`${compressedFile.name} (${sizeKb} KB - Terkompresi)`);
+            showModalFilePill(`${compressedFile.name} (${sizeKb} KB - Terkompresi)`, compressedFile);
         } catch (e) {
-            console.error('Gagal mengompres gambar:', e);
-            alert('Gagal mengompres foto. Silakan coba pilih berkas lain.');
+            console.error('Gagal mengompres berkas:', e);
+            alert('Gagal mengompres berkas. Silakan coba pilih berkas lain.');
         } finally {
             if (btn) btn.disabled = false;
             if (btnText) btnText.textContent = originalText;
+        }
+    }
+
+    async function executeModalOptionalCompression() {
+        const input = document.getElementById('form-input-attachment');
+        if (!input || !input.files || !input.files[0]) return;
+
+        const rawFile = input.files[0];
+        const isImage = rawFile.type.startsWith('image/');
+        const isPdf = rawFile.type === 'application/pdf' || rawFile.name.toLowerCase().endsWith('.pdf');
+        if (!isImage && !isPdf) return;
+
+        const optBtn = document.getElementById('btn-modal-optional-compress');
+        const optBtnText = document.getElementById('btn-modal-optional-compress-text');
+        const originalText = optBtnText ? optBtnText.textContent : 'Perkecil Berkas';
+
+        if (optBtn) optBtn.disabled = true;
+        if (optBtnText) optBtnText.textContent = isPdf ? 'Memperkecil PDF...' : 'Memperkecil Gambar...';
+
+        try {
+            let compressedFile = null;
+            if (isPdf) {
+                compressedFile = await compressPdfClient(rawFile, (cur, total) => {
+                    if (optBtnText) optBtnText.textContent = `Halaman ${cur}/${total}...`;
+                });
+            } else {
+                compressedFile = await compressImageModal(rawFile);
+            }
+
+            if (compressedFile && compressedFile.size < rawFile.size) {
+                const dt = new DataTransfer();
+                dt.items.add(compressedFile);
+                input.files = dt.files;
+
+                const sizeKb = (compressedFile.size / 1024).toFixed(1);
+                showModalFilePill(`${compressedFile.name} (${sizeKb} KB - Terkompresi)`, compressedFile);
+            } else {
+                if (optBtnText) optBtnText.textContent = 'Sudah Optimal';
+                setTimeout(() => {
+                    if (optBtnText) optBtnText.textContent = originalText;
+                }, 2000);
+            }
+        } catch (err) {
+            console.error('Gagal memperkecil berkas opsional:', err);
+            alert('Gagal memperkecil berkas.');
+        } finally {
+            if (optBtn) optBtn.disabled = false;
+            if (optBtnText && optBtnText.textContent !== 'Sudah Optimal') {
+                optBtnText.textContent = originalText;
+            }
         }
     }
 
@@ -742,11 +922,27 @@
         renderPhotoGallery();
     }
 
-    function showModalFilePill(filename) {
+    function showModalFilePill(filename, file = null) {
         const pill = document.getElementById('form-file-preview-pill');
         const nameEl = document.getElementById('form-file-preview-name');
         nameEl.textContent = filename;
         pill.classList.remove('hidden');
+
+        const optBtn = document.getElementById('btn-modal-optional-compress');
+        if (optBtn) {
+            const isCompressed = filename.includes('- Terkompresi');
+            if (file && !isCompressed && file.size >= 300 * 1024) {
+                const isImage = file.type.startsWith('image/');
+                const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+                if (isImage || isPdf) {
+                    optBtn.classList.remove('hidden');
+                } else {
+                    optBtn.classList.add('hidden');
+                }
+            } else {
+                optBtn.classList.add('hidden');
+            }
+        }
     }
 
     function clearModalAttachment(resetCards = true) {
@@ -754,6 +950,8 @@
         if (attInput) attInput.value = '';
         const pill = document.getElementById('form-file-preview-pill');
         if (pill) pill.classList.add('hidden');
+        const optBtn = document.getElementById('btn-modal-optional-compress');
+        if (optBtn) optBtn.classList.add('hidden');
         if (resetCards) {
             cancelCompressionPrompt();
             hideOversizeDocCard();

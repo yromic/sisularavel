@@ -83,6 +83,107 @@
     </form>
 
     <script>
+        let pdfCompressionLibsLoaded = false;
+        async function loadPdfCompressionLibraries() {
+            if (pdfCompressionLibsLoaded && window.pdfjsLib && window.jspdf) {
+                return true;
+            }
+
+            return new Promise((resolve, reject) => {
+                let loadedCount = 0;
+                function checkDone() {
+                    loadedCount++;
+                    if (loadedCount === 2) {
+                        if (window.pdfjsLib) {
+                            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                        }
+                        pdfCompressionLibsLoaded = true;
+                        resolve(true);
+                    }
+                }
+
+                if (!window.pdfjsLib) {
+                    const s1 = document.createElement('script');
+                    s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+                    s1.onload = checkDone;
+                    s1.onerror = () => reject(new Error('Gagal memuat pustaka pembaca PDF.'));
+                    document.head.appendChild(s1);
+                } else {
+                    checkDone();
+                }
+
+                if (!window.jspdf) {
+                    const s2 = document.createElement('script');
+                    s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                    s2.onload = checkDone;
+                    s2.onerror = () => reject(new Error('Gagal memuat pustaka generator PDF.'));
+                    document.head.appendChild(s2);
+                } else {
+                    checkDone();
+                }
+            });
+        }
+
+        async function compressPdfClient(file, onProgress) {
+            await loadPdfCompressionLibraries();
+
+            const arrayBuffer = await file.arrayBuffer();
+            const pdfDoc = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const numPages = pdfDoc.numPages;
+
+            const { jsPDF } = window.jspdf;
+            let newPdf = null;
+
+            for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+                if (typeof onProgress === 'function') {
+                    onProgress(pageNum, numPages);
+                }
+
+                const page = await pdfDoc.getPage(pageNum);
+                const unscaledViewport = page.getViewport({ scale: 1.0 });
+                let targetScale = 1.5;
+                const maxDim = Math.max(unscaledViewport.width, unscaledViewport.height);
+                if (maxDim * targetScale > 1600) {
+                    targetScale = 1600 / maxDim;
+                }
+
+                const viewport = page.getViewport({ scale: targetScale });
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.round(viewport.width);
+                canvas.height = Math.round(viewport.height);
+                const ctx = canvas.getContext('2d');
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                await page.render({
+                    canvasContext: ctx,
+                    viewport: viewport
+                }).promise;
+
+                const imgData = canvas.toDataURL('image/jpeg', 0.75);
+                const orientation = viewport.width > viewport.height ? 'landscape' : 'portrait';
+                const pageWidthPt = unscaledViewport.width;
+                const pageHeightPt = unscaledViewport.height;
+
+                if (pageNum === 1) {
+                    newPdf = new jsPDF({
+                        orientation: orientation,
+                        unit: 'pt',
+                        format: [pageWidthPt, pageHeightPt],
+                        compress: true
+                    });
+                    newPdf.addImage(imgData, 'JPEG', 0, 0, pageWidthPt, pageHeightPt, undefined, 'FAST');
+                } else {
+                    newPdf.addPage([pageWidthPt, pageHeightPt], orientation);
+                    newPdf.addImage(imgData, 'JPEG', 0, 0, pageWidthPt, pageHeightPt, undefined, 'FAST');
+                }
+            }
+
+            const outputBlob = newPdf.output('blob');
+            return new File([outputBlob], file.name.replace(/\.[^.]+$/, '.pdf'), { type: 'application/pdf' });
+        }
+
         function compressImage(file, maxDimension = 1600, quality = 0.8) {
             return new Promise((resolve) => {
                 if (!file.type.startsWith('image/')) {
@@ -108,6 +209,8 @@
                         canvas.width = width;
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(0, 0, width, height);
                         ctx.drawImage(img, 0, 0, width, height);
                         canvas.toBlob(function(blob) {
                             if (blob && blob.size < file.size) {
@@ -128,16 +231,27 @@
             const info = document.getElementById('file-info');
             if (input.files && input.files[0]) {
                 const file = input.files[0];
+                const isImage = file.type.startsWith('image/');
+                const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+
                 if (file.size > 2 * 1024 * 1024) {
                     const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
-                    if (file.type.startsWith('image/')) {
-                        if (confirm(`Foto terpilih berukuran ${sizeMb} MB (melebihi batas aman 2 MB).\n\nApakah Anda ingin mengecilkan/mengompres foto ini secara otomatis agar pas dan cepat diunggah?`)) {
-                            info.textContent = 'Mengompres foto terpilih...';
+                    if (isImage || isPdf) {
+                        const typeLabel = isPdf ? 'Dokumen PDF' : 'Berkas gambar';
+                        if (confirm(`${typeLabel} terpilih berukuran ${sizeMb} MB (melebihi batas aman 2 MB).\n\nApakah Anda ingin mengecilkan/mengompres berkas ini secara otomatis agar pas dan cepat diunggah?`)) {
+                            info.textContent = isPdf ? 'Memuat mesin kompresi PDF...' : 'Mengompres gambar terpilih...';
                             info.classList.remove('hidden');
                             try {
-                                const compressed = await compressImage(file);
+                                let compressed = null;
+                                if (isPdf) {
+                                    compressed = await compressPdfClient(file, (cur, total) => {
+                                        info.textContent = `Mengompres halaman PDF ${cur} dari ${total}...`;
+                                    });
+                                } else {
+                                    compressed = await compressImage(file);
+                                }
                                 const sizeKb = (compressed.size / 1024).toFixed(1);
-                                info.textContent = `Foto terkompresi: ${compressed.name} (${sizeKb} KB)`;
+                                info.textContent = `Berkas terkompresi: ${compressed.name} (${sizeKb} KB)`;
                                 const dt = new DataTransfer();
                                 dt.items.add(compressed);
                                 input.files = dt.files;
@@ -145,11 +259,12 @@
                                 if (cam) cam.value = '';
                                 return;
                             } catch (e) {
-                                console.error('Gagal mengompres gambar:', e);
+                                console.error('Gagal mengompres berkas:', e);
+                                alert('Gagal mengompres berkas.');
                             }
                         }
                     } else {
-                        alert(`Dokumen PDF/Word (${sizeMb} MB) melebihi batas 2 MB. Format dokumen terstruktur tidak dapat diperkecil langsung di peramban. Silakan gunakan berkas scan berukuran di bawah 2 MB.`);
+                        alert(`Dokumen Word (${sizeMb} MB) melebihi batas 2 MB. Format dokumen Word tidak dapat diperkecil langsung di peramban. Silakan gunakan berkas di bawah 2 MB atau simpan sebagai PDF.`);
                     }
                     input.value = '';
                     info.textContent = '';
@@ -157,7 +272,49 @@
                     return;
                 }
                 const sizeKb = (file.size / 1024).toFixed(1);
-                info.textContent = `Berkas terpilih: ${file.name} (${sizeKb} KB)`;
+                info.innerHTML = `Berkas terpilih: ${file.name} (${sizeKb} KB)`;
+                if (file.size >= 300 * 1024 && (isImage || isPdf)) {
+                    info.innerHTML += ` <button type="button" onclick="executeOutgoingOptionalCompress()" class="ml-2 underline font-semibold text-emerald-950 hover:text-emerald-700">Perkecil Berkas</button>`;
+                }
+                info.classList.remove('hidden');
+            }
+        }
+
+        async function executeOutgoingOptionalCompress() {
+            const input = document.getElementById('attachment');
+            const info = document.getElementById('file-info');
+            if (!input || !input.files || !input.files[0]) return;
+
+            const file = input.files[0];
+            const isImage = file.type.startsWith('image/');
+            const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+            if (!isImage && !isPdf) return;
+
+            info.textContent = isPdf ? 'Memperkecil PDF...' : 'Memperkecil gambar...';
+            try {
+                let compressed = null;
+                if (isPdf) {
+                    compressed = await compressPdfClient(file, (cur, total) => {
+                        info.textContent = `Memperkecil halaman PDF ${cur}/${total}...`;
+                    });
+                } else {
+                    compressed = await compressImage(file);
+                }
+
+                if (compressed && compressed.size < file.size) {
+                    const dt = new DataTransfer();
+                    dt.items.add(compressed);
+                    input.files = dt.files;
+                    const sizeKb = (compressed.size / 1024).toFixed(1);
+                    info.textContent = `Berkas terkompresi: ${compressed.name} (${sizeKb} KB - Terkompresi)`;
+                } else {
+                    info.textContent = `Berkas terpilih: ${file.name} (${(file.size / 1024).toFixed(1)} KB - Sudah optimal)`;
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Gagal memperkecil berkas.');
+            }
+        }
                 info.classList.remove('hidden');
                 const cam = document.getElementById('attachment_camera');
                 if (cam) cam.value = '';
