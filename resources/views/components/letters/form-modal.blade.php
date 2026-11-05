@@ -776,7 +776,11 @@
             showModalFilePill(`${compressedFile.name} (${sizeKb} KB - Terkompresi)`, compressedFile);
         } catch (e) {
             console.error('Gagal mengompres berkas:', e);
-            alert('Gagal mengompres berkas. Silakan coba pilih berkas lain.');
+            if (window.showToast) {
+                window.showToast('Gagal mengompres berkas. Silakan coba pilih berkas lain.', 'error');
+            } else {
+                alert('Gagal mengompres berkas. Silakan coba pilih berkas lain.');
+            }
         } finally {
             if (btn) btn.disabled = false;
             if (btnText) btnText.textContent = originalText;
@@ -816,15 +820,25 @@
 
                 const sizeKb = (compressedFile.size / 1024).toFixed(1);
                 showModalFilePill(`${compressedFile.name} (${sizeKb} KB - Terkompresi)`, compressedFile);
+                if (window.showToast) {
+                    window.showToast(`Ukuran berkas berhasil diperkecil menjadi ${sizeKb} KB.`, 'success');
+                }
             } else {
                 if (optBtnText) optBtnText.textContent = 'Sudah Optimal';
+                if (window.showToast) {
+                    window.showToast('Ukuran berkas sudah optimal dan tidak dapat diperkecil lagi.', 'info');
+                }
                 setTimeout(() => {
                     if (optBtnText) optBtnText.textContent = originalText;
                 }, 2000);
             }
         } catch (err) {
             console.error('Gagal memperkecil berkas opsional:', err);
-            alert('Gagal memperkecil berkas.');
+            if (window.showToast) {
+                window.showToast('Gagal memperkecil berkas.', 'error');
+            } else {
+                alert('Gagal memperkecil berkas.');
+            }
         } finally {
             if (optBtn) optBtn.disabled = false;
             if (optBtnText && optBtnText.textContent !== 'Sudah Optimal') {
@@ -865,7 +879,16 @@
 
             if (file.size > 2 * 1024 * 1024) {
                 const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
-                alert(`Ukuran foto (${sizeMb} MB) melebihi batas 2 MB per lembar.`);
+                if (window.showAlertModal) {
+                    window.showAlertModal({
+                        title: 'Batas Ukuran Foto',
+                        message: `Ukuran foto (${sizeMb} MB) melebihi batas 2 MB per lembar. Silakan arahkan kamera kembali atau ambil foto dengan resolusi lebih hemat.`,
+                        variant: 'warning',
+                        confirmText: 'Mengerti'
+                    });
+                } else {
+                    alert(`Ukuran foto (${sizeMb} MB) melebihi batas 2 MB per lembar.`);
+                }
                 input.value = '';
                 return;
             }
@@ -873,7 +896,16 @@
             const currentTotalBytes = capturedPhotos.reduce((sum, item) => sum + (item.file.size || 0), 0);
             if (currentTotalBytes + file.size > 5 * 1024 * 1024) {
                 const totalMb = ((currentTotalBytes + file.size) / (1024 * 1024)).toFixed(2);
-                alert(`Total ukuran seluruh foto (${totalMb} MB) akan melebihi batas maksimal 5 MB. Hapus sebagian foto atau gunakan dokumen scan PDF.`);
+                if (window.showAlertModal) {
+                    window.showAlertModal({
+                        title: 'Batas Total Dokumen',
+                        message: `Total ukuran seluruh foto (${totalMb} MB) akan melebihi batas maksimal 5 MB. Silakan hapus sebagian lembar atau unggah langsung sebagai dokumen PDF.`,
+                        variant: 'warning',
+                        confirmText: 'Mengerti'
+                    });
+                } else {
+                    alert(`Total ukuran seluruh foto (${totalMb} MB) akan melebihi batas maksimal 5 MB. Hapus sebagian foto atau gunakan dokumen scan PDF.`);
+                }
                 input.value = '';
                 return;
             }
@@ -1017,7 +1049,11 @@
         }
 
         if (!fileToScan) {
-            alert('Silakan pilih berkas dokumen atau ambil foto terlebih dahulu sebelum memindai.');
+            if (window.showToast) {
+                window.showToast('Silakan pilih berkas dokumen atau ambil foto terlebih dahulu sebelum memindai.', 'warning');
+            } else {
+                alert('Silakan pilih berkas dokumen atau ambil foto terlebih dahulu sebelum memindai.');
+            }
             return;
         }
 
@@ -1065,6 +1101,10 @@
                 if (d.origin_agency) highlight('form-input-asal', d.origin_agency);
                 if (d.subject) highlight('form-input-perihal', d.subject);
 
+                if (window.showToast) {
+                    window.showToast('Data surat berhasil dipindai dan dimasukkan ke formulir.', 'success');
+                }
+
                 buttons.forEach(b => {
                     if (b.text) b.text.textContent = 'Selesai Dipindai';
                 });
@@ -1074,14 +1114,32 @@
                     });
                 }, 2000);
             } else {
-                alert(json.message || 'Layanan pemindai otomatis sedang sibuk. Silakan isi formulir secara manual.');
+                if (window.showAlertModal) {
+                    window.showAlertModal({
+                        title: 'Hasil Pemindaian',
+                        message: json.message || 'Layanan pemindai otomatis sedang sibuk atau teks dokumen kurang jelas. Silakan isi formulir secara manual.',
+                        variant: 'warning',
+                        confirmText: 'Mengerti'
+                    });
+                } else {
+                    alert(json.message || 'Layanan pemindai otomatis sedang sibuk. Silakan isi formulir secara manual.');
+                }
                 buttons.forEach(b => {
                     if (b.text) b.text.textContent = b.orig;
                 });
             }
         } catch (e) {
             console.error('OCR Error:', e);
-            alert('Tidak dapat terhubung ke layanan pemindai otomatis. Silakan isi formulir secara manual.');
+            if (window.showAlertModal) {
+                window.showAlertModal({
+                    title: 'Gagal Memindai',
+                    message: 'Tidak dapat terhubung ke layanan pemindai otomatis. Silakan isi formulir secara manual.',
+                    variant: 'danger',
+                    confirmText: 'Tutup'
+                });
+            } else {
+                alert('Tidak dapat terhubung ke layanan pemindai otomatis. Silakan isi formulir secara manual.');
+            }
             buttons.forEach(b => {
                 if (b.text) b.text.textContent = b.orig;
             });

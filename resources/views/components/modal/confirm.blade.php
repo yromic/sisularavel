@@ -81,7 +81,12 @@
                     extraEl.classList.add('hidden');
                 }
 
-                cancelBtn.textContent = options.cancelText || 'Batal';
+                if (options.hideCancel || options.cancelText === false) {
+                    cancelBtn.classList.add('hidden');
+                } else {
+                    cancelBtn.classList.remove('hidden');
+                    cancelBtn.textContent = options.cancelText || 'Batal';
+                }
                 okBtnText.textContent = options.confirmText || 'Ya, Lanjutkan';
 
                 // Variant styling
@@ -132,6 +137,20 @@
                 confirmResolver(result);
                 confirmResolver = null;
             }
+        };
+
+        window.showAlertModal = function(options = {}) {
+            if (typeof options === 'string') {
+                options = { message: options };
+            }
+            return window.showConfirmDialog({
+                title: options.title || 'Pemberitahuan',
+                message: options.message || '',
+                variant: options.variant || 'info',
+                confirmText: options.confirmText || 'Mengerti',
+                hideCancel: true,
+                extra: options.extra || null
+            });
         };
 
         window.confirmAction = function(event, message, title = 'Konfirmasi Tindakan', variant = 'danger', confirmText = 'Ya, Lanjutkan') {
