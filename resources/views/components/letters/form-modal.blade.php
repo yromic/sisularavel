@@ -142,16 +142,16 @@
                         </div>
                         
                         <!-- Smart Actions Bar: Pindai OCR & Perkecil Berkas -->
-                        <div class="pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-slate-50/70 p-2 rounded-md">
-                            <div class="flex items-center gap-1.5 flex-wrap">
+                        <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                            <div class="flex items-center gap-2 flex-wrap">
                                 <!-- Tombol Pindai AI/OCR -->
-                                <button type="button" id="btn-modal-ocr-scan" onclick="triggerModalOcrScan()" class="inline-flex min-h-[32px] items-center gap-1.5 rounded-md bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-emerald-800 focus:outline-hidden transition-all">
+                                <button type="button" id="btn-modal-ocr-scan" onclick="triggerModalOcrScan()" class="inline-flex min-h-[32px] items-center gap-1.5 rounded-md bg-emerald-700 px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-emerald-800 focus:outline-hidden transition-all">
                                     <x-icon name="search" class="h-3.5 w-3.5 text-emerald-100" />
                                     <span id="btn-modal-ocr-scan-text">Pindai Data Otomatis</span>
                                 </button>
 
                                 <!-- Tombol Perkecil Berkas (Muncul untuk berkas >= 300 KB) -->
-                                <button type="button" id="btn-modal-optional-compress" onclick="executeModalOptionalCompression()" class="hidden inline-flex min-h-[32px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-100 hover:border-slate-400 focus:outline-hidden transition-all">
+                                <button type="button" id="btn-modal-optional-compress" onclick="executeModalOptionalCompression()" class="hidden inline-flex min-h-[32px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-400 focus:outline-hidden transition-all">
                                     <x-icon name="refresh-cw" class="h-3.5 w-3.5 text-teal-600" />
                                     <span id="btn-modal-optional-compress-text">Perkecil Ukuran</span>
                                 </button>
@@ -162,14 +162,14 @@
                     </div>
 
                     <!-- Smart Universal Compression Prompt Card (Gambar & PDF > 2 MB) -->
-                    <div id="form-compress-prompt-card" class="hidden rounded-xl border border-teal-300 bg-teal-50/80 p-3.5 space-y-3 shadow-2xs">
+                    <div id="form-compress-prompt-card" class="hidden rounded-xl border border-teal-200 bg-teal-50/70 p-4 space-y-3 shadow-2xs">
                         <div class="flex items-start gap-3">
                             <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-white shadow-2xs">
                                 <x-icon name="refresh-cw" class="h-4 w-4" />
                             </span>
                             <div class="flex-1 min-w-0">
                                 <h4 id="compress-prompt-title" class="text-xs font-bold text-teal-950">Berkas Berukuran Besar Terdeteksi</h4>
-                                <p class="text-[11px] text-teal-800 mt-0.5 leading-relaxed">
+                                <p class="text-[11px] text-teal-800 mt-1 leading-relaxed">
                                     Berkas <strong id="compress-prompt-filename" class="font-semibold text-teal-900 truncate inline-block max-w-[200px] align-bottom"></strong> 
                                     berukuran <strong id="compress-prompt-filesize" class="font-bold text-teal-900"></strong> (melebihi batas aman 2 MB).
                                     Sistem dapat mengecilkan resolusi berkas ini secara otomatis agar pas dan cepat diunggah tanpa mengurangi kejelasan teks surat.
@@ -177,7 +177,7 @@
                             </div>
                         </div>
                         
-                        <div class="flex items-center gap-2 pt-1 border-t border-teal-200/60">
+                        <div class="flex items-center gap-2.5 pt-1">
                             <button type="button" id="btn-execute-compress" onclick="executeModalCompression()" class="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg bg-[#147D73] px-4 text-xs font-semibold text-white shadow-xs hover:bg-[#0F635B] transition-colors">
                                 <x-icon name="refresh-cw" class="h-3.5 w-3.5" />
                                 <span id="btn-execute-compress-text">Kompres & Pasang Berkas</span>
@@ -229,7 +229,7 @@
                         <div id="gallery-thumbnails-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
 
                         <!-- AI Scan Button for Captured Photos -->
-                        <div class="pt-2 border-t border-teal-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-teal-100/60 p-2.5 rounded-md">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-teal-100/70 p-2.5 rounded-lg border border-teal-200">
                             <span class="text-[11px] font-medium text-teal-900">Ekstrak otomatis teks dokumen:</span>
                             <button type="button" id="btn-gallery-ocr-scan" onclick="triggerModalOcrScan()" class="inline-flex min-h-[32px] items-center justify-center gap-1.5 rounded-md bg-emerald-700 px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-emerald-800 transition-colors">
                                 <x-icon name="search" class="h-3.5 w-3.5 text-emerald-100" />
