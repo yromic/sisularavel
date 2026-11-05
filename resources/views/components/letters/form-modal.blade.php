@@ -243,10 +243,6 @@
                             <span>+ Ambil Lembar Berikutnya (Halaman Baru)</span>
                         </button>
                     </div>
-                            <x-icon name="camera" class="h-4 w-4 text-teal-700" />
-                            <span>+ Ambil Lembar Berikutnya (Halaman Baru)</span>
-                        </button>
-                    </div>
                 </div>
 
                 <!-- Footer Aksi -->
