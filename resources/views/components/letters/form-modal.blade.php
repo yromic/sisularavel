@@ -121,36 +121,50 @@
                         </label>
                     </div>
 
-                    <!-- Single File Document Pill (e.g. PDF/DOCX/Image) -->
-                    <div id="form-file-preview-pill" class="hidden flex flex-col gap-2 rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-950 border border-emerald-300">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                            <div class="flex items-center gap-2 min-w-0 flex-1">
-                                <x-icon name="file-text" class="h-4 w-4 text-emerald-700 shrink-0" />
-                                <span id="form-file-preview-name" class="truncate font-medium"></span>
+                    <!-- Single File Document Card (PDF / DOCX / Image) -->
+                    <div id="form-file-preview-pill" class="hidden rounded-lg border border-emerald-200 bg-white p-3 shadow-2xs space-y-2.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                                    <x-icon name="file-text" class="h-5 w-5" />
+                                </span>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <p id="form-file-preview-name" class="truncate font-semibold text-xs text-slate-900 max-w-[220px] sm:max-w-xs"></p>
+                                        <span id="form-file-preview-badge" class="shrink-0 inline-flex items-center rounded-full bg-emerald-100/80 px-2 py-0.5 text-[10px] font-bold text-emerald-800">Siap Diunggah</span>
+                                    </div>
+                                    <p id="form-file-preview-size" class="text-[11px] text-slate-500 font-mono mt-0.5"></p>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-1.5 shrink-0">
-                                <!-- Tombol Opsional Perkecil Berkas (Muncul untuk Image / PDF berukuran >= 300 KB) -->
-                                <button type="button" id="btn-modal-optional-compress" onclick="executeModalOptionalCompression()" class="hidden inline-flex items-center gap-1 rounded-md border border-teal-400 bg-white px-2.5 py-1 text-[11px] font-semibold text-teal-800 hover:bg-teal-50 shadow-2xs transition-colors">
-                                    <x-icon name="refresh-cw" class="h-3 w-3 text-teal-600" />
-                                    <span id="btn-modal-optional-compress-text">Perkecil Berkas</span>
-                                </button>
-                                <button type="button" onclick="clearModalAttachment()" class="text-emerald-700 hover:text-emerald-900 font-bold px-1" title="Hapus berkas">×</button>
-                            </div>
+                            <button type="button" onclick="clearModalAttachment()" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors" title="Hapus berkas">
+                                <x-icon name="x" class="h-4 w-4" />
+                            </button>
                         </div>
                         
-                        <!-- AI Scan Button (Quick Extract) -->
-                        <div class="pt-1.5 border-t border-emerald-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                            <span class="text-[11px] font-medium text-emerald-900">Ekstrak otomatis nomor, tanggal & pengirim:</span>
-                            <button type="button" id="btn-modal-ocr-scan" onclick="triggerModalOcrScan()" class="inline-flex min-h-[32px] items-center justify-center rounded-md bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-emerald-800 transition-colors">
-                                <span id="btn-modal-ocr-scan-text">Pindai Gambar</span>
-                            </button>
+                        <!-- Smart Actions Bar: Pindai OCR & Perkecil Berkas -->
+                        <div class="pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-slate-50/70 p-2 rounded-md">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <!-- Tombol Pindai AI/OCR -->
+                                <button type="button" id="btn-modal-ocr-scan" onclick="triggerModalOcrScan()" class="inline-flex min-h-[32px] items-center gap-1.5 rounded-md bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-emerald-800 focus:outline-hidden transition-all">
+                                    <x-icon name="search" class="h-3.5 w-3.5 text-emerald-100" />
+                                    <span id="btn-modal-ocr-scan-text">Pindai Data Otomatis</span>
+                                </button>
+
+                                <!-- Tombol Perkecil Berkas (Muncul untuk berkas >= 300 KB) -->
+                                <button type="button" id="btn-modal-optional-compress" onclick="executeModalOptionalCompression()" class="hidden inline-flex min-h-[32px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-100 hover:border-slate-400 focus:outline-hidden transition-all">
+                                    <x-icon name="refresh-cw" class="h-3.5 w-3.5 text-teal-600" />
+                                    <span id="btn-modal-optional-compress-text">Perkecil Ukuran</span>
+                                </button>
+                            </div>
+
+                            <span class="text-[11px] text-slate-400 hidden sm:inline">Pindai untuk isi otomatis form</span>
                         </div>
                     </div>
 
                     <!-- Smart Universal Compression Prompt Card (Gambar & PDF > 2 MB) -->
-                    <div id="form-compress-prompt-card" class="hidden rounded-lg border border-teal-200 bg-teal-50/70 p-3.5 space-y-2.5">
-                        <div class="flex items-start gap-2.5">
-                            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-teal-100 text-teal-700">
+                    <div id="form-compress-prompt-card" class="hidden rounded-xl border border-teal-300 bg-teal-50/80 p-3.5 space-y-3 shadow-2xs">
+                        <div class="flex items-start gap-3">
+                            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-white shadow-2xs">
                                 <x-icon name="refresh-cw" class="h-4 w-4" />
                             </span>
                             <div class="flex-1 min-w-0">
@@ -163,12 +177,12 @@
                             </div>
                         </div>
                         
-                        <div class="flex items-center gap-2 pt-1">
-                            <button type="button" id="btn-execute-compress" onclick="executeModalCompression()" class="inline-flex min-h-[36px] items-center gap-1.5 rounded-md bg-[#147D73] px-3.5 text-xs font-semibold text-white shadow-2xs hover:bg-[#0F635B] transition-colors">
+                        <div class="flex items-center gap-2 pt-1 border-t border-teal-200/60">
+                            <button type="button" id="btn-execute-compress" onclick="executeModalCompression()" class="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg bg-[#147D73] px-4 text-xs font-semibold text-white shadow-xs hover:bg-[#0F635B] transition-colors">
                                 <x-icon name="refresh-cw" class="h-3.5 w-3.5" />
                                 <span id="btn-execute-compress-text">Kompres & Pasang Berkas</span>
                             </button>
-                            <button type="button" onclick="cancelCompressionPrompt()" class="inline-flex min-h-[36px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+                            <button type="button" onclick="cancelCompressionPrompt()" class="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
                                 <x-icon name="x" class="h-3.5 w-3.5" />
                                 <span>Pilih Berkas Lain</span>
                             </button>
@@ -217,13 +231,18 @@
                         <!-- AI Scan Button for Captured Photos -->
                         <div class="pt-2 border-t border-teal-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-teal-100/60 p-2.5 rounded-md">
                             <span class="text-[11px] font-medium text-teal-900">Ekstrak otomatis teks dokumen:</span>
-                            <button type="button" id="btn-gallery-ocr-scan" onclick="triggerModalOcrScan()" class="inline-flex min-h-[32px] items-center justify-center rounded-md bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-emerald-800 transition-colors">
-                                <span id="btn-gallery-ocr-scan-text">Pindai Gambar</span>
+                            <button type="button" id="btn-gallery-ocr-scan" onclick="triggerModalOcrScan()" class="inline-flex min-h-[32px] items-center justify-center gap-1.5 rounded-md bg-emerald-700 px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-emerald-800 transition-colors">
+                                <x-icon name="search" class="h-3.5 w-3.5 text-emerald-100" />
+                                <span id="btn-gallery-ocr-scan-text">Pindai Data Otomatis</span>
                             </button>
                         </div>
 
                         <!-- Button to take next page -->
                         <button type="button" onclick="document.getElementById('form-camera-input').click()" class="w-full flex items-center justify-center gap-1.5 rounded-md border border-dashed border-teal-600 bg-white py-2 text-xs font-semibold text-teal-800 hover:bg-teal-50 shadow-2xs">
+                            <x-icon name="camera" class="h-4 w-4 text-teal-700" />
+                            <span>+ Ambil Lembar Berikutnya (Halaman Baru)</span>
+                        </button>
+                    </div>
                             <x-icon name="camera" class="h-4 w-4 text-teal-700" />
                             <span>+ Ambil Lembar Berikutnya (Halaman Baru)</span>
                         </button>
@@ -925,22 +944,55 @@
     function showModalFilePill(filename, file = null) {
         const pill = document.getElementById('form-file-preview-pill');
         const nameEl = document.getElementById('form-file-preview-name');
-        nameEl.textContent = filename;
+        const sizeEl = document.getElementById('form-file-preview-size');
+        const badgeEl = document.getElementById('form-file-preview-badge');
+        const optBtn = document.getElementById('btn-modal-optional-compress');
+
+        const isCompressed = filename.includes('- Terkompresi');
+        const cleanName = filename.replace(/\s*\([^)]*\)\s*$/, '');
+
+        if (nameEl) nameEl.textContent = cleanName;
+
+        let displaySize = '';
+        if (file) {
+            if (file.size >= 1024 * 1024) {
+                displaySize = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+            } else {
+                displaySize = (file.size / 1024).toFixed(1) + ' KB';
+            }
+        } else {
+            const match = filename.match(/\(([^)]+)\)/);
+            if (match) displaySize = match[1];
+        }
+
+        if (sizeEl) sizeEl.textContent = displaySize ? `Ukuran: ${displaySize}` : '';
+
+        if (badgeEl) {
+            if (isCompressed) {
+                badgeEl.textContent = 'Terkompresi';
+                badgeEl.className = 'shrink-0 inline-flex items-center rounded-full bg-teal-100 text-teal-800 px-2 py-0.5 text-[10px] font-bold border border-teal-200';
+            } else {
+                badgeEl.textContent = 'Siap Diunggah';
+                badgeEl.className = 'shrink-0 inline-flex items-center rounded-full bg-emerald-100/80 text-emerald-800 px-2 py-0.5 text-[10px] font-bold';
+            }
+        }
+
         pill.classList.remove('hidden');
 
-        const optBtn = document.getElementById('btn-modal-optional-compress');
         if (optBtn) {
-            const isCompressed = filename.includes('- Terkompresi');
             if (file && !isCompressed && file.size >= 300 * 1024) {
                 const isImage = file.type.startsWith('image/');
                 const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
                 if (isImage || isPdf) {
                     optBtn.classList.remove('hidden');
+                    optBtn.classList.add('inline-flex');
                 } else {
                     optBtn.classList.add('hidden');
+                    optBtn.classList.remove('inline-flex');
                 }
             } else {
                 optBtn.classList.add('hidden');
+                optBtn.classList.remove('inline-flex');
             }
         }
     }
@@ -974,13 +1026,13 @@
         }
 
         const buttons = [
-            { btn: document.getElementById('btn-modal-ocr-scan'), text: document.getElementById('btn-modal-ocr-scan-text'), orig: 'Pindai Gambar' },
-            { btn: document.getElementById('btn-gallery-ocr-scan'), text: document.getElementById('btn-gallery-ocr-scan-text'), orig: 'Pindai Gambar' }
+            { btn: document.getElementById('btn-modal-ocr-scan'), text: document.getElementById('btn-modal-ocr-scan-text'), orig: 'Pindai Data Otomatis' },
+            { btn: document.getElementById('btn-gallery-ocr-scan'), text: document.getElementById('btn-gallery-ocr-scan-text'), orig: 'Pindai Data Otomatis' }
         ];
 
         buttons.forEach(b => {
             if (b.btn) b.btn.disabled = true;
-            if (b.text) b.text.textContent = 'Memindai...';
+            if (b.text) b.text.textContent = 'Memindai Data...';
         });
 
         try {
