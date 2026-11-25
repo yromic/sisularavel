@@ -739,12 +739,6 @@
 
             clearAllCapturedPhotos();
             showModalFilePill(`${file.name} (${(file.size / 1024).toFixed(1)} KB)`, file);
-
-            // Otomatis memicu pemindaian OCR AI
-            const isDoc = file.name.toLowerCase().endsWith('.doc') || file.name.toLowerCase().endsWith('.docx');
-            if (!isDoc) {
-                triggerModalOcrScan();
-            }
         }
     }
 
@@ -924,10 +918,6 @@
                     name: `Lembar ${capturedPhotos.length + 1}`
                 });
                 renderPhotoGallery();
-                // Otomatis memicu pemindaian OCR AI pada lembar pertama yang difoto
-                if (capturedPhotos.length === 1) {
-                    triggerModalOcrScan();
-                }
             };
             reader.readAsDataURL(file);
 

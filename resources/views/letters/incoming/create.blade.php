@@ -604,7 +604,6 @@
                                 const cam = document.getElementById('attachment_camera');
                                 if (cam) cam.value = '';
                                 updateFileInfoDisplay(compressed, true);
-                                triggerCreateOcrScan();
                                 return;
                             } catch (e) {
                                 console.error('Gagal mengompres berkas:', e);
@@ -622,9 +621,6 @@
                 updateFileInfoDisplay(file);
                 const cam = document.getElementById('attachment_camera');
                 if (cam) cam.value = '';
-
-                // Otomatis pindai dokumen dengan AI saat berkas dipilih
-                triggerCreateOcrScan();
             }
         }
 
@@ -676,11 +672,6 @@
             const info = document.getElementById('file-info');
             if (input.files && input.files[0]) {
                 const rawFile = input.files[0];
-                const badge = document.getElementById('ocr-status-badge');
-                const badgeText = document.getElementById('ocr-status-text');
-                if (badge) badge.classList.remove('hidden');
-                if (badgeText) badgeText.textContent = 'Memproses foto kamera...';
-
                 const file = await compressImage(rawFile);
                 if (file.size > 2 * 1024 * 1024) {
                     const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
@@ -710,11 +701,6 @@
                         name: `Lembar ${capturedPhotos.length + 1}`
                     });
                     renderPhotoGallery();
-
-                    // Otomatis pindai OCR AI pada lembar pertama yang difoto
-                    if (capturedPhotos.length === 1) {
-                        triggerCreateOcrScan();
-                    }
                 };
                 reader.readAsDataURL(file);
 
