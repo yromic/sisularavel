@@ -386,4 +386,65 @@ class UserSoftDeleteAndRestoreContractTest extends TestCase
         $this->assertEquals($operator->id, $letter->createdBy->id);
         $this->assertEquals('historical_operator', $letter->createdBy->username);
     }
+
+    public function test_division_admin_can_create_user_in_own_division(): void
+    {
+        $division = Division::factory()->create(['status' => 'active']);
+        $divisionAdmin = User::factory()->divisionAdmin()->create(['division_id' => $division->id]);
+
+        $response = $this->actingAs($divisionAdmin)
+            ->from('/master/pengguna')
+            ->post('/api/v1/users', [
+                'username' => 'operator_dikdas_01',
+                'name' => 'Operator Baru Dikdas',
+                'email' => 'opdikdas@disdikbudpora.test',
+                'password' => 'Password123!',
+                'role' => 'operator',
+                'division_id' => (string) $division->id,
+            ]);
+
+        $response->assertRedirect('/master/pengguna');
+        $this->assertDatabaseHas('users', [
+            'username' => 'operator_dikdas_01',
+            'division_id' => $division->id,
+            'role' => 'operator',
+        ]);
+    }
+
+    public function test_division_admin_cannot_create_super_admin(): void
+    {
+        $division = Division::factory()->create(['status' => 'active']);
+        $divisionAdmin = User::factory()->divisionAdmin()->create(['division_id' => $division->id]);
+
+        $response = $this->actingAs($divisionAdmin)
+            ->post('/api/v1/users', [
+                'username' => 'rogue_admin',
+                'name' => 'Rogue Admin',
+                'email' => 'rogue@disdikbudpora.test',
+                'password' => 'Password123!',
+                'role' => 'super_admin',
+                'division_id' => (string) $division->id,
+            ]);
+
+        $response->assertStatus(403);
+    }
+
+    public function test_division_admin_cannot_create_user_in_another_division(): void
+    {
+        $divisionA = Division::factory()->create(['status' => 'active']);
+        $divisionB = Division::factory()->create(['status' => 'active']);
+        $divisionAdmin = User::factory()->divisionAdmin()->create(['division_id' => $divisionA->id]);
+
+        $response = $this->actingAs($divisionAdmin)
+            ->post('/api/v1/users', [
+                'username' => 'intruder_user',
+                'name' => 'Intruder User',
+                'email' => 'intruder@disdikbudpora.test',
+                'password' => 'Password123!',
+                'role' => 'operator',
+                'division_id' => (string) $divisionB->id,
+            ]);
+
+        $response->assertStatus(403);
+    }
 }

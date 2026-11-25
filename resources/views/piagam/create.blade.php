@@ -65,7 +65,7 @@
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'Idempotency-Key': crypto.randomUUID(),
+                            'Idempotency-Key': (window.generateUUID ? window.generateUUID() : crypto.randomUUID()),
                             'Accept': 'application/json'
                         },
                         body: new FormData(form),

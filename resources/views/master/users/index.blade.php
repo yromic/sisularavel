@@ -95,16 +95,21 @@
                     </div>
                     <div>
                         <label for="create-division_id" class="block text-xs font-semibold text-slate-700">Divisi Kerja *</label>
-                        <select name="division_id" id="create-division_id" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm focus:border-emerald-700 focus:outline-hidden">
-                            @if (auth()->user()->role === 'super_admin')
+                        @if (auth()->user()->role === 'super_admin')
+                            <select name="division_id" id="create-division_id" class="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 text-sm focus:border-emerald-700 focus:outline-hidden">
                                 <option value="">-- Tanpa Divisi (Global Super Admin) --</option>
-                            @endif
-                            @foreach ($divisions as $division)
-                                <option value="{{ $division->id }}" @selected(auth()->user()->division_id === $division->id)>
-                                    {{ $division->code }} - {{ $division->name }}
-                                </option>
-                            @endforeach
-                        </select>
+                                @foreach ($divisions as $division)
+                                    <option value="{{ $division->id }}" @selected(auth()->user()->division_id === $division->id)>
+                                        {{ $division->code }} - {{ $division->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        @else
+                            <input type="hidden" name="division_id" id="create-division_id" value="{{ auth()->user()->division_id }}">
+                            <div class="mt-1 flex min-h-[44px] items-center rounded-md border border-slate-200 bg-slate-100 px-3 text-sm font-medium text-slate-700">
+                                {{ auth()->user()->division?->code ?? 'Divisi' }} - {{ auth()->user()->division?->name ?? 'Divisi Anda' }}
+                            </div>
+                        @endif
                     </div>
                     <div>
                         <label for="create-password" class="block text-xs font-semibold text-slate-700">Password Sementara *</label>

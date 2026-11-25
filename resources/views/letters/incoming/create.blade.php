@@ -286,6 +286,9 @@
                     info.innerHTML += ` <button type="button" onclick="executeIncomingOptionalCompress()" class="ml-2 underline font-semibold text-emerald-950 hover:text-emerald-700">Perkecil Berkas</button>`;
                 }
                 info.classList.remove('hidden');
+                // Clear camera input so only one file is submitted
+                const cam = document.getElementById('attachment_camera');
+                if (cam) cam.value = '';
             }
         }
 
@@ -322,11 +325,6 @@
             } catch (e) {
                 console.error(e);
                 alert('Gagal memperkecil berkas.');
-            }
-        }
-                // Clear camera input so only one file is submitted
-                const cam = document.getElementById('attachment_camera');
-                if (cam) cam.value = '';
             }
         }
 
@@ -376,7 +374,7 @@
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'Idempotency-Key': crypto.randomUUID(),
+                            'Idempotency-Key': (window.generateUUID ? window.generateUUID() : crypto.randomUUID()),
                             'Accept': 'application/json'
                         },
                         body: new FormData(form),

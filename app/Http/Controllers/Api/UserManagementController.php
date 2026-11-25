@@ -69,9 +69,13 @@ class UserManagementController extends Controller
         ]);
 
         if ($actor->role !== 'super_admin') {
-            if ($validated['role'] === 'super_admin' || ($validated['division_id'] ?? null) !== $actor->division_id) {
-                abort(403);
+            if ($validated['role'] === 'super_admin') {
+                abort(403, 'Admin Divisi tidak berwenang membuat akun Super Admin.');
             }
+            if (isset($validated['division_id']) && (int) $validated['division_id'] !== (int) $actor->division_id) {
+                abort(403, 'Anda tidak memiliki hak akses atau wewenang untuk membuka halaman atau data divisi ini.');
+            }
+            $validated['division_id'] = $actor->division_id;
         }
 
         if ($validated['role'] !== 'super_admin' && empty($validated['division_id'])) {
@@ -111,7 +115,7 @@ class UserManagementController extends Controller
         abort_unless(in_array($actor?->role, ['super_admin', 'division_admin'], true), 403);
 
         if ($actor->role !== 'super_admin') {
-            if ($user->division_id !== $actor->division_id || $user->role !== 'operator') {
+            if ((int) $user->division_id !== (int) $actor->division_id || $user->role !== 'operator') {
                 abort(403);
             }
         }
@@ -193,7 +197,7 @@ class UserManagementController extends Controller
         }
 
         if ($actor->role !== 'super_admin') {
-            if ($user->division_id !== $actor->division_id || $user->role !== 'operator') {
+            if ((int) $user->division_id !== (int) $actor->division_id || $user->role !== 'operator') {
                 abort(403);
             }
         }
@@ -222,7 +226,7 @@ class UserManagementController extends Controller
 
         // RBAC check for division admin
         if ($actor->role !== 'super_admin') {
-            if ($user->division_id !== $actor->division_id || $user->role !== 'operator') {
+            if ((int) $user->division_id !== (int) $actor->division_id || $user->role !== 'operator') {
                 abort(403, 'Admin Divisi hanya berwenang memulihkan akun operator pada divisi sendiri.');
             }
         }

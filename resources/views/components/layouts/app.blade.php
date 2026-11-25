@@ -371,6 +371,16 @@
 
         <!-- Accessible Drawer & Toast Management Script -->
         <script>
+            window.generateUUID = function() {
+                if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+                    return crypto.randomUUID();
+                }
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            };
+
             function showToast(message, type = 'success') {
                 const container = document.getElementById('sisurat-client-toast-container');
                 if (!container) return;

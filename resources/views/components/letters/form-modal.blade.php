@@ -196,7 +196,7 @@
                                 <x-icon name="alert-triangle" class="h-4 w-4" />
                             </span>
                             <div class="flex-1 min-w-0">
-                                <h4 class="text-xs font-bold text-amber-950">Ukuran Dokumen Word Melebihi 2 MB</h4>
+                                <h4 class="text-xs font-bold text-amber-950">Ukuran Dokumen Melebihi 2 MB</h4>
                                 <p class="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
                                     Dokumen Word <strong id="oversize-doc-filename" class="font-semibold text-amber-900 truncate inline-block max-w-[200px] align-bottom"></strong> 
                                     berukuran <strong id="oversize-doc-filesize" class="font-bold text-amber-900"></strong>.
@@ -1208,7 +1208,7 @@
             const headers = {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
                 'Accept': 'application/json',
-                'Idempotency-Key': crypto.randomUUID()
+                'Idempotency-Key': (window.generateUUID ? window.generateUUID() : (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2)))
             };
 
             const response = await fetch(form.action, {

@@ -517,4 +517,30 @@ class FullClientUiWorkflowTest extends TestCase
             ->assertJsonPath('code', 'ERR_422_VALIDATION')
             ->assertJsonStructure(['success', 'code', 'message', 'errors', 'timestamp']);
     }
+
+    public function test_incoming_and_outgoing_create_pages_render_valid_file_and_camera_handlers(): void
+    {
+        $division = Division::factory()->create(['code' => 'DIKDAS']);
+        $operator = User::factory()->for($division)->create(['role' => 'operator']);
+
+        // Check Incoming Letter Create Page
+        $this->actingAs($operator)
+            ->get('/surat-masuk/create')
+            ->assertOk()
+            ->assertSee('handleFileSelected(this)', false)
+            ->assertSee('handleCameraSelected(this)', false)
+            ->assertSee('async function handleFileSelected', false)
+            ->assertSee('async function handleCameraSelected', false)
+            ->assertSee('window.generateUUID', false);
+
+        // Check Outgoing Letter Create Page
+        $this->actingAs($operator)
+            ->get('/surat-keluar/create')
+            ->assertOk()
+            ->assertSee('handleFileSelected(this)', false)
+            ->assertSee('handleCameraSelected(this)', false)
+            ->assertSee('async function handleFileSelected', false)
+            ->assertSee('async function handleCameraSelected', false)
+            ->assertSee('window.generateUUID', false);
+    }
 }
