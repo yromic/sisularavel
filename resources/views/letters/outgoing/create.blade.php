@@ -73,17 +73,210 @@
                     <input name="attachment_camera" id="attachment_camera" type="file" accept="image/*" capture="environment" class="sr-only" onchange="handleCameraSelected(this)">
                 </label>
             </div>
-            <div id="file-info" class="mt-2 hidden rounded-md bg-blue-50 p-2 text-xs font-semibold text-blue-800"></div>
+            
+            <!-- File Info & Smart AI OCR Action Card -->
+            <div id="file-info" class="mt-3 hidden rounded-lg border border-blue-200 bg-white p-3.5 shadow-2xs space-y-2.5">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80">
+                            <x-icon name="file-text" class="h-4 w-4" />
+                        </span>
+                        <div class="min-w-0">
+                            <p id="file-info-name" class="font-semibold text-xs text-slate-900 truncate max-w-[240px] sm:max-w-xs"></p>
+                            <p id="file-info-size" class="text-[11px] text-slate-500 font-mono"></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button type="button" id="btn-ocr-scan" onclick="triggerOutgoingOcrScan()" class="inline-flex min-h-[34px] items-center gap-1.5 rounded-md bg-blue-700 px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-blue-800 focus:outline-hidden transition-all">
+                            <x-icon name="search" class="h-3.5 w-3.5 text-blue-100" />
+                            <span id="btn-ocr-scan-text">Pindai Data Otomatis (AI)</span>
+                        </button>
+                        <button type="button" id="btn-optional-compress" onclick="executeOutgoingOptionalCompress()" class="hidden inline-flex min-h-[34px] items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-all">
+                            <x-icon name="refresh-cw" class="h-3.5 w-3.5 text-blue-600" />
+                            <span>Perkecil Berkas</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="ocr-status-badge" class="hidden rounded-md bg-blue-50 p-2 text-xs font-medium text-blue-900 border border-blue-200 flex items-center gap-2">
+                    <svg class="animate-spin h-3.5 w-3.5 text-blue-700 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    <span id="ocr-status-text">Memindai data surat dengan AI untuk mengisi formulir otomatis...</span>
+                </div>
+            </div>
+
+            <!-- Multi-Photo Gallery Container (Lembar 1, 2, 3...) -->
+            <div id="form-photos-gallery-container" class="mt-3 hidden rounded-lg border border-blue-200 bg-blue-50/60 p-3 space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-1.5 text-xs font-bold text-blue-900">
+                        <x-icon name="check" class="h-4 w-4 text-blue-700 shrink-0" />
+                        <span id="gallery-photo-count">1 Lembar Foto Terambil</span>
+                    </div>
+                    <button type="button" onclick="clearAllCapturedPhotos()" class="text-[11px] font-semibold text-rose-600 hover:underline">Hapus Semua Foto</button>
+                </div>
+                <p class="text-[11px] text-blue-800 leading-relaxed">
+                    Foto lembaran ini akan <strong>otomatis digabungkan menjadi 1 berkas PDF resmi</strong> saat surat disimpan.
+                </p>
+
+                <!-- Thumbnail Grid -->
+                <div id="gallery-thumbnails-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
+
+                <!-- Scan Button for Captured Photos -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-blue-100/70 p-2.5 rounded-lg border border-blue-200">
+                    <span class="text-[11px] font-medium text-blue-900">Ekstrak otomatis teks dokumen:</span>
+                    <button type="button" id="btn-gallery-ocr-scan" onclick="triggerOutgoingOcrScan()" class="inline-flex min-h-[32px] items-center justify-center gap-1.5 rounded-md bg-blue-700 px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-blue-800 transition-colors">
+                        <x-icon name="search" class="h-3.5 w-3.5 text-blue-100" />
+                        <span id="btn-gallery-ocr-scan-text">Pindai Data Otomatis (AI)</span>
+                    </button>
+                </div>
+
+                <!-- Button to take next page -->
+                <button type="button" onclick="document.getElementById('attachment_camera').click()" class="w-full flex items-center justify-center gap-1.5 rounded-md border border-dashed border-blue-600 bg-white py-2 text-xs font-semibold text-blue-800 hover:bg-blue-50 shadow-2xs">
+                    <x-icon name="camera" class="h-4 w-4 text-blue-700" />
+                    <span>+ Ambil Lembar Berikutnya (Halaman Baru)</span>
+                </button>
+            </div>
         </div>
 
         <div class="sticky bottom-0 -mx-4 mt-auto flex gap-3 border-t border-slate-200 bg-white/95 p-4 md:col-span-2 md:mx-0 md:rounded-t-md">
-            <a href="/surat-keluar" class="flex min-h-[44px] flex-1 items-center justify-center rounded-md border border-slate-300 px-4 font-medium text-slate-700 hover:bg-slate-100">Batal</a>
-            <button type="submit" data-loading-label="Menyimpan..." class="min-h-[44px] flex-1 rounded-md bg-emerald-700 px-4 font-semibold text-white hover:bg-emerald-800">Simpan Surat Keluar</button>
+            <a href="/surat-keluar" onclick="return handleCancelCreate(event, '/surat-keluar')" class="flex min-h-[44px] flex-1 items-center justify-center rounded-md border border-slate-300 px-4 font-medium text-slate-700 hover:bg-slate-100">Batal</a>
+            <button type="submit" id="btn-submit-outgoing" data-loading-label="Menyimpan..." class="min-h-[44px] flex-1 rounded-md bg-emerald-700 px-4 font-semibold text-white hover:bg-emerald-800">Simpan Surat Keluar</button>
         </div>
     </form>
 
     <script>
+        let capturedPhotos = []; // array of { file, previewUrl, name }
         let pdfCompressionLibsLoaded = false;
+
+        function isFormDirty() {
+            if (capturedPhotos.length > 0) return true;
+            const att = document.getElementById('attachment');
+            if (att && att.files && att.files.length > 0) return true;
+            const nomor = document.getElementById('nomor_surat')?.value?.trim() || '';
+            const perihal = document.getElementById('perihal')?.value?.trim() || '';
+            return nomor !== '' || perihal !== '';
+        }
+
+        function handleCancelCreate(e, targetUrl) {
+            if (isFormDirty()) {
+                if (!confirm('Ada draf isian surat keluar atau foto kamera yang belum disimpan. Batalkan dan kembali ke daftar surat?')) {
+                    if (e) e.preventDefault();
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function clearFieldErrors() {
+            const form = document.querySelector('[data-idempotent-form]');
+            if (!form) return;
+            form.querySelectorAll('.field-error-message').forEach(el => el.remove());
+            form.querySelectorAll('input, select, textarea').forEach(input => {
+                input.classList.remove('border-rose-500', 'bg-rose-50/40', 'focus:border-rose-600', 'focus:ring-rose-500');
+                if (!input.classList.contains('border-slate-300') && !input.classList.contains('sr-only')) {
+                    input.classList.add('border-slate-300');
+                }
+            });
+        }
+
+        function applyFieldErrors(errors) {
+            clearFieldErrors();
+            const form = document.querySelector('[data-idempotent-form]');
+            if (!form || !errors) return;
+
+            let firstInvalidInput = null;
+            const fieldMapping = {
+                'nomor_surat': 'nomor_surat',
+                'tanggal_surat': 'tanggal_surat',
+                'tanggal_share': 'tanggal_share',
+                'perihal': 'perihal',
+                'division_id': 'division_id',
+                'attachment': 'attachment',
+                'photos': 'attachment_camera'
+            };
+
+            Object.entries(errors).forEach(([fieldKey, messages]) => {
+                const elementId = fieldMapping[fieldKey] || fieldKey;
+                const targetEl = document.getElementById(elementId) || form.querySelector(`[name="${fieldKey}"]`);
+
+                if (targetEl) {
+                    targetEl.classList.add('border-rose-500', 'bg-rose-50/40');
+                    targetEl.classList.remove('border-slate-300');
+
+                    const errorMsg = document.createElement('p');
+                    errorMsg.className = 'field-error-message mt-1 text-xs font-semibold text-rose-600 flex items-center gap-1';
+                    errorMsg.innerHTML = `<span class="inline-block w-1.5 h-1.5 rounded-full bg-rose-600"></span> ${messages[0]}`;
+
+                    targetEl.parentNode.appendChild(errorMsg);
+
+                    const cleanUpOnInput = () => {
+                        targetEl.classList.remove('border-rose-500', 'bg-rose-50/40');
+                        targetEl.classList.add('border-slate-300');
+                        errorMsg.remove();
+                    };
+                    targetEl.addEventListener('input', cleanUpOnInput, { once: true });
+                    targetEl.addEventListener('change', cleanUpOnInput, { once: true });
+
+                    if (!firstInvalidInput) {
+                        firstInvalidInput = targetEl;
+                    }
+                }
+            });
+
+            if (firstInvalidInput && typeof firstInvalidInput.focus === 'function') {
+                firstInvalidInput.focus();
+            }
+        }
+
+        function renderPhotoGallery() {
+            const container = document.getElementById('form-photos-gallery-container');
+            const grid = document.getElementById('gallery-thumbnails-grid');
+            const countEl = document.getElementById('gallery-photo-count');
+
+            if (!container || !grid) return;
+
+            if (capturedPhotos.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            const totalBytes = capturedPhotos.reduce((sum, item) => sum + (item.file.size || 0), 0);
+            const totalMb = (totalBytes / (1024 * 1024)).toFixed(2);
+
+            container.classList.remove('hidden');
+            if (countEl) countEl.textContent = `${capturedPhotos.length} Lembar Foto Terambil (Total: ${totalMb} MB / Maks. 5 MB)`;
+
+            grid.innerHTML = '';
+            capturedPhotos.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'relative group rounded-md border border-slate-300 bg-white p-1 text-center shadow-2xs';
+                card.innerHTML = `
+                    <div class="h-20 w-full overflow-hidden rounded bg-slate-100 flex items-center justify-center">
+                        <img src="${item.previewUrl}" alt="Lembar ${index + 1}" class="h-full w-full object-cover">
+                    </div>
+                    <p class="mt-1 text-[10px] font-semibold text-slate-700 truncate">Halaman ${index + 1}</p>
+                    <button type="button" onclick="removeCapturedPhoto(${index})" class="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-[10px] font-bold text-white shadow hover:bg-rose-700" title="Hapus lembar ini">×</button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function removeCapturedPhoto(index) {
+            capturedPhotos.splice(index, 1);
+            renderPhotoGallery();
+            if (capturedPhotos.length === 0) {
+                const info = document.getElementById('file-info');
+                if (info) info.classList.add('hidden');
+            }
+        }
+
+        function clearAllCapturedPhotos() {
+            capturedPhotos = [];
+            renderPhotoGallery();
+        }
+
         async function loadPdfCompressionLibraries() {
             if (pdfCompressionLibsLoaded && window.pdfjsLib && window.jspdf) {
                 return true;
@@ -227,6 +420,141 @@
             });
         }
 
+        function updateFileInfoDisplay(file, isCompressed = false) {
+            const info = document.getElementById('file-info');
+            const nameEl = document.getElementById('file-info-name');
+            const sizeEl = document.getElementById('file-info-size');
+            const compressBtn = document.getElementById('btn-optional-compress');
+
+            if (!file) {
+                if (info) info.classList.add('hidden');
+                return;
+            }
+
+            if (nameEl) nameEl.textContent = file.name;
+            const sizeKb = (file.size / 1024).toFixed(1);
+            if (sizeEl) sizeEl.textContent = `${sizeKb} KB ${isCompressed ? '• Terkompresi' : ''}`;
+            if (info) info.classList.remove('hidden');
+
+            const isImage = file.type.startsWith('image/');
+            const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+
+            if (compressBtn) {
+                if (file.size >= 300 * 1024 && (isImage || isPdf) && !isCompressed) {
+                    compressBtn.classList.remove('hidden');
+                    compressBtn.classList.add('inline-flex');
+                } else {
+                    compressBtn.classList.add('hidden');
+                    compressBtn.classList.remove('inline-flex');
+                }
+            }
+        }
+
+        async function triggerOutgoingOcrScan() {
+            let fileToScan = null;
+            const input = document.getElementById('attachment');
+            if (input && input.files && input.files[0]) {
+                fileToScan = input.files[0];
+            } else if (capturedPhotos.length > 0) {
+                fileToScan = capturedPhotos[0].file;
+            }
+
+            if (!fileToScan) {
+                if (window.showToast) {
+                    window.showToast('Pilih berkas dokumen atau foto terlebih dahulu sebelum memindai.', 'warning');
+                } else {
+                    alert('Pilih berkas dokumen atau foto terlebih dahulu sebelum memindai.');
+                }
+                return;
+            }
+
+            const isDoc = fileToScan.name.toLowerCase().endsWith('.doc') || fileToScan.name.toLowerCase().endsWith('.docx');
+            if (isDoc) {
+                if (window.showToast) {
+                    window.showToast('Format dokumen Word (.doc/.docx) tidak dapat dipindai otomatis oleh AI. Silakan simpan sebagai PDF terlebih dahulu.', 'warning');
+                } else {
+                    alert('Format dokumen Word (.doc/.docx) tidak dapat dipindai otomatis oleh AI. Silakan simpan sebagai PDF terlebih dahulu.');
+                }
+                return;
+            }
+
+            const btn = document.getElementById('btn-ocr-scan');
+            const btnText = document.getElementById('btn-ocr-scan-text');
+            const galleryBtn = document.getElementById('btn-gallery-ocr-scan');
+            const galleryBtnText = document.getElementById('btn-gallery-ocr-scan-text');
+            const badge = document.getElementById('ocr-status-badge');
+            const badgeText = document.getElementById('ocr-status-text');
+
+            if (btn) btn.disabled = true;
+            if (btnText) btnText.textContent = 'Memindai Data...';
+            if (galleryBtn) galleryBtn.disabled = true;
+            if (galleryBtnText) galleryBtnText.textContent = 'Memindai...';
+
+            if (badge) {
+                badge.className = 'rounded-md bg-blue-50 p-2 text-xs font-medium text-blue-900 border border-blue-200 flex items-center gap-2';
+                badge.classList.remove('hidden');
+            }
+            if (badgeText) badgeText.textContent = 'Memindai data surat keluar dengan AI untuk mengisi formulir otomatis...';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', fileToScan);
+                formData.append('type', 'surat');
+
+                const res = await fetch('/api/v1/ocr/scan', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                const json = await res.json();
+
+                if (res.ok && json.success && json.data) {
+                    const d = json.data;
+                    const highlight = (id, val) => {
+                        const el = document.getElementById(id);
+                        if (el && val) {
+                            el.value = val;
+                            el.dispatchEvent(new Event('input', { bubbles: true }));
+                            el.classList.add('ring-2', 'ring-blue-500', 'bg-blue-50');
+                            setTimeout(() => el.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-50'), 2500);
+                        }
+                    };
+
+                    if (d.letter_number) highlight('nomor_surat', d.letter_number);
+                    if (d.letter_date) highlight('tanggal_surat', d.letter_date);
+                    if (d.subject) highlight('perihal', d.subject);
+
+                    if (badge) {
+                        badge.className = 'rounded-md bg-blue-100 p-2 text-xs font-semibold text-blue-900 border border-blue-300 flex items-center gap-2';
+                        badge.innerHTML = '<span>✓</span> <span>Data surat keluar berhasil dipindai dan dimasukkan ke formulir otomatis.</span>';
+                    }
+                    if (window.showToast) {
+                        window.showToast('Data surat keluar berhasil dipindai dan dimasukkan ke formulir.', 'success');
+                    }
+                } else {
+                    if (badge) {
+                        badge.className = 'rounded-md bg-amber-50 p-2 text-xs font-medium text-amber-900 border border-amber-200 flex items-center gap-2';
+                        badge.innerHTML = `<span>!</span> <span>${json.message || 'Layanan pemindai AI sedang sibuk atau teks dokumen kurang jelas. Silakan lengkapi manual.'}</span>`;
+                    }
+                }
+            } catch (err) {
+                console.error('OCR Error:', err);
+                if (badge) {
+                    badge.className = 'rounded-md bg-amber-50 p-2 text-xs font-medium text-amber-900 border border-amber-200 flex items-center gap-2';
+                    badge.innerHTML = '<span>!</span> <span>Tidak dapat terhubung ke pemindai AI. Silakan isi formulir manual.</span>';
+                }
+            } finally {
+                if (btn) btn.disabled = false;
+                if (btnText) btnText.textContent = 'Pindai Ulang (AI)';
+                if (galleryBtn) galleryBtn.disabled = false;
+                if (galleryBtnText) galleryBtnText.textContent = 'Pindai Ulang (AI)';
+            }
+        }
+
         async function handleFileSelected(input) {
             const info = document.getElementById('file-info');
             if (input.files && input.files[0]) {
@@ -234,29 +562,37 @@
                 const isImage = file.type.startsWith('image/');
                 const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
 
+                // Clear any camera photos so single file is primary
+                clearAllCapturedPhotos();
+
                 if (file.size > 2 * 1024 * 1024) {
                     const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
                     if (isImage || isPdf) {
                         const typeLabel = isPdf ? 'Dokumen PDF' : 'Berkas gambar';
                         if (confirm(`${typeLabel} terpilih berukuran ${sizeMb} MB (melebihi batas aman 2 MB).\n\nApakah Anda ingin mengecilkan/mengompres berkas ini secara otomatis agar pas dan cepat diunggah?`)) {
-                            info.textContent = isPdf ? 'Memuat mesin kompresi PDF...' : 'Mengompres gambar terpilih...';
-                            info.classList.remove('hidden');
+                            const badge = document.getElementById('ocr-status-badge');
+                            if (badge) {
+                                badge.className = 'rounded-md bg-blue-50 p-2 text-xs font-medium text-blue-900 border border-blue-200 flex items-center gap-2';
+                                badge.classList.remove('hidden');
+                            }
+                            const badgeText = document.getElementById('ocr-status-text');
+                            if (badgeText) badgeText.textContent = isPdf ? 'Memuat mesin kompresi PDF...' : 'Mengompres gambar terpilih...';
                             try {
                                 let compressed = null;
                                 if (isPdf) {
                                     compressed = await compressPdfClient(file, (cur, total) => {
-                                        info.textContent = `Mengompres halaman PDF ${cur} dari ${total}...`;
+                                        if (badgeText) badgeText.textContent = `Mengompres halaman PDF ${cur} dari ${total}...`;
                                     });
                                 } else {
                                     compressed = await compressImage(file);
                                 }
-                                const sizeKb = (compressed.size / 1024).toFixed(1);
-                                info.textContent = `Berkas terkompresi: ${compressed.name} (${sizeKb} KB)`;
                                 const dt = new DataTransfer();
                                 dt.items.add(compressed);
                                 input.files = dt.files;
                                 const cam = document.getElementById('attachment_camera');
                                 if (cam) cam.value = '';
+                                updateFileInfoDisplay(compressed, true);
+                                triggerOutgoingOcrScan();
                                 return;
                             } catch (e) {
                                 console.error('Gagal mengompres berkas:', e);
@@ -267,24 +603,21 @@
                         alert(`Dokumen Word (${sizeMb} MB) melebihi batas 2 MB. Format dokumen Word tidak dapat diperkecil langsung di peramban. Silakan gunakan berkas di bawah 2 MB atau simpan sebagai PDF.`);
                     }
                     input.value = '';
-                    info.textContent = '';
-                    info.classList.add('hidden');
+                    if (info) info.classList.add('hidden');
                     return;
                 }
-                const sizeKb = (file.size / 1024).toFixed(1);
-                info.innerHTML = `Berkas terpilih: ${file.name} (${sizeKb} KB)`;
-                if (file.size >= 300 * 1024 && (isImage || isPdf)) {
-                    info.innerHTML += ` <button type="button" onclick="executeOutgoingOptionalCompress()" class="ml-2 underline font-semibold text-emerald-950 hover:text-emerald-700">Perkecil Berkas</button>`;
-                }
-                info.classList.remove('hidden');
+
+                updateFileInfoDisplay(file);
                 const cam = document.getElementById('attachment_camera');
                 if (cam) cam.value = '';
+
+                // Otomatis pindai surat keluar dengan AI
+                triggerOutgoingOcrScan();
             }
         }
 
         async function executeOutgoingOptionalCompress() {
             const input = document.getElementById('attachment');
-            const info = document.getElementById('file-info');
             if (!input || !input.files || !input.files[0]) return;
 
             const file = input.files[0];
@@ -292,12 +625,16 @@
             const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
             if (!isImage && !isPdf) return;
 
-            info.textContent = isPdf ? 'Memperkecil PDF...' : 'Memperkecil gambar...';
+            const badge = document.getElementById('ocr-status-badge');
+            const badgeText = document.getElementById('ocr-status-text');
+            if (badge) badge.classList.remove('hidden');
+            if (badgeText) badgeText.textContent = isPdf ? 'Memperkecil halaman PDF...' : 'Memperkecil gambar...';
+
             try {
                 let compressed = null;
                 if (isPdf) {
                     compressed = await compressPdfClient(file, (cur, total) => {
-                        info.textContent = `Memperkecil halaman PDF ${cur}/${total}...`;
+                        if (badgeText) badgeText.textContent = `Memperkecil halaman PDF ${cur}/${total}...`;
                     });
                 } else {
                     compressed = await compressImage(file);
@@ -307,10 +644,15 @@
                     const dt = new DataTransfer();
                     dt.items.add(compressed);
                     input.files = dt.files;
-                    const sizeKb = (compressed.size / 1024).toFixed(1);
-                    info.textContent = `Berkas terkompresi: ${compressed.name} (${sizeKb} KB - Terkompresi)`;
+                    updateFileInfoDisplay(compressed, true);
+                    if (window.showToast) {
+                        window.showToast('Ukuran berkas berhasil diperkecil.', 'success');
+                    }
                 } else {
-                    info.textContent = `Berkas terpilih: ${file.name} (${(file.size / 1024).toFixed(1)} KB - Sudah optimal)`;
+                    updateFileInfoDisplay(file, false);
+                    if (window.showToast) {
+                        window.showToast('Ukuran berkas sudah optimal.', 'info');
+                    }
                 }
             } catch (e) {
                 console.error(e);
@@ -322,25 +664,49 @@
             const info = document.getElementById('file-info');
             if (input.files && input.files[0]) {
                 const rawFile = input.files[0];
-                info.textContent = 'Memproses foto kamera...';
-                info.classList.remove('hidden');
+                const badge = document.getElementById('ocr-status-badge');
+                const badgeText = document.getElementById('ocr-status-text');
+                if (badge) badge.classList.remove('hidden');
+                if (badgeText) badgeText.textContent = 'Memproses foto kamera...';
 
                 const file = await compressImage(rawFile);
                 if (file.size > 2 * 1024 * 1024) {
                     const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
                     alert(`Ukuran foto (${sizeMb} MB) melebihi batas 2 MB per lembar.`);
                     input.value = '';
-                    info.textContent = '';
-                    info.classList.add('hidden');
                     return;
                 }
 
-                const sizeKb = (file.size / 1024).toFixed(1);
-                info.textContent = `Foto kamera terpilih: ${file.name} (${sizeKb} KB)`;
-                info.classList.remove('hidden');
-                const dt = new DataTransfer();
-                dt.items.add(file);
-                document.getElementById('attachment').files = dt.files;
+                const currentTotalBytes = capturedPhotos.reduce((sum, item) => sum + (item.file.size || 0), 0);
+                if (currentTotalBytes + file.size > 5 * 1024 * 1024) {
+                    const totalMb = ((currentTotalBytes + file.size) / (1024 * 1024)).toFixed(2);
+                    alert(`Total ukuran seluruh foto (${totalMb} MB) akan melebihi batas maksimal 5 MB. Hapus sebagian foto atau gunakan dokumen scan PDF.`);
+                    input.value = '';
+                    return;
+                }
+
+                // Clear single attachment file when camera photo is captured
+                const attInput = document.getElementById('attachment');
+                if (attInput) attInput.value = '';
+                if (info) info.classList.add('hidden');
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    capturedPhotos.push({
+                        file: file,
+                        previewUrl: e.target.result,
+                        name: `Lembar ${capturedPhotos.length + 1}`
+                    });
+                    renderPhotoGallery();
+
+                    // Otomatis pindai OCR AI pada lembar pertama yang difoto
+                    if (capturedPhotos.length === 1) {
+                        triggerOutgoingOcrScan();
+                    }
+                };
+                reader.readAsDataURL(file);
+
+                input.value = '';
             }
         }
 
@@ -350,13 +716,25 @@
                 const errorBanner = document.getElementById('form-error-banner');
                 errorBanner.classList.add('hidden');
                 errorBanner.textContent = '';
+                clearFieldErrors();
 
                 const button = form.querySelector('[type="submit"]');
                 const originalText = button.textContent;
                 button.disabled = true;
-                button.textContent = button.dataset.loadingLabel;
+                button.textContent = capturedPhotos.length > 0 ? 'Menggabungkan foto & menyimpan...' : button.dataset.loadingLabel;
 
                 try {
+                    const formData = new FormData(form);
+
+                    // If multi-photo captured, append as photos[] and remove attachment
+                    if (capturedPhotos.length > 0) {
+                        formData.delete('attachment');
+                        formData.delete('attachment_camera');
+                        capturedPhotos.forEach((item, idx) => {
+                            formData.append('photos[]', item.file, `lembar_${idx + 1}.jpg`);
+                        });
+                    }
+
                     const response = await fetch(form.action, {
                         method: 'POST',
                         headers: {
@@ -364,24 +742,31 @@
                             'Idempotency-Key': (window.generateUUID ? window.generateUUID() : crypto.randomUUID()),
                             'Accept': 'application/json'
                         },
-                        body: new FormData(form),
+                        body: formData,
                     });
 
                     const data = await response.json();
                     if (response.ok) {
+                        sessionStorage.setItem('sisurat_toast', JSON.stringify({
+                            message: data.message || 'Surat keluar berhasil ditambahkan.',
+                            type: 'success'
+                        }));
                         window.location.href = '/surat-keluar';
                     } else {
                         errorBanner.classList.remove('hidden');
                         if (data.errors) {
-                            const errMsgs = Object.values(data.errors).flat().join(' ');
-                            errorBanner.textContent = errMsgs;
+                            applyFieldErrors(data.errors);
+                            const errMsgs = Object.values(data.errors).flat().join('<br>');
+                            errorBanner.innerHTML = errMsgs;
                         } else {
+                            clearFieldErrors();
                             errorBanner.textContent = data.message || 'Gagal menyimpan surat keluar. Periksa isian form.';
                         }
                         button.disabled = false;
                         button.textContent = originalText;
                     }
                 } catch (e) {
+                    clearFieldErrors();
                     errorBanner.classList.remove('hidden');
                     errorBanner.textContent = 'Terjadi gangguan koneksi. Silakan coba kembali.';
                     button.disabled = false;

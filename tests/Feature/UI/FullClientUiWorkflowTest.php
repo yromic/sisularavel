@@ -531,6 +531,12 @@ class FullClientUiWorkflowTest extends TestCase
             ->assertSee('handleCameraSelected(this)', false)
             ->assertSee('async function handleFileSelected', false)
             ->assertSee('async function handleCameraSelected', false)
+            ->assertSee('triggerCreateOcrScan', false)
+            ->assertSee('btn-ocr-scan', false)
+            ->assertSee('form-photos-gallery-container', false)
+            ->assertSee('applyFieldErrors', false)
+            ->assertSee("sessionStorage.setItem('sisurat_toast'", false)
+            ->assertSee('handleCancelCreate', false)
             ->assertSee('window.generateUUID', false);
 
         // Check Outgoing Letter Create Page
@@ -541,6 +547,12 @@ class FullClientUiWorkflowTest extends TestCase
             ->assertSee('handleCameraSelected(this)', false)
             ->assertSee('async function handleFileSelected', false)
             ->assertSee('async function handleCameraSelected', false)
+            ->assertSee('triggerOutgoingOcrScan', false)
+            ->assertSee('btn-ocr-scan', false)
+            ->assertSee('form-photos-gallery-container', false)
+            ->assertSee('applyFieldErrors', false)
+            ->assertSee("sessionStorage.setItem('sisurat_toast'", false)
+            ->assertSee('handleCancelCreate', false)
             ->assertSee('window.generateUUID', false);
     }
 }

@@ -103,7 +103,7 @@ PROMPT;
         foreach ($keys as $apiKey) {
             try {
                 $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
-                $response = Http::timeout(6)
+                $response = Http::timeout(15)
                     ->withHeaders(['Content-Type' => 'application/json'])
                     ->post($url, [
                         'contents' => [
