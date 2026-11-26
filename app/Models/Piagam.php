@@ -26,6 +26,8 @@ class Piagam extends Model
         'competition_year',
         'pickup_category_id',
         'pickup_category_name',
+        'document_type_id',
+        'document_type_name',
         'recipient_name',
         'recipient_position',
         'recipient_unit',
@@ -50,6 +52,11 @@ class Piagam extends Model
     public function getCompetitionDisplayNameAttribute(): string
     {
         return $this->competition_category_name ?: ($this->competitionCategory?->name ?: '-');
+    }
+
+    public function getDocumentTypeDisplayNameAttribute(): string
+    {
+        return $this->document_type_name ?: ($this->documentType?->name ?: 'Piagam Penghargaan');
     }
 
     public function getUnitDisplayNameAttribute(): string
@@ -80,6 +87,11 @@ class Piagam extends Model
     public function pickupCategory(): BelongsTo
     {
         return $this->belongsTo(PickupCategory::class);
+    }
+
+    public function documentType(): BelongsTo
+    {
+        return $this->belongsTo(DocumentType::class);
     }
 
     public function attachments(): MorphMany

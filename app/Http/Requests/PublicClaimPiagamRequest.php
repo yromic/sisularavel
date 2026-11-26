@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\CompetitionCategory;
 use App\Models\Division;
+use App\Models\DocumentType;
 use App\Models\PickupCategory;
 use App\Models\School;
 use App\Models\WorkUnit;
@@ -68,6 +69,12 @@ class PublicClaimPiagamRequest extends FormRequest
                 Rule::exists('competition_categories', 'id')->where('is_active', true),
             ],
             'competition_category_name' => ['nullable', 'string', 'max:150'],
+            'document_type_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('document_types', 'id')->where('is_active', true),
+            ],
+            'document_type_name' => ['nullable', 'string', 'max:150'],
             'competition_year' => ['required', 'integer', 'min:2000', 'max:2099'],
             'student_name' => ['required', 'string', 'max:150'],
             'piagam_description' => ['required', 'string', 'max:255'],
@@ -178,6 +185,24 @@ class PublicClaimPiagamRequest extends FormRequest
         $studentName = trim((string) ($this->input('student_name') ?: $this->input('piagam_description')));
         $piagamDesc = trim((string) ($this->input('piagam_description') ?: ($compCatName ? "{$compCatName} – {$studentName}" : $studentName)));
 
+        // 6. Resolve Document Type
+        $docTypeId = $this->input('document_type_id');
+        $docTypeName = trim((string) $this->input('document_type_name'));
+
+        if ($docTypeId && is_numeric($docTypeId)) {
+            $docType = DocumentType::query()->where('is_active', true)->find($docTypeId);
+            if ($docType) {
+                $docTypeName = $docType->name;
+            }
+        }
+
+        if (! $docTypeName) {
+            $defaultDoc = DocumentType::query()->where('code', 'PIAGAM')->first()
+                ?? DocumentType::query()->where('is_active', true)->first();
+            $docTypeId = $defaultDoc?->id;
+            $docTypeName = $defaultDoc?->name ?? 'Piagam Penghargaan';
+        }
+
         $this->merge([
             'division_id' => $divisionId ? (int) $divisionId : null,
             'school_id' => $schoolId ? (int) $schoolId : null,
@@ -185,6 +210,8 @@ class PublicClaimPiagamRequest extends FormRequest
             'recipient_unit' => is_string($unitLabel) ? trim($unitLabel) : $unitLabel,
             'school_origin' => is_string($unitLabel) ? trim($unitLabel) : $unitLabel,
             'npsn' => $npsn !== '' ? $npsn : null,
+            'document_type_id' => $docTypeId ? (int) $docTypeId : null,
+            'document_type_name' => $docTypeName,
             'pickup_category_id' => $pickupCatId ? (int) $pickupCatId : null,
             'pickup_category_name' => $pickupCatName,
             'competition_category_id' => $compCatId ? (int) $compCatId : null,

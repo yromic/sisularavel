@@ -33,7 +33,7 @@
             <div class="flex items-center gap-2.5">
                 <a href="/piagam/ambil" class="inline-flex min-h-[44px] items-center gap-2 rounded-md bg-emerald-600 px-4 text-xs font-semibold text-white shadow-md hover:bg-emerald-500 transition-colors">
                     <x-icon name="signature" class="h-4 w-4" />
-                    Ambil Piagam
+                    Ambil Dokumen Dinas
                 </a>
                 @auth
                     <a href="/dashboard" class="inline-flex min-h-[44px] items-center gap-2 rounded-md border border-white/20 bg-white/10 px-4 text-xs font-semibold text-white shadow-xs backdrop-blur-sm hover:bg-white/20 transition-colors">
@@ -58,13 +58,13 @@
                 Sistem Informasi Persuratan & Pengambilan Piagam
             </h2>
             <p class="mt-5 text-sm sm:text-lg text-slate-200 leading-relaxed max-w-2xl mx-auto font-normal drop-shadow-xs">
-                Selamat datang di portal pelayanan Disdikbudpora Kabupaten Semarang. Bagi tamu sekolah, guru, atau perwakilan yang hadir di kantor dinas untuk serah terima piagam, silakan buka form bukti tanda terima langsung di bawah ini.
+                Selamat datang di portal pelayanan Disdikbudpora Kabupaten Semarang. Bagi tamu sekolah, guru, atau perwakilan yang hadir di kantor dinas untuk serah terima dokumen dinas atau piagam penghargaan, silakan buka form bukti tanda terima langsung di bawah ini.
             </p>
 
             <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5">
                 <a href="/piagam/ambil" class="flex min-h-[48px] w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-emerald-600 px-6 text-sm font-bold text-white shadow-lg shadow-emerald-950/50 hover:bg-emerald-500 transition-all">
                     <x-icon name="signature" class="h-5 w-5" />
-                    Ambil Piagam (Isi Tanda Terima)
+                    Ambil Dokumen Dinas (Isi Tanda Terima)
                 </a>
                 <a href="/login" class="flex min-h-[48px] w-full sm:w-auto items-center justify-center gap-2 rounded-lg border border-white/25 bg-white/10 px-6 text-sm font-semibold text-white backdrop-blur-md hover:bg-white/20 transition-all">
                     <x-icon name="key" class="h-4 w-4 text-emerald-300" />

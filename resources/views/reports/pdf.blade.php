@@ -202,24 +202,26 @@
 
     <!-- 3. Piagam & Sertifikat -->
     @if ($type === 'piagam' || $type === 'all')
-        <div class="section-title">Rekapitulasi Pengambilan Piagam ({{ $piagams->count() }} Data)</div>
+        <div class="section-title">Rekapitulasi Pengambilan Dokumen Dinas / Piagam ({{ $piagams->count() }} Data)</div>
         <table class="data-table">
             <thead>
                 <tr>
                     <th style="width: 4%;">No</th>
-                    <th style="width: 18%;">Nama Siswa</th>
-                    <th style="width: 20%;">Sekolah</th>
-                    <th style="width: 14%;">Kategori Lomba</th>
+                    <th style="width: 13%;">Jenis Dokumen</th>
+                    <th style="width: 17%;">Nama Siswa</th>
+                    <th style="width: 18%;">Sekolah</th>
+                    <th style="width: 12%;">Kategori Lomba</th>
                     <th style="width: 6%;">Tahun</th>
-                    <th style="width: 12%;">Status</th>
-                    <th style="width: 16%;">Penerima</th>
-                    <th style="width: 10%;">Divisi</th>
+                    <th style="width: 10%;">Status</th>
+                    <th style="width: 12%;">Penerima</th>
+                    <th style="width: 8%;">Divisi</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($piagams as $index => $piagam)
                     <tr>
                         <td class="text-center">{{ $index + 1 }}</td>
+                        <td>{{ $piagam->document_type_display_name }}</td>
                         <td style="font-weight: 600;">{{ $piagam->piagam_description ?: $piagam->student_name }}</td>
                         <td>{{ $piagam->school?->name ?? $piagam->school_origin ?? $piagam->recipient_unit ?? '-' }}</td>
                         <td>{{ $piagam->competition_category_name ?: ($piagam->competitionCategory?->name ?? '-') }}</td>
@@ -230,7 +232,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="text-center" style="padding: 12px; color: #64748b;">Tidak ada data piagam untuk kriteria yang dipilih.</td>
+                        <td colspan="9" class="text-center" style="padding: 12px; color: #64748b;">Tidak ada data dokumen dinas/piagam untuk kriteria yang dipilih.</td>
                     </tr>
                 @endforelse
             </tbody>

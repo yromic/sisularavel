@@ -131,7 +131,7 @@
                     <a href="/" target="_blank" class="flex min-h-[44px] items-center justify-between rounded-lg border border-[#23344E] bg-[#0F1725]/60 px-3 text-xs font-semibold text-slate-300 hover:bg-[#23344E] hover:text-white transition-colors">
                         <span class="flex items-center gap-2">
                             <x-icon name="signature" class="h-4 w-4 text-teal-400" />
-                            Portal Tamu (Ambil Piagam)
+                            Portal Tamu (Ambil Dokumen Dinas)
                         </span>
                         <x-icon name="external-link" class="h-3.5 w-3.5 text-slate-400" />
                     </a>
@@ -255,7 +255,7 @@
                         <a href="/" target="_blank" class="flex min-h-[44px] items-center justify-between rounded-lg border border-[#23344E] bg-[#0F1725]/60 px-3 text-xs font-semibold text-slate-300 hover:bg-[#23344E] hover:text-white transition-colors">
                             <span class="flex items-center gap-2">
                                 <x-icon name="signature" class="h-4 w-4 text-teal-400" />
-                                Portal Tamu (Ambil Piagam)
+                                Portal Tamu (Ambil Dokumen Dinas)
                             </span>
                             <x-icon name="external-link" class="h-3.5 w-3.5 text-slate-400" />
                         </a>

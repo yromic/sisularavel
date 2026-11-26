@@ -23,6 +23,7 @@ use App\Http\Middleware\EnsureActiveAccount;
 use App\Http\Middleware\EnsurePasswordIsActivated;
 use App\Models\CompetitionCategory;
 use App\Models\Division;
+use App\Models\DocumentType;
 use App\Models\IncomingLetter;
 use App\Models\OutgoingLetter;
 use App\Models\Piagam;
@@ -56,6 +57,7 @@ Route::get('/piagam/ambil', function () {
     $workUnits = WorkUnit::query()->where('is_active', true)->orderBy('name')->get(['id', 'code', 'name']);
     $pickupCategories = PickupCategory::query()->where('is_active', true)->orderBy('id')->get(['id', 'division_id', 'name'])->unique('name')->values();
     $competitionCategories = CompetitionCategory::query()->where('is_active', true)->orderBy('name')->get(['id', 'division_id', 'name']);
+    $documentTypes = DocumentType::query()->where('is_active', true)->orderBy('id')->get(['id', 'division_id', 'name', 'code']);
 
     return view('piagam.claim', [
         'schools' => $schools,
@@ -63,6 +65,7 @@ Route::get('/piagam/ambil', function () {
         'workUnits' => $workUnits,
         'pickupCategories' => $pickupCategories,
         'competitionCategories' => $competitionCategories,
+        'documentTypes' => $documentTypes,
     ]);
 })->name('piagam.ambil');
 Route::get('/password/activate', fn () => view('auth.activate'))->middleware('auth')->name('password.activate');
@@ -223,7 +226,7 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
         $dateTo = $request->input('date_to');
 
         $piagams = Piagam::query()
-            ->with(['school', 'competitionCategory', 'pickupCategory', 'attachments', 'division'])
+            ->with(['school', 'competitionCategory', 'pickupCategory', 'documentType', 'attachments', 'division'])
             ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
             ->when($dateFrom, fn ($query) => $query->whereDate('created_at', '>=', $dateFrom))
             ->when($dateTo, fn ($query) => $query->whereDate('created_at', '<=', $dateTo))
@@ -232,6 +235,7 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
                     ->orWhere('piagam_description', 'like', "%{$q}%")
                     ->orWhere('recipient_name', 'like', "%{$q}%")
                     ->orWhere('school_origin', 'like', "%{$q}%")
+                    ->orWhere('document_type_name', 'like', "%{$q}%")
                     ->orWhereHas('school', fn ($s) => $s->where('name', 'like', "%{$q}%"));
             }))
             ->latest('id')
@@ -356,6 +360,7 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
         $competitionQuery = $isTrashed ? CompetitionCategory::onlyTrashed() : CompetitionCategory::query();
         $pickupQuery = $isTrashed ? PickupCategory::onlyTrashed() : PickupCategory::query();
         $workUnitQuery = $isTrashed ? WorkUnit::onlyTrashed() : WorkUnit::query();
+        $documentTypeQuery = $isTrashed ? DocumentType::onlyTrashed() : DocumentType::query();
 
         $competitionCategories = $competitionQuery
             ->with('division')
@@ -369,18 +374,27 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
 
         $workUnits = $workUnitQuery->orderBy('name')->get();
 
+        $documentTypes = $documentTypeQuery
+            ->with('division')
+            ->when($divisionId !== null, fn ($query) => $query->where(fn ($sub) => $sub->whereNull('division_id')->orWhere('division_id', $divisionId)))
+            ->orderBy('id')
+            ->get();
+
         $trashedCount = CompetitionCategory::onlyTrashed()->when($divisionId !== null, fn ($q) => $q->where('division_id', $divisionId))->count()
             + PickupCategory::onlyTrashed()->when($divisionId !== null, fn ($q) => $q->where('division_id', $divisionId))->count()
-            + WorkUnit::onlyTrashed()->count();
+            + WorkUnit::onlyTrashed()->count()
+            + DocumentType::onlyTrashed()->when($divisionId !== null, fn ($q) => $q->where(fn ($sub) => $sub->whereNull('division_id')->orWhere('division_id', $divisionId)))->count();
 
         $activeCount = CompetitionCategory::query()->when($divisionId !== null, fn ($q) => $q->where('division_id', $divisionId))->count()
             + PickupCategory::query()->when($divisionId !== null, fn ($q) => $q->where('division_id', $divisionId))->count()
-            + WorkUnit::query()->count();
+            + WorkUnit::query()->count()
+            + DocumentType::query()->when($divisionId !== null, fn ($q) => $q->where(fn ($sub) => $sub->whereNull('division_id')->orWhere('division_id', $divisionId)))->count();
 
         return view('master.categories.index', [
             'competitionCategories' => $competitionCategories,
             'pickupCategories' => $pickupCategories,
             'workUnits' => $workUnits,
+            'documentTypes' => $documentTypes,
             'status' => $status,
             'divisionId' => $divisionId,
             'activeCount' => $activeCount,
@@ -393,6 +407,8 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
     Route::delete('/master/sekolah/{school}', [SchoolController::class, 'destroy']);
     Route::post('/master/pengguna/{id}/restore', [UserManagementController::class, 'restore']);
     Route::delete('/master/pengguna/{user}', [UserManagementController::class, 'destroy']);
+    Route::post('/master/kategori/jenis-dokumen/{id}/restore', [ReferenceCategoryController::class, 'restoreDocumentType']);
+    Route::delete('/master/kategori/jenis-dokumen/{documentType}', [ReferenceCategoryController::class, 'destroyDocumentType']);
     Route::post('/master/kategori/lomba/{id}/restore', [ReferenceCategoryController::class, 'restoreCompetition']);
     Route::delete('/master/kategori/lomba/{category}', [ReferenceCategoryController::class, 'destroyCompetition']);
     Route::post('/master/kategori/pengambilan/{id}/restore', [ReferenceCategoryController::class, 'restorePickup']);
@@ -662,6 +678,12 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
     Route::post('/api/v1/reference/work-units/bulk-restore/preview', [ReferenceCategoryController::class, 'bulkPreviewWorkUnit'])->middleware('throttle:bulk');
     Route::post('/api/v1/reference/work-units/bulk-delete', [ReferenceCategoryController::class, 'bulkDestroyWorkUnit'])->middleware(['idempotent', 'throttle:bulk']);
     Route::post('/api/v1/reference/work-units/bulk-restore', [ReferenceCategoryController::class, 'bulkRestoreWorkUnit'])->middleware(['idempotent', 'throttle:bulk']);
+
+    Route::post('/api/v1/reference/document-types', [ReferenceCategoryController::class, 'storeDocumentType']);
+    Route::put('/api/v1/reference/document-types/{documentType}', [ReferenceCategoryController::class, 'updateDocumentType']);
+    Route::post('/api/v1/reference/document-types/{id}/restore', [ReferenceCategoryController::class, 'restoreDocumentType']);
+    Route::delete('/api/v1/reference/document-types/{documentType}', [ReferenceCategoryController::class, 'destroyDocumentType']);
+
     Route::post('/api/v1/divisions', [DivisionManagementController::class, 'store']);
     Route::put('/api/v1/divisions/{division}', [DivisionManagementController::class, 'update']);
     Route::patch('/api/v1/divisions/{division}/status', [DivisionManagementController::class, 'updateStatus']);

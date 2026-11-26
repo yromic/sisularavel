@@ -62,6 +62,8 @@ class PublicPiagamController extends Controller
         }
         $competitionCategoryId = $request->input('competition_category_id');
         $competitionCategoryName = $request->input('competition_category_name');
+        $documentTypeId = $request->input('document_type_id');
+        $documentTypeName = $request->input('document_type_name') ?: 'Piagam Penghargaan';
 
         $path = 'signatures/'.$division->code.'/'.Str::uuid().'.png';
         $stagedPath = null;
@@ -77,6 +79,8 @@ class PublicPiagamController extends Controller
                 $schoolOrigin,
                 $studentName,
                 $piagamDescription,
+                $documentTypeId,
+                $documentTypeName,
                 $competitionCategoryId,
                 $competitionCategoryName,
                 $competitionYear,
@@ -96,6 +100,8 @@ class PublicPiagamController extends Controller
                 $piagam = Piagam::query()->create([
                     'uuid' => (string) Str::uuid(),
                     'division_id' => $division->id,
+                    'document_type_id' => $documentTypeId,
+                    'document_type_name' => $documentTypeName,
                     'student_name' => $studentName,
                     'piagam_description' => $piagamDescription,
                     'school_id' => $schoolId,
@@ -152,6 +158,8 @@ class PublicPiagamController extends Controller
             'data' => [
                 'id' => $piagam->id,
                 'uuid' => $piagam->uuid,
+                'document_type_id' => $piagam->document_type_id,
+                'document_type_name' => $piagam->document_type_display_name,
                 'piagam_description' => $piagam->piagam_description,
                 'student_name' => $piagam->student_name,
                 'school_origin' => $piagam->school_origin,

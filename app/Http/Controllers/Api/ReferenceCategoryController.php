@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BulkDeleteRequest;
 use App\Models\CompetitionCategory;
+use App\Models\DocumentType;
 use App\Models\PickupCategory;
 use App\Models\WorkUnit;
 use App\Services\AuditLogger;
@@ -25,6 +26,114 @@ class ReferenceCategoryController extends Controller
     public function storeCompetition(Request $request, DivisionContext $divisionContext): Response
     {
         return $this->storeCategory($request, $divisionContext, new CompetitionCategory);
+    }
+
+    public function storeDocumentType(Request $request, DivisionContext $divisionContext): Response
+    {
+        $user = $request->user();
+        abort_unless(in_array($user?->role, ['super_admin', 'division_admin'], true), 403);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:150'],
+            'code' => ['nullable', 'string', 'max:50'],
+            'division_id' => ['nullable', 'integer', 'exists:divisions,id'],
+            'is_active' => ['sometimes', 'boolean'],
+        ]);
+
+        $divisionId = $validated['division_id'] ?? $divisionContext->activeDivisionId($request, $user);
+        if ($user->role !== 'super_admin') {
+            $divisionId = $user->division_id;
+        }
+
+        $docType = DocumentType::query()->create([
+            'division_id' => $divisionId,
+            'name' => trim($validated['name']),
+            'code' => isset($validated['code']) && trim($validated['code']) !== '' ? strtoupper(trim($validated['code'])) : null,
+            'is_active' => $validated['is_active'] ?? true,
+        ]);
+
+        if (! $request->expectsJson()) {
+            return back()->with('success', "Jenis dokumen {$docType->name} berhasil ditambahkan.");
+        }
+
+        return response()->json(['data' => $docType], 201);
+    }
+
+    public function updateDocumentType(Request $request, DocumentType $documentType): Response
+    {
+        $user = $request->user();
+        abort_unless(in_array($user?->role, ['super_admin', 'division_admin'], true), 403);
+        if ($user->role !== 'super_admin' && $documentType->division_id !== null && $documentType->division_id !== $user->division_id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:150'],
+            'code' => ['nullable', 'string', 'max:50'],
+            'is_active' => ['sometimes', 'boolean'],
+        ]);
+
+        $documentType->update([
+            'name' => trim($validated['name']),
+            'code' => isset($validated['code']) && trim($validated['code']) !== '' ? strtoupper(trim($validated['code'])) : $documentType->code,
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
+        if (! $request->expectsJson()) {
+            return back()->with('success', "Jenis dokumen {$documentType->name} berhasil diperbarui.");
+        }
+
+        return response()->json(['data' => $documentType]);
+    }
+
+    public function destroyDocumentType(Request $request, DocumentType $documentType, AuditLogger $auditLogger): Response
+    {
+        $user = $request->user();
+        abort_unless(in_array($user?->role, ['super_admin', 'division_admin'], true), 403);
+        if ($user->role !== 'super_admin' && $documentType->division_id !== null && $documentType->division_id !== $user->division_id) {
+            abort(403);
+        }
+
+        $documentType->delete();
+
+        $auditLogger->log(
+            'DOCUMENT_TYPE_DELETED',
+            $user,
+            "Menghapus jenis dokumen {$documentType->name} (soft delete).",
+            $documentType
+        );
+
+        if (! $request->expectsJson()) {
+            return redirect('/master/kategori')->with('success', "Jenis dokumen {$documentType->name} berhasil dihapus.");
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function restoreDocumentType(Request $request, int $id, AuditLogger $auditLogger): Response
+    {
+        $user = $request->user();
+        abort_unless(in_array($user?->role, ['super_admin', 'division_admin'], true), 403);
+
+        $documentType = DocumentType::onlyTrashed()->findOrFail($id);
+        if ($user->role !== 'super_admin' && $documentType->division_id !== null && $documentType->division_id !== $user->division_id) {
+            abort(403);
+        }
+
+        $documentType->restore();
+
+        $auditLogger->log(
+            'DOCUMENT_TYPE_RESTORED',
+            $user,
+            "Memulihkan jenis dokumen {$documentType->name} dari arsip.",
+            $documentType
+        );
+
+        if (! $request->expectsJson()) {
+            return back()->with('success', "Jenis dokumen {$documentType->name} berhasil dipulihkan.");
+        }
+
+        return response()->json(['success' => true, 'data' => $documentType]);
     }
 
     public function updatePickup(Request $request, PickupCategory $category): Response

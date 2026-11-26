@@ -47,6 +47,10 @@
                             <dd id="modal-piagam-time" class="col-span-2 font-semibold text-slate-900">-</dd>
                         </div>
                         <div class="grid grid-cols-3 gap-2 border-t border-slate-100 pt-2.5">
+                            <dt class="font-medium text-slate-500">Jenis Dokumen</dt>
+                            <dd id="modal-piagam-doc-type" class="col-span-2 font-semibold text-slate-900">-</dd>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 border-t border-slate-100 pt-2.5">
                             <dt class="font-medium text-slate-500">Asal Sekolah / Instansi</dt>
                             <dd id="modal-piagam-school" class="col-span-2 text-slate-800 font-medium break-words">-</dd>
                         </div>
@@ -307,6 +311,7 @@
             document.getElementById('modal-piagam-title').textContent = data.piagam_description || data.student_name;
             document.getElementById('modal-piagam-division-badge').textContent = data.division_code || 'DIVISI';
             document.getElementById('modal-piagam-time').textContent = data.created_at_human || data.created_at_formatted;
+            document.getElementById('modal-piagam-doc-type').textContent = data.document_type_name || 'Piagam Penghargaan';
             document.getElementById('modal-piagam-school').textContent = data.unit_display_name || data.school_origin || '-';
             document.getElementById('modal-piagam-npsn').textContent = data.npsn || '-';
             document.getElementById('modal-piagam-division').textContent = `${data.division_code} — ${data.division_name}`;

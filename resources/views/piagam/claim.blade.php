@@ -35,7 +35,8 @@
                 :divisions="$divisions ?? collect()"
                 :work-units="$workUnits ?? collect()"
                 :pickup-categories="$pickupCategories ?? collect()"
-                :competition-categories="$competitionCategories ?? collect()" />
+                :competition-categories="$competitionCategories ?? collect()"
+                :document-types="$documentTypes ?? collect()" />
         </div>
     </div>
 </x-layouts.app>

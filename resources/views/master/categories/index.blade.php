@@ -48,7 +48,72 @@
             </a>
         </div>
 
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+            <!-- 0. Jenis Dokumen Dinas -->
+            <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-xs" id="section-document-type">
+                <div class="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div>
+                        <h2 class="font-semibold text-slate-900">Jenis Dokumen Dinas</h2>
+                        <p class="text-xs text-slate-500">Kategori dokumen fisik serah terima.</p>
+                    </div>
+                </div>
+
+                @if (($status ?? 'active') !== 'trashed')
+                    <form method="post" action="/api/v1/reference/document-types" class="mb-4 flex gap-2">
+                        @csrf
+                        <input name="name" id="input-cat-doc-type-name" aria-label="Nama jenis dokumen baru" class="min-h-[44px] flex-1 rounded-md border border-slate-300 px-3 text-sm focus:border-emerald-700 focus:outline-hidden" placeholder="Jenis dokumen..." required>
+                        <button type="submit" class="min-h-[44px] rounded-md bg-emerald-700 px-4 text-xs font-semibold text-white hover:bg-emerald-800 shrink-0">
+                            + Tambah
+                        </button>
+                    </form>
+                @endif
+
+                <div class="divide-y divide-slate-100">
+                    @forelse ($documentTypes ?? collect() as $docType)
+                        <div class="flex items-center justify-between py-2.5">
+                            <div class="flex items-center gap-2.5">
+                                <div>
+                                    <span class="text-sm font-medium text-slate-800">{{ $docType->name }}</span>
+                                    @if ($docType->code)
+                                        <span class="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-slate-600 ml-1">{{ $docType->code }}</span>
+                                    @endif
+                                    @if ($docType->division)
+                                        <span class="rounded bg-teal-50 border border-teal-200 px-1.5 py-0.5 text-[10px] font-bold text-teal-800 ml-1">{{ $docType->division->code }}</span>
+                                    @else
+                                        <span class="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 ml-1">Umum</span>
+                                    @endif
+                                </div>
+                            </div>
+                            <div>
+                                @if (in_array(auth()->user()->role, ['super_admin', 'division_admin']))
+                                    @if (($status ?? 'active') === 'trashed')
+                                        <form method="post" action="/master/kategori/jenis-dokumen/{{ $docType->id }}/restore" class="inline">
+                                            @csrf
+                                            <button type="submit" class="flex min-h-[38px] items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 px-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100" title="Pulihkan jenis dokumen">
+                                                <x-icon name="rotate-ccw" class="h-3.5 w-3.5" />
+                                                <span>Pulihkan</span>
+                                            </button>
+                                        </form>
+                                    @else
+                                        <form method="post" action="/master/kategori/jenis-dokumen/{{ $docType->id }}" onsubmit="return confirmAction(event, 'Hapus jenis dokumen {{ $docType->name }}?', 'Konfirmasi Hapus Jenis Dokumen', 'danger', 'Ya, Hapus')" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="flex min-h-[38px] min-w-[38px] items-center justify-center rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50" title="Hapus jenis dokumen">
+                                                <x-icon name="trash" class="h-4 w-4" />
+                                            </button>
+                                        </form>
+                                    @endif
+                                @endif
+                            </div>
+                        </div>
+                    @empty
+                        <p class="py-4 text-center text-xs text-slate-500">
+                            {{ ($status ?? 'active') === 'trashed' ? 'Tidak ada jenis dokumen di Tempat Sampah.' : 'Belum ada jenis dokumen.' }}
+                        </p>
+                    @endforelse
+                </div>
+            </div>
+
             <!-- 1. Competition Categories -->
             <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-xs" id="section-competition">
                 <div class="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">

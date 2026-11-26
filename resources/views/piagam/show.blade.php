@@ -48,6 +48,10 @@
                         <dt class="text-xs font-medium text-slate-500">Waktu Penyerahan</dt>
                         <dd class="mt-1 text-sm font-semibold text-slate-900">{{ $piagam->created_at->format('d F Y, H:i') }} WIB</dd>
                     </div>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500">Jenis Dokumen</dt>
+                        <dd class="mt-1 text-sm font-semibold text-slate-900">{{ $piagam->document_type_display_name }}</dd>
+                    </div>
                     <div class="sm:col-span-2">
                         <dt class="text-xs font-medium text-slate-500">Keterangan Piagam / Lomba</dt>
                         <dd class="mt-1 text-sm font-semibold text-slate-900">{{ $piagam->piagam_description ?: $piagam->student_name }}</dd>

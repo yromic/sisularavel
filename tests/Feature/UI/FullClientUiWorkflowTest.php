@@ -228,7 +228,7 @@ class FullClientUiWorkflowTest extends TestCase
         // Landing page view (Phase B: landing page shows CTA button to /piagam/ambil)
         $this->get('/')
             ->assertOk()
-            ->assertSee('Ambil Piagam')
+            ->assertSee('Ambil Dokumen Dinas')
             ->assertSee('/piagam/ambil');
 
         // Handover receipt page view

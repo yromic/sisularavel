@@ -4,6 +4,7 @@
     'workUnits' => collect(),
     'pickupCategories' => collect(),
     'competitionCategories' => collect(),
+    'documentTypes' => collect(),
 ])
 
 @php
@@ -21,6 +22,12 @@
     if ($competitionCategories->isEmpty()) {
         $competitionCategories = \App\Models\CompetitionCategory::query()->where('is_active', true)->orderBy('name')->get(['id', 'division_id', 'name']);
     }
+    if ($documentTypes->isEmpty()) {
+        $documentTypes = \App\Models\DocumentType::query()->where('is_active', true)->orderBy('id')->get(['id', 'division_id', 'name', 'code']);
+    }
+    $defaultDocType = $documentTypes->firstWhere('code', 'PIAGAM') ?? $documentTypes->first();
+    $defaultDocTypeId = $defaultDocType?->id ?? 1;
+    $defaultDocTypeName = $defaultDocType?->name ?? 'Piagam Penghargaan';
 @endphp
 
 <div class="w-full">
@@ -200,7 +207,20 @@
                 </legend>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-6">
-                    <div class="md:col-span-3">
+                    <div>
+                        <label for="document_type_display" class="{{ $labelCls }}">Jenis Dokumen</label>
+                        <input type="text"
+                               id="document_type_display"
+                               value="{{ $defaultDocTypeName }}"
+                               class="{{ $inputCls }} bg-slate-100 text-slate-700 cursor-not-allowed select-none font-medium"
+                               readonly
+                               tabindex="-1">
+                        <input type="hidden" name="document_type_id" id="document_type_id" value="{{ $defaultDocTypeId }}">
+                        <input type="hidden" name="document_type_name" id="document_type_name" value="{{ $defaultDocTypeName }}">
+                        <p class="mt-1 text-[11px] text-slate-500">Standar dokumen dinas (read-only).</p>
+                    </div>
+
+                    <div class="md:col-span-2">
                         <label for="student_name" class="{{ $labelCls }}">Nama siswa atau regu</label>
                         <input type="text"
                                name="student_name"
@@ -607,6 +627,8 @@
                 competition_category_manual: document.getElementById('competition_category_manual')?.value || '',
                 competition_year: document.getElementById('competition_year').value,
                 student_name: document.getElementById('student_name').value,
+                document_type_id: document.getElementById('document_type_id')?.value || '',
+                document_type_name: document.getElementById('document_type_name')?.value || '',
                 piagam_description: document.getElementById('piagam_description')?.value || '',
                 signature_canvas: dataUrl
             };

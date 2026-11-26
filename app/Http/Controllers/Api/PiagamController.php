@@ -88,7 +88,7 @@ class PiagamController extends Controller
             ], 403);
         }
 
-        $piagam->loadMissing(['division', 'school', 'workUnit', 'competitionCategory', 'pickupCategory', 'createdBy', 'attachments']);
+        $piagam->loadMissing(['division', 'school', 'workUnit', 'competitionCategory', 'pickupCategory', 'documentType', 'createdBy', 'attachments']);
 
         return response()->json([
             'success' => true,
@@ -216,6 +216,8 @@ class PiagamController extends Controller
             'id' => $piagam->id,
             'uuid' => $piagam->uuid,
             'division_id' => $piagam->division_id,
+            'document_type_id' => $piagam->document_type_id,
+            'document_type_name' => $piagam->document_type_display_name,
             'student_name' => $piagam->student_name,
             'school_id' => $piagam->school_id,
             'competition_category_id' => $piagam->competition_category_id,
@@ -239,6 +241,8 @@ class PiagamController extends Controller
             'division_id' => $piagam->division_id,
             'division_name' => $piagam->division?->name,
             'division_code' => $piagam->division?->code,
+            'document_type_id' => $piagam->document_type_id,
+            'document_type_name' => $piagam->document_type_display_name,
             'student_name' => $piagam->student_name,
             'piagam_description' => $piagam->piagam_description ?: $piagam->student_name,
             'school_origin' => $piagam->school_origin,

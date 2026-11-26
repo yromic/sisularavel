@@ -125,6 +125,7 @@ class ReportExportController extends Controller
             } elseif ($type === 'piagam') {
                 fputcsv($output, [
                     'No',
+                    'Jenis Dokumen',
                     'Nama Siswa',
                     'Sekolah',
                     'NPSN',
@@ -140,7 +141,7 @@ class ReportExportController extends Controller
                 ]);
 
                 $query = Piagam::query()
-                    ->with(['division', 'school', 'competitionCategory', 'pickupCategory', 'createdBy'])
+                    ->with(['division', 'school', 'competitionCategory', 'pickupCategory', 'documentType', 'createdBy'])
                     ->when($divisionId !== null, fn ($builder) => $builder->where('division_id', $divisionId))
                     ->when($dateFrom, fn ($builder) => $builder->whereDate('created_at', '>=', $dateFrom))
                     ->when($dateTo, fn ($builder) => $builder->whereDate('created_at', '<=', $dateTo))
@@ -151,6 +152,7 @@ class ReportExportController extends Controller
                             ->orWhere('piagam_description', 'like', "%{$q}%")
                             ->orWhere('recipient_name', 'like', "%{$q}%")
                             ->orWhere('school_origin', 'like', "%{$q}%")
+                            ->orWhere('document_type_name', 'like', "%{$q}%")
                             ->orWhereHas('school', fn ($s) => $s->where('name', 'like', "%{$q}%"));
                     }))
                     ->orderBy('id');
@@ -158,6 +160,7 @@ class ReportExportController extends Controller
                 $query->each(function (Piagam $piagam) use ($output, &$rowNumber): void {
                     fputcsv($output, [
                         $rowNumber++,
+                        $this->sanitizeCell($piagam->document_type_display_name),
                         $this->sanitizeCell($piagam->piagam_description ?: $piagam->student_name),
                         $this->sanitizeCell($piagam->school?->name ?? $piagam->school_origin ?? '-'),
                         $this->sanitizeCell($piagam->npsn ?? $piagam->school?->npsn ?? '-'),
@@ -246,7 +249,7 @@ class ReportExportController extends Controller
 
                 // 3. Piagam
                 Piagam::query()
-                    ->with(['division', 'school', 'competitionCategory', 'pickupCategory', 'createdBy'])
+                    ->with(['division', 'school', 'competitionCategory', 'pickupCategory', 'documentType', 'createdBy'])
                     ->when($divisionId !== null, fn ($builder) => $builder->where('division_id', $divisionId))
                     ->when($dateFrom, fn ($builder) => $builder->whereDate('created_at', '>=', $dateFrom))
                     ->when($dateTo, fn ($builder) => $builder->whereDate('created_at', '<=', $dateTo))
@@ -254,14 +257,15 @@ class ReportExportController extends Controller
                     ->when($month, fn ($builder) => $builder->whereMonth('created_at', $month))
                     ->when($q, fn ($builder) => $builder->where(function ($sub) use ($q) {
                         $sub->where('student_name', 'like', "%{$q}%")
-                            ->orWhere('recipient_name', 'like', "%{$q}%");
+                            ->orWhere('recipient_name', 'like', "%{$q}%")
+                            ->orWhere('document_type_name', 'like', "%{$q}%");
                     }))
                     ->orderBy('id')
                     ->each(function (Piagam $piagam) use ($output, &$rowNumber): void {
                         $status = $piagam->recipient_name ? 'Diambil: '.$piagam->recipient_name : 'Belum Diambil';
                         fputcsv($output, [
                             $rowNumber++,
-                            'Piagam',
+                            $this->sanitizeCell($piagam->document_type_display_name),
                             $this->sanitizeCell($piagam->student_name),
                             $this->sanitizeCell($piagam->school?->name ?? '-'),
                             $this->sanitizeCell($piagam->competitionCategory?->name ?? '-'),
@@ -346,7 +350,7 @@ class ReportExportController extends Controller
 
         if ($type === 'piagam' || $type === 'all') {
             $piagams = Piagam::query()
-                ->with(['division', 'school', 'competitionCategory', 'pickupCategory', 'createdBy'])
+                ->with(['division', 'school', 'competitionCategory', 'pickupCategory', 'documentType', 'createdBy'])
                 ->when($divisionId !== null, fn ($builder) => $builder->where('division_id', $divisionId))
                 ->when($dateFrom, fn ($builder) => $builder->whereDate('created_at', '>=', $dateFrom))
                 ->when($dateTo, fn ($builder) => $builder->whereDate('created_at', '<=', $dateTo))
@@ -354,7 +358,8 @@ class ReportExportController extends Controller
                 ->when($month, fn ($builder) => $builder->whereMonth('created_at', $month))
                 ->when($q, fn ($builder) => $builder->where(function ($sub) use ($q) {
                     $sub->where('student_name', 'like', "%{$q}%")
-                        ->orWhere('recipient_name', 'like', "%{$q}%");
+                        ->orWhere('recipient_name', 'like', "%{$q}%")
+                        ->orWhere('document_type_name', 'like', "%{$q}%");
                 }))
                 ->orderBy('id')
                 ->limit(500)

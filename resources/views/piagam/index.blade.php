@@ -63,6 +63,9 @@
                             <span class="inline-block rounded-xs bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[11px] font-bold text-emerald-800">
                                 {{ $piagam->division?->code ?? 'DIKDAS' }}
                             </span>
+                            <span class="inline-block rounded-xs bg-slate-100 border border-slate-200 px-1.5 py-0.5 text-[10px] font-medium text-slate-700 ml-1">
+                                {{ $piagam->document_type_display_name }}
+                            </span>
                             <span class="text-xs text-slate-400 ml-1.5 font-mono">
                                 {{ $piagam->created_at->format('d/m/Y H:i') }} WIB
                             </span>
@@ -121,6 +124,7 @@
                 <thead>
                     <tr class="border-b border-slate-200 bg-slate-50/80 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                         <th class="p-3">Tanggal & Jam</th>
+                        <th class="p-3">Jenis Dokumen</th>
                         <th class="p-3">Keterangan Piagam / Lomba</th>
                         <th class="p-3">Asal Sekolah / Instansi</th>
                         <th class="p-3">Nama Pengambil</th>
@@ -135,6 +139,11 @@
                         <tr class="hover:bg-slate-50/75 cursor-pointer transition-colors" onclick="openPiagamDetailModal({{ $piagam->id }})">
                             <td class="p-3 font-mono text-xs text-slate-600 whitespace-nowrap">
                                 {{ $piagam->created_at->format('d/m/Y H:i') }}
+                            </td>
+                            <td class="p-3 whitespace-nowrap">
+                                <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 border border-slate-200">
+                                    {{ $piagam->document_type_display_name }}
+                                </span>
                             </td>
                             <td class="p-3 font-medium text-slate-900 max-w-xs">
                                 {{ $piagam->piagam_description ?: $piagam->student_name }}

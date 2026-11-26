@@ -40,7 +40,7 @@ class DigitalExpeditionBookHandoverContractTest extends TestCase
         $response = $this->get('/');
 
         $response->assertOk()
-            ->assertSee('Ambil Piagam')
+            ->assertSee('Ambil Dokumen Dinas')
             ->assertSee('/piagam/ambil')
             ->assertDontSee('id="signature-pad"', false);
     }

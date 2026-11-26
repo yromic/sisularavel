@@ -79,12 +79,13 @@ class UnifiedWorkspaceController extends Controller
                         ->orWhere('recipient_unit', 'like', "%{$q}%")
                         ->orWhere('school_origin', 'like', "%{$q}%")
                         ->orWhere('piagam_description', 'like', "%{$q}%")
-                        ->orWhere('competition_category_name', 'like', "%{$q}%");
+                        ->orWhere('competition_category_name', 'like', "%{$q}%")
+                        ->orWhere('document_type_name', 'like', "%{$q}%");
                 });
             })
             ->when($dateFrom !== '', fn ($query) => $query->whereDate('created_at', '>=', $dateFrom))
             ->when($dateTo !== '', fn ($query) => $query->whereDate('created_at', '<=', $dateTo.' 23:59:59'))
-            ->with(['division', 'school', 'workUnit', 'competitionCategory', 'pickupCategory', 'attachments'])
+            ->with(['division', 'school', 'workUnit', 'competitionCategory', 'pickupCategory', 'documentType', 'attachments'])
             ->latest('id');
 
         $totalPiagam = (clone $piagamQuery)->count();
