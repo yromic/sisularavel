@@ -33,14 +33,7 @@
                    id="btn-quick-piagam"
                    class="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-[#E3E8EE] bg-white px-3.5 text-xs font-semibold text-[#17243A] shadow-2xs hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
                     <x-icon name="plus" class="h-4 w-4 text-slate-500" />
-                    <span>Catat Dokumen Dinas</span>
-                </a>
-                <a href="/" target="_blank" 
-                   id="btn-quick-welcoming"
-                   class="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-[#E3E8EE] bg-white px-3.5 text-xs font-semibold text-[#17243A] shadow-2xs hover:bg-slate-50 hover:text-[#147D73] hover:border-teal-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors"
-                   title="Buka Halaman Depan / Welcoming di tab baru">
-                    <x-icon name="external-link" class="h-4 w-4 text-slate-500" />
-                    <span>Halaman Depan (Welcoming)</span>
+                    <span>Catat Piagam</span>
                 </a>
             </x-slot:actions>
         </x-page-header>

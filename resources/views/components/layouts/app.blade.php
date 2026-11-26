@@ -128,10 +128,10 @@
 
                 <!-- Sidebar Bottom: Portal Tamu Utility -->
                 <div class="border-t border-[#23344E] p-3 shrink-0">
-                    <a href="/" target="_blank" class="flex min-h-[44px] items-center justify-between rounded-lg border border-[#23344E] bg-[#0F1725]/60 px-3 text-xs font-semibold text-slate-300 hover:bg-[#23344E] hover:text-white transition-colors" title="Buka Halaman Depan / Welcoming Portal Tamu">
+                    <a href="/" target="_blank" class="flex min-h-[44px] items-center justify-between rounded-lg border border-[#23344E] bg-[#0F1725]/60 px-3 text-xs font-semibold text-slate-300 hover:bg-[#23344E] hover:text-white transition-colors">
                         <span class="flex items-center gap-2">
-                            <x-icon name="home" class="h-4 w-4 text-teal-400" />
-                            Halaman Depan (Welcoming)
+                            <x-icon name="signature" class="h-4 w-4 text-teal-400" />
+                            Portal Tamu (Ambil Dokumen Dinas)
                         </span>
                         <x-icon name="external-link" class="h-3.5 w-3.5 text-slate-400" />
                     </a>
@@ -252,10 +252,10 @@
 
                     <!-- Drawer Footer: Portal Tamu -->
                     <div class="border-t border-[#23344E] p-3 shrink-0">
-                        <a href="/" target="_blank" class="flex min-h-[44px] items-center justify-between rounded-lg border border-[#23344E] bg-[#0F1725]/60 px-3 text-xs font-semibold text-slate-300 hover:bg-[#23344E] hover:text-white transition-colors" title="Buka Halaman Depan / Welcoming Portal Tamu">
+                        <a href="/" target="_blank" class="flex min-h-[44px] items-center justify-between rounded-lg border border-[#23344E] bg-[#0F1725]/60 px-3 text-xs font-semibold text-slate-300 hover:bg-[#23344E] hover:text-white transition-colors">
                             <span class="flex items-center gap-2">
-                                <x-icon name="home" class="h-4 w-4 text-teal-400" />
-                                Halaman Depan (Welcoming)
+                                <x-icon name="signature" class="h-4 w-4 text-teal-400" />
+                                Portal Tamu (Ambil Dokumen Dinas)
                             </span>
                             <x-icon name="external-link" class="h-3.5 w-3.5 text-slate-400" />
                         </a>
@@ -322,14 +322,6 @@
                             <p class="text-xs font-bold text-[#17243A]">{{ $user->name }}</p>
                             <p class="text-[11px] font-semibold text-[#657184] uppercase tracking-wider">{{ str_replace('_', ' ', $user->role) }}</p>
                         </div>
-
-                        <!-- Halaman Depan / Welcoming -->
-                        <a href="/" target="_blank" 
-                           class="flex min-h-[40px] items-center gap-1.5 rounded-lg border border-[#E3E8EE] bg-white px-2.5 sm:px-3 text-xs font-semibold text-[#17243A] hover:bg-[#F7F8FA] hover:text-[#147D73] hover:border-teal-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors" 
-                           title="Buka Halaman Depan (Welcoming) di tab baru">
-                            <x-icon name="home" class="h-3.5 w-3.5 text-slate-500" />
-                            <span class="hidden md:inline">Halaman Depan</span>
-                        </a>
 
                         <!-- Ganti Password -->
                         <a href="/password/activate" 
