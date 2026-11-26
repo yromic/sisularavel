@@ -24,7 +24,7 @@ class DocumentTypeAndClaimFeatureTest extends TestCase
         $response->assertDontSee('Ambil Piagam</a>', false);
     }
 
-    public function test_public_claim_page_renders_read_only_jenis_dokumen(): void
+    public function test_public_claim_page_renders_dropdown_jenis_dokumen(): void
     {
         $division = Division::factory()->create(['code' => 'DIKDAS', 'status' => 'active']);
         $docType = DocumentType::query()->create([
@@ -32,14 +32,61 @@ class DocumentTypeAndClaimFeatureTest extends TestCase
             'code' => 'PIAGAM',
             'is_active' => true,
         ]);
+        $docTypeIjazah = DocumentType::query()->create([
+            'name' => 'Ijazah',
+            'code' => 'IJAZAH',
+            'is_active' => true,
+        ]);
 
         $response = $this->get('/piagam/ambil');
         $response->assertOk();
-        $response->assertSee('Jenis Dokumen', false);
+        $response->assertSee('Jenis Dokumen Dinas', false);
         $response->assertSee('Piagam Penghargaan', false);
+        $response->assertSee('Ijazah', false);
+        $response->assertSee('<select name="document_type_id"', false);
         $response->assertSee('name="document_type_name"', false);
-        $response->assertSee('name="document_type_id"', false);
-        $response->assertSee('readonly', false);
+    }
+
+    public function test_guest_can_submit_ijazah_handover_without_competition_category(): void
+    {
+        Storage::fake('private_signatures');
+
+        $division = Division::factory()->create(['code' => 'DIKDAS', 'status' => 'active']);
+        $school = School::factory()->create(['name' => 'SMP Negeri 1 Ungaran', 'npsn' => '20320999']);
+        $docTypeIjazah = DocumentType::query()->create([
+            'name' => 'Ijazah',
+            'code' => 'IJAZAH',
+            'is_active' => true,
+        ]);
+
+        $dataUri = 'data:image/png;base64,'.base64_encode('fake-png-binary-content');
+
+        $response = $this->withHeader('Idempotency-Key', (string) Str::uuid())
+            ->postJson('/api/v1/piagam/ambil', [
+                'division_id' => $division->id,
+                'recipient_name' => 'Hendra Setiawan',
+                'recipient_position' => 'Orang Tua / Wali',
+                'work_unit_selection' => 'school:'.$school->id,
+                'student_name' => 'Rizky Ramadhan',
+                'document_type_id' => $docTypeIjazah->id,
+                'document_type_name' => 'Ijazah',
+                'competition_year' => 2026,
+                'signature_canvas' => $dataUri,
+            ]);
+
+        $response->assertCreated();
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('data.document_type_id', $docTypeIjazah->id);
+        $response->assertJsonPath('data.document_type_name', 'Ijazah');
+
+        $this->assertDatabaseHas('piagams', [
+            'division_id' => $division->id,
+            'student_name' => 'Rizky Ramadhan',
+            'document_type_id' => $docTypeIjazah->id,
+            'document_type_name' => 'Ijazah',
+            'piagam_description' => 'Ijazah – Rizky Ramadhan',
+            'recipient_name' => 'Hendra Setiawan',
+        ]);
     }
 
     public function test_guest_can_submit_handover_with_document_type(): void

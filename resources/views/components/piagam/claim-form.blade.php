@@ -199,29 +199,33 @@
                 </div>
             </fieldset>
 
-            <!-- LANGKAH 2: PIAGAM -->
+            <!-- LANGKAH 2: DOKUMEN DINAS -->
             <fieldset class="space-y-5">
                 <legend class="{{ $legendCls }}">
                     <span class="{{ $stepCls }}">2</span>
-                    Data piagam
+                    Data Dokumen Dinas
                 </legend>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-6">
                     <div>
-                        <label for="document_type_display" class="{{ $labelCls }}">Jenis Dokumen</label>
-                        <input type="text"
-                               id="document_type_display"
-                               value="{{ $defaultDocTypeName }}"
-                               class="{{ $inputCls }} bg-slate-100 text-slate-700 cursor-not-allowed select-none font-medium"
-                               readonly
-                               tabindex="-1">
-                        <input type="hidden" name="document_type_id" id="document_type_id" value="{{ $defaultDocTypeId }}">
+                        <label for="document_type_id" class="{{ $labelCls }}">Jenis Dokumen Dinas</label>
+                        <select name="document_type_id"
+                                id="document_type_id"
+                                onchange="handleDocumentTypeChange(this)"
+                                class="{{ $inputCls }}"
+                                required>
+                            @foreach ($documentTypes as $docType)
+                                <option value="{{ $docType->id }}" data-name="{{ $docType->name }}" @selected(old('document_type_id', $defaultDocTypeId) == $docType->id)>
+                                    {{ $docType->name }}
+                                </option>
+                            @endforeach
+                        </select>
                         <input type="hidden" name="document_type_name" id="document_type_name" value="{{ $defaultDocTypeName }}">
-                        <p class="mt-1 text-[11px] text-slate-500">Standar dokumen dinas (read-only).</p>
+                        <p class="mt-1 text-[11px] text-slate-500">Pilih jenis dokumen yang diambil (Piagam, Ijazah, dll).</p>
                     </div>
 
                     <div class="md:col-span-2">
-                        <label for="student_name" class="{{ $labelCls }}">Nama siswa atau regu</label>
+                        <label for="student_name" class="{{ $labelCls }}">Nama siswa atau penerima</label>
                         <input type="text"
                                name="student_name"
                                id="student_name"
@@ -232,12 +236,12 @@
                     </div>
 
                     <div class="md:col-span-2">
-                        <label for="competition_category_id" class="{{ $labelCls }}">Lomba atau kategori</label>
+                        <label for="competition_category_id" class="{{ $labelCls }}">Kategori / Lomba (Jika ada)</label>
                         <select name="competition_category_id"
                                 id="competition_category_id"
                                 onchange="handleCompetitionCategoryChange(this.value)"
                                 class="{{ $inputCls }}">
-                            <option value="">Pilih lomba</option>
+                            <option value="">Pilih kategori / lomba (Opsional)</option>
                             @foreach ($competitionCategories as $comp)
                                 <option value="{{ $comp->id }}" data-division-id="{{ $comp->division_id }}" @selected(old('competition_category_id') == $comp->id)>
                                     {{ $comp->name }}
@@ -531,6 +535,16 @@
         document.getElementById('signature-watermark').classList.remove('hidden');
     }
 
+    function handleDocumentTypeChange(selectEl) {
+        if (!selectEl) return;
+        const selectedOption = selectEl.options[selectEl.selectedIndex];
+        const docTypeName = selectedOption ? (selectedOption.getAttribute('data-name') || selectedOption.textContent.trim()) : '';
+        const nameHidden = document.getElementById('document_type_name');
+        if (nameHidden) {
+            nameHidden.value = docTypeName;
+        }
+    }
+
     function handleDivisionChange(val) {
         const wrapper = document.getElementById('division_manual_wrapper');
         if (val === 'manual') {
@@ -717,6 +731,11 @@
         document.getElementById('pickup_category_manual_wrapper').classList.add('hidden');
         document.getElementById('competition_category_manual_wrapper').classList.add('hidden');
         document.getElementById('recipient_unit_manual_wrapper').classList.add('hidden');
+        const docTypeSelect = document.getElementById('document_type_id');
+        if (docTypeSelect && docTypeSelect.options.length > 0) {
+            docTypeSelect.selectedIndex = 0;
+            handleDocumentTypeChange(docTypeSelect);
+        }
         clearSchoolAutocomplete();
     }
 

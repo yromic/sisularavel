@@ -181,11 +181,7 @@ class PublicClaimPiagamRequest extends FormRequest
             $compCatName = $compCat?->name;
         }
 
-        // 5. Resolve Siswa & Deskripsi Piagam
-        $studentName = trim((string) ($this->input('student_name') ?: $this->input('piagam_description')));
-        $piagamDesc = trim((string) ($this->input('piagam_description') ?: ($compCatName ? "{$compCatName} – {$studentName}" : $studentName)));
-
-        // 6. Resolve Document Type
+        // 5. Resolve Document Type
         $docTypeId = $this->input('document_type_id');
         $docTypeName = trim((string) $this->input('document_type_name'));
 
@@ -202,6 +198,10 @@ class PublicClaimPiagamRequest extends FormRequest
             $docTypeId = $defaultDoc?->id;
             $docTypeName = $defaultDoc?->name ?? 'Piagam Penghargaan';
         }
+
+        // 6. Resolve Siswa & Deskripsi Dokumen
+        $studentName = trim((string) ($this->input('student_name') ?: $this->input('piagam_description')));
+        $piagamDesc = trim((string) ($this->input('piagam_description') ?: ($compCatName && $studentName !== '' ? "{$compCatName} – {$studentName}" : ($studentName !== '' ? "{$docTypeName} – {$studentName}" : ''))));
 
         $this->merge([
             'division_id' => $divisionId ? (int) $divisionId : null,
