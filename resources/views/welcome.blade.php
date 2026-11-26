@@ -55,7 +55,7 @@
         <!-- Konten Utama Hero -->
         <div class="mx-auto max-w-4xl text-center">
             <h2 class="text-3xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl drop-shadow-md">
-                Sistem Informasi Persuratan & Pengambilan Piagam
+                Sistem Informasi Persuratan & Pengambilan Dokumen Dinas
             </h2>
             <p class="mt-5 text-sm sm:text-lg text-slate-200 leading-relaxed max-w-2xl mx-auto font-normal drop-shadow-xs">
                 Selamat datang di portal pelayanan Disdikbudpora Kabupaten Semarang. Bagi tamu sekolah, guru, atau perwakilan yang hadir di kantor dinas untuk serah terima dokumen dinas atau piagam penghargaan, silakan buka form bukti tanda terima langsung di bawah ini.
