@@ -377,7 +377,7 @@
             return new File([outputBlob], file.name.replace(/\.[^.]+$/, '.pdf'), { type: 'application/pdf' });
         }
 
-        function compressImage(file, maxDimension = 1600, quality = 0.8) {
+        function compressImage(file, maxDimension = 1280, quality = 0.75) {
             return new Promise((resolve) => {
                 if (!file.type.startsWith('image/')) {
                     resolve(file);

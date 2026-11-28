@@ -13,6 +13,7 @@ use App\Services\DivisionContext;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
@@ -244,6 +245,20 @@ class IncomingLetterController extends Controller
                 'file',
                 'max:2048',
                 'mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if ($value instanceof UploadedFile) {
+                        $mime = $value->getMimeType() ?: '';
+                        if (str_starts_with($mime, 'image/')) {
+                            $info = @getimagesize($value->getRealPath());
+                            if ($info !== false) {
+                                [$w, $h] = $info;
+                                if ($w > 4096 || $h > 4096) {
+                                    $fail('Dimensi berkas gambar lampiran tidak boleh melebihi 4096 x 4096 piksel.');
+                                }
+                            }
+                        }
+                    }
+                },
             ],
         ], [
             'attachment.max' => 'Ukuran berkas lampiran utama tidak boleh melebihi 2 MB.',

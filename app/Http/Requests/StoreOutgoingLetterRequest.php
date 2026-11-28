@@ -27,6 +27,20 @@ class StoreOutgoingLetterRequest extends FormRequest
                 'file',
                 'max:2048',
                 'mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if ($value instanceof UploadedFile) {
+                        $mime = $value->getMimeType() ?: '';
+                        if (str_starts_with($mime, 'image/')) {
+                            $info = @getimagesize($value->getRealPath());
+                            if ($info !== false) {
+                                [$w, $h] = $info;
+                                if ($w > 4096 || $h > 4096) {
+                                    $fail('Dimensi berkas gambar lampiran tidak boleh melebihi 4096 x 4096 piksel.');
+                                }
+                            }
+                        }
+                    }
+                },
             ],
             'photos' => [
                 'sometimes',
@@ -46,7 +60,7 @@ class StoreOutgoingLetterRequest extends FormRequest
                     }
                 },
             ],
-            'photos.*' => ['file', 'image', 'max:2048'],
+            'photos.*' => ['file', 'image', 'max:2048', 'dimensions:max_width=4096,max_height=4096'],
         ];
     }
 

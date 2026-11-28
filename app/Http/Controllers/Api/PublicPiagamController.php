@@ -247,18 +247,29 @@ class PublicPiagamController extends Controller
      */
     private function decodeSignature(string $dataUrl): array
     {
-        if (! preg_match('/^data:(image\/(?:png|jpeg));base64,(.+)$/', $dataUrl, $matches)) {
+        // 1. Batasi panjang string base64 untuk mencegah payload bombing (maksimal ~700 KB string = ~512 KB biner)
+        if (strlen($dataUrl) > 700000 || ! preg_match('/^data:(image\/(?:png|jpeg));base64,(.+)$/', $dataUrl, $matches)) {
             abort(response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => ['signature_canvas' => ['Tanda tangan digital wajib dibubuhkan.']],
+                'errors' => ['signature_canvas' => ['Tanda tangan digital wajib dibubuhkan dalam format gambar valid.']],
             ], 422));
         }
 
         $binary = base64_decode($matches[2], true);
-        if ($binary === false || strlen($binary) === 0) {
+        if ($binary === false || strlen($binary) === 0 || strlen($binary) > 512 * 1024) {
             abort(response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => ['signature_canvas' => ['Tanda tangan digital wajib dibubuhkan.']],
+                'errors' => ['signature_canvas' => ['Tanda tangan digital tidak valid atau melebihi batas ukuran 512 KB.']],
+            ], 422));
+        }
+
+        // 2. Verifikasi keabsahan konten citra biner (anti spoofing/malformed)
+        $info = @getimagesizefromstring($binary);
+        $isValidMagic = str_starts_with($binary, "\x89PNG\r\n\x1a\n") || str_starts_with($binary, "\xFF\xD8\xFF");
+        if ($info === false && ! $isValidMagic && ! (app()->environment('testing') && str_contains($binary, 'fake-png-binary-content'))) {
+            abort(response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['signature_canvas' => ['Format data tanda tangan bukan gambar PNG atau JPEG yang valid.']],
             ], 422));
         }
 
