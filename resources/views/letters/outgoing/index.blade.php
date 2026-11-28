@@ -68,7 +68,7 @@
                 <article data-testid="mobile-outgoing-card" class="rounded-md border border-slate-200 bg-white p-4 shadow-xs">
                     <div class="flex items-start justify-between gap-3 cursor-pointer" onclick="openLetterDetailModal('surat-keluar', '{{ $letter->id }}')">
                         <div>
-                            <span class="inline-block rounded-xs bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">Tahun {{ $letter->letter_year }}</span>
+                            <span class="inline-block rounded-xs bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">No. {{ ($letters->currentPage() - 1) * $letters->perPage() + $loop->iteration }} &bull; Thn {{ $letter->letter_year }} &bull; Reg #{{ $letter->id }}</span>
                             @if ($letter->trashed())
                                 <span class="rounded bg-rose-100 text-rose-800 px-2 py-0.5 text-[10px] font-bold ml-1">Terhapus</span>
                             @endif
@@ -124,11 +124,12 @@
                                 <input type="checkbox" id="bulk-select-all-page" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer" title="Pilih Semua di Halaman Ini">
                             </th>
                         @endif
-                        <th class="p-3">No. Agenda</th>
-                        <th class="p-3">Tahun</th>
-                        <th class="p-3">Nomor Surat</th>
-                        <th class="p-3">Tanggal Surat</th>
-                        <th class="p-3">Tanggal Pengiriman</th>
+                        <th class="p-3 w-12 text-center">No</th>
+                        <th class="p-3"><x-sort-link column="id" title="No. Agenda" :currentSort="$sort ?? 'letter_date'" :currentDir="$dir ?? 'desc'" /></th>
+                        <th class="p-3"><x-sort-link column="letter_year" title="Tahun" :currentSort="$sort ?? 'letter_date'" :currentDir="$dir ?? 'desc'" /></th>
+                        <th class="p-3"><x-sort-link column="letter_number" title="Nomor Surat" :currentSort="$sort ?? 'letter_date'" :currentDir="$dir ?? 'desc'" defaultDir="asc" /></th>
+                        <th class="p-3"><x-sort-link column="letter_date" title="Tanggal Surat" :currentSort="$sort ?? 'letter_date'" :currentDir="$dir ?? 'desc'" /></th>
+                        <th class="p-3"><x-sort-link column="disseminated_date" title="Tanggal Pengiriman" :currentSort="$sort ?? 'letter_date'" :currentDir="$dir ?? 'desc'" /></th>
                         <th class="p-3">Perihal</th>
                         <th class="p-3">Lampiran</th>
                         <th class="p-3 text-center">Aksi</th>
@@ -153,7 +154,8 @@
                                     <input type="checkbox" value="{{ $letter->id }}" class="bulk-row-checkbox rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer" aria-label="Pilih surat {{ $letter->letter_number }}">
                                 </td>
                             @endif
-                            <td class="p-3 font-mono text-xs">{{ $letter->id }}</td>
+                            <td class="p-3 text-center font-mono text-xs text-slate-500">{{ ($letters->currentPage() - 1) * $letters->perPage() + $loop->iteration }}</td>
+                            <td class="p-3 font-mono text-xs">#{{ $letter->id }}</td>
                             <td class="p-3 font-semibold text-slate-600">{{ $letter->letter_year }}</td>
                             <td class="p-3 font-medium text-slate-900">
                                 {{ $letter->letter_number }}
@@ -204,15 +206,18 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ in_array(auth()->user()->role, ['super_admin', 'division_admin'], true) ? 9 : 8 }}" class="p-6 text-center text-sm text-slate-500">Tidak ada surat keluar ditemukan.</td>
+                            <td colspan="{{ in_array(auth()->user()->role, ['super_admin', 'division_admin'], true) ? 10 : 9 }}" class="p-6 text-center text-sm text-slate-500">Tidak ada surat keluar ditemukan.</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
 
-        <div class="mt-4">
-            {{ $letters->links() }}
+        <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <x-per-page-selector :current="$perPage ?? 15" id="outgoing" />
+            <div>
+                {{ $letters->links() }}
+            </div>
         </div>
     </section>
 

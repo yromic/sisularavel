@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AttachmentController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DivisionContextController;
 use App\Http\Controllers\Api\DivisionManagementController;
+use App\Http\Controllers\Api\DocumentOcrController;
 use App\Http\Controllers\Api\IncomingLetterController;
 use App\Http\Controllers\Api\OutgoingLetterController;
 use App\Http\Controllers\Api\PiagamController;
@@ -117,7 +118,16 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
         $user = $request->user();
         $canViewTrashed = in_array($user->role, ['super_admin', 'division_admin'], true);
 
-        $letters = IncomingLetter::query()
+        $allowedPerPage = [15, 30, 50, 100, 250];
+        $perPage = in_array((int) $request->input('per_page'), $allowedPerPage, true)
+            ? (int) $request->input('per_page')
+            : 15;
+
+        $allowedSorts = ['id', 'letter_number', 'origin_agency', 'letter_date', 'received_date'];
+        $sort = in_array($request->input('sort'), $allowedSorts, true) ? $request->input('sort') : 'received_date';
+        $dir = strtolower($request->input('dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        $letterQuery = IncomingLetter::query()
             ->with(['attachments'])
             ->when($canViewTrashed && $status === 'trashed', fn ($query) => $query->onlyTrashed())
             ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
@@ -126,13 +136,21 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
                     ->orWhere('origin_agency', 'like', "%{$q}%")
                     ->orWhere('subject', 'like', "%{$q}%");
             }))
-            ->latest('received_date')
-            ->paginate(10);
+            ->orderBy($sort, $dir);
+
+        if ($sort !== 'id') {
+            $letterQuery->orderBy('id', 'desc');
+        }
+
+        $letters = $letterQuery->paginate($perPage)->withQueryString();
 
         return view('letters.incoming.index', [
             'letters' => $letters,
             'status' => $status,
             'canViewTrashed' => $canViewTrashed,
+            'perPage' => $perPage,
+            'sort' => $sort,
+            'dir' => $dir,
         ]);
     });
 
@@ -172,7 +190,16 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
         $user = $request->user();
         $canViewTrashed = in_array($user->role, ['super_admin', 'division_admin'], true);
 
-        $letters = OutgoingLetter::query()
+        $allowedPerPage = [15, 30, 50, 100, 250];
+        $perPage = in_array((int) $request->input('per_page'), $allowedPerPage, true)
+            ? (int) $request->input('per_page')
+            : 15;
+
+        $allowedSorts = ['id', 'letter_number', 'letter_year', 'letter_date', 'disseminated_date'];
+        $sort = in_array($request->input('sort'), $allowedSorts, true) ? $request->input('sort') : 'letter_date';
+        $dir = strtolower($request->input('dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        $letterQuery = OutgoingLetter::query()
             ->with(['attachments'])
             ->when($canViewTrashed && $status === 'trashed', fn ($query) => $query->onlyTrashed())
             ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
@@ -180,13 +207,21 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
                 $sub->where('letter_number', 'like', "%{$q}%")
                     ->orWhere('subject', 'like', "%{$q}%");
             }))
-            ->latest('letter_date')
-            ->paginate(10);
+            ->orderBy($sort, $dir);
+
+        if ($sort !== 'id') {
+            $letterQuery->orderBy('id', 'desc');
+        }
+
+        $letters = $letterQuery->paginate($perPage)->withQueryString();
 
         return view('letters.outgoing.index', [
             'letters' => $letters,
             'status' => $status,
             'canViewTrashed' => $canViewTrashed,
+            'perPage' => $perPage,
+            'sort' => $sort,
+            'dir' => $dir,
         ]);
     });
 
@@ -225,7 +260,16 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
 
-        $piagams = Piagam::query()
+        $allowedPerPage = [15, 30, 50, 100, 250];
+        $perPage = in_array((int) $request->input('per_page'), $allowedPerPage, true)
+            ? (int) $request->input('per_page')
+            : 15;
+
+        $allowedSorts = ['id', 'created_at', 'student_name', 'recipient_name', 'document_type_name'];
+        $sort = in_array($request->input('sort'), $allowedSorts, true) ? $request->input('sort') : 'id';
+        $dir = strtolower($request->input('dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        $piagamQuery = Piagam::query()
             ->with(['school', 'competitionCategory', 'pickupCategory', 'documentType', 'attachments', 'division'])
             ->when($divisionId !== null, fn ($query) => $query->where('division_id', $divisionId))
             ->when($dateFrom, fn ($query) => $query->whereDate('created_at', '>=', $dateFrom))
@@ -238,11 +282,20 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
                     ->orWhere('document_type_name', 'like', "%{$q}%")
                     ->orWhereHas('school', fn ($s) => $s->where('name', 'like', "%{$q}%"));
             }))
-            ->latest('id')
-            ->paginate(15)
-            ->withQueryString();
+            ->orderBy($sort, $dir);
 
-        return view('piagam.index', ['piagams' => $piagams]);
+        if ($sort !== 'id') {
+            $piagamQuery->orderBy('id', 'desc');
+        }
+
+        $piagams = $piagamQuery->paginate($perPage)->withQueryString();
+
+        return view('piagam.index', [
+            'piagams' => $piagams,
+            'perPage' => $perPage,
+            'sort' => $sort,
+            'dir' => $dir,
+        ]);
     });
 
     Route::get('/piagam/create', function (Request $request, DivisionContext $divisionContext) {
@@ -294,12 +347,17 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
         $status = $request->query('status', 'active');
         $isTrashed = $status === 'trashed';
 
+        $allowedPerPage = [15, 30, 50, 100, 250];
+        $perPage = in_array((int) $request->input('per_page'), $allowedPerPage, true)
+            ? (int) $request->input('per_page')
+            : 15;
+
         $schools = ($isTrashed ? School::onlyTrashed() : School::query())
             ->when($q !== '', fn ($query) => $query->where(function ($sub) use ($q) {
                 $sub->where('name', 'like', "%{$q}%")->orWhere('npsn', 'like', "%{$q}%");
             }))
             ->orderBy($isTrashed ? 'deleted_at' : 'name', $isTrashed ? 'desc' : 'asc')
-            ->paginate(15)
+            ->paginate($perPage)
             ->withQueryString();
 
         $activeCount = School::query()->count();
@@ -310,6 +368,7 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
             'status' => $status,
             'activeCount' => $activeCount,
             'trashedCount' => $trashedCount,
+            'perPage' => $perPage,
         ]);
     });
 
@@ -644,6 +703,8 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
     Route::get('/api/v1/attachments/{uuid}/preview', [AttachmentController::class, 'preview']);
     Route::get('/api/v1/attachments/{uuid}/download', [AttachmentController::class, 'download']);
     Route::post('/api/v1/schools', [SchoolController::class, 'store']);
+    Route::get('/master/sekolah/template-csv', [SchoolController::class, 'downloadTemplate']);
+    Route::post('/api/v1/schools/import-csv', [SchoolController::class, 'importCsv']);
     Route::put('/api/v1/schools/{school}', [SchoolController::class, 'update']);
     Route::post('/api/v1/schools/{id}/restore', [SchoolController::class, 'restore']);
     Route::delete('/api/v1/schools/{school}', [SchoolController::class, 'destroy']);
@@ -706,7 +767,7 @@ Route::middleware(['auth', EnsureActiveAccount::class, EnsurePasswordIsActivated
     Route::get('/api/v1/search', [SearchController::class, 'index']);
     Route::get('/api/v1/reports/export.csv', [ReportExportController::class, 'csv']);
     Route::get('/api/v1/reports/export.pdf', [ReportExportController::class, 'pdf']);
-    Route::post('/api/v1/ocr/scan', [\App\Http\Controllers\Api\DocumentOcrController::class, 'scan'])->middleware('throttle:30,1');
+    Route::post('/api/v1/ocr/scan', [DocumentOcrController::class, 'scan'])->middleware('throttle:30,1');
 
     // Admin Backup & Disaster Recovery Management (Fase 06 & Spesifikasi 30)
     Route::get('/admin/backups', [BackupController::class, 'index'])->name('admin.backups.index');

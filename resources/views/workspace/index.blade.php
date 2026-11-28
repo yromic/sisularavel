@@ -200,7 +200,7 @@
                     <article class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs space-y-2.5 hover:border-emerald-300 transition-colors cursor-pointer" onclick="openLetterDetailModal('surat-masuk', {{ $letter->id }})">
                         <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2">
                             <div>
-                                <span class="inline-block rounded-xs bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-700">Agenda #{{ $letter->id }}</span>
+                                <span class="inline-block rounded-xs bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-700">No. {{ ($incomingLetters->currentPage() - 1) * $incomingLetters->perPage() + $loop->iteration }} &bull; Reg #{{ $letter->id }}</span>
                                 <span class="rounded bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800 ml-1">{{ $letter->division?->code }}</span>
                                 @if ($letter->trashed())
                                     <span class="rounded bg-rose-100 text-rose-800 px-1.5 py-0.5 text-[10px] font-bold ml-1">Terhapus</span>
@@ -254,11 +254,12 @@
                 <table class="w-full min-w-[1024px] border-collapse bg-white text-sm shadow-xs rounded-lg border border-slate-200">
                     <thead>
                         <tr class="border-b border-slate-200 bg-slate-50/80 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                            <th class="p-3">Agenda #</th>
-                            <th class="p-3">Nomor Surat</th>
-                            <th class="p-3">Asal Instansi</th>
-                            <th class="p-3">Tgl Surat</th>
-                            <th class="p-3">Diterima</th>
+                            <th class="p-3 w-12 text-center">No</th>
+                            <th class="p-3"><x-sort-link column="id" title="No. Agenda" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" /></th>
+                            <th class="p-3"><x-sort-link column="letter_number" title="Nomor Surat" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" defaultDir="asc" /></th>
+                            <th class="p-3"><x-sort-link column="origin_agency" title="Asal Instansi" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" defaultDir="asc" /></th>
+                            <th class="p-3"><x-sort-link column="letter_date" title="Tgl Surat" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" /></th>
+                            <th class="p-3"><x-sort-link column="received_date" title="Diterima" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" /></th>
                             <th class="p-3">Perihal / Ringkasan</th>
                             <th class="p-3 text-center">Berkas</th>
                             <th class="p-3 text-center">Aksi</th>
@@ -267,6 +268,7 @@
                     <tbody class="divide-y divide-slate-100">
                         @forelse ($incomingLetters as $letter)
                             <tr class="hover:bg-slate-50/75 cursor-pointer transition-colors" onclick="openLetterDetailModal('surat-masuk', {{ $letter->id }})">
+                                <td class="p-3 text-center font-mono text-xs text-slate-500">{{ ($incomingLetters->currentPage() - 1) * $incomingLetters->perPage() + $loop->iteration }}</td>
                                 <td class="p-3 font-mono text-xs font-semibold text-slate-600">#{{ $letter->id }}</td>
                                 <td class="p-3 font-bold text-slate-900">
                                     {{ $letter->letter_number }}
@@ -313,7 +315,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="p-8 text-center text-sm text-slate-500">
+                                <td colspan="9" class="p-8 text-center text-sm text-slate-500">
                                     <x-icon name="mail" class="mx-auto h-8 w-8 text-slate-300 mb-2" />
                                     Tidak ada arsip surat masuk ditemukan.
                                 </td>
@@ -323,8 +325,11 @@
                 </table>
             </div>
 
-            <div class="mt-4">
-                {{ $incomingLetters->appends(['tab' => 'masuk', 'status' => $status, 'q' => request('q'), 'date_from' => request('date_from'), 'date_to' => request('date_to')])->links() }}
+            <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <x-per-page-selector :current="$perPage ?? 15" id="masuk" />
+                <div>
+                    {{ $incomingLetters->appends(['tab' => 'masuk', 'status' => $status, 'q' => request('q'), 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'sort' => request('sort'), 'dir' => request('dir'), 'per_page' => $perPage ?? 15])->links() }}
+                </div>
             </div>
         </div>
 
@@ -338,7 +343,7 @@
                     <article class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs space-y-2.5 hover:border-blue-300 transition-colors cursor-pointer" onclick="openLetterDetailModal('surat-keluar', {{ $letter->id }})">
                         <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2">
                             <div>
-                                <span class="inline-block rounded-xs bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-700">Agenda #{{ $letter->id }}</span>
+                                <span class="inline-block rounded-xs bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-700">No. {{ ($outgoingLetters->currentPage() - 1) * $outgoingLetters->perPage() + $loop->iteration }} &bull; Reg #{{ $letter->id }}</span>
                                 <span class="rounded bg-blue-50 border border-blue-200 px-1.5 py-0.5 text-[10px] font-bold text-blue-800 ml-1">{{ $letter->division?->code }}</span>
                                 @if ($letter->trashed())
                                     <span class="rounded bg-rose-100 text-rose-800 px-1.5 py-0.5 text-[10px] font-bold ml-1">Terhapus</span>
@@ -392,11 +397,12 @@
                 <table class="w-full min-w-[1024px] border-collapse bg-white text-sm shadow-xs rounded-lg border border-slate-200">
                     <thead>
                         <tr class="border-b border-slate-200 bg-slate-50/80 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                            <th class="p-3">Agenda #</th>
-                            <th class="p-3">Nomor Surat</th>
-                            <th class="p-3">Tahun</th>
-                            <th class="p-3">Tgl Surat</th>
-                            <th class="p-3">Diseminasi / Share</th>
+                            <th class="p-3 w-12 text-center">No</th>
+                            <th class="p-3"><x-sort-link column="id" title="No. Agenda" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" /></th>
+                            <th class="p-3"><x-sort-link column="letter_number" title="Nomor Surat" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" defaultDir="asc" /></th>
+                            <th class="p-3"><x-sort-link column="letter_year" title="Tahun" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" /></th>
+                            <th class="p-3"><x-sort-link column="letter_date" title="Tgl Surat" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" /></th>
+                            <th class="p-3"><x-sort-link column="disseminated_date" title="Diseminasi" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" /></th>
                             <th class="p-3">Perihal / Ringkasan</th>
                             <th class="p-3 text-center">Berkas</th>
                             <th class="p-3 text-center">Aksi</th>
@@ -405,6 +411,7 @@
                     <tbody class="divide-y divide-slate-100">
                         @forelse ($outgoingLetters as $letter)
                             <tr class="hover:bg-slate-50/75 cursor-pointer transition-colors" onclick="openLetterDetailModal('surat-keluar', {{ $letter->id }})">
+                                <td class="p-3 text-center font-mono text-xs text-slate-500">{{ ($outgoingLetters->currentPage() - 1) * $outgoingLetters->perPage() + $loop->iteration }}</td>
                                 <td class="p-3 font-mono text-xs font-semibold text-slate-600">#{{ $letter->id }}</td>
                                 <td class="p-3 font-bold text-slate-900">
                                     {{ $letter->letter_number }}
@@ -451,7 +458,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="p-8 text-center text-sm text-slate-500">
+                                <td colspan="9" class="p-8 text-center text-sm text-slate-500">
                                     <x-icon name="mail-outgoing" class="mx-auto h-8 w-8 text-slate-300 mb-2" />
                                     Tidak ada arsip surat keluar ditemukan.
                                 </td>
@@ -461,8 +468,11 @@
                 </table>
             </div>
 
-            <div class="mt-4">
-                {{ $outgoingLetters->appends(['tab' => 'keluar', 'status' => $status, 'q' => request('q'), 'date_from' => request('date_from'), 'date_to' => request('date_to')])->links() }}
+            <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <x-per-page-selector :current="$perPage ?? 15" id="keluar" />
+                <div>
+                    {{ $outgoingLetters->appends(['tab' => 'keluar', 'status' => $status, 'q' => request('q'), 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'sort' => request('sort'), 'dir' => request('dir'), 'per_page' => $perPage ?? 15])->links() }}
+                </div>
             </div>
         </div>
 
@@ -476,7 +486,7 @@
                     <article class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs space-y-2.5 hover:border-teal-300 transition-colors cursor-pointer" onclick="openPiagamDetailModal({{ $piagam->id }})">
                         <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2">
                             <div>
-                                <span class="inline-block rounded-xs bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-700">Resi #{{ $piagam->id }}</span>
+                                <span class="inline-block rounded-xs bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-700">No. {{ ($piagams->currentPage() - 1) * $piagams->perPage() + $loop->iteration }} &bull; Resi #{{ $piagam->id }}</span>
                                 <span class="rounded bg-teal-50 border border-teal-200 px-1.5 py-0.5 text-[10px] font-bold text-teal-800 ml-1">{{ $piagam->division?->code }}</span>
                                 <span class="rounded bg-slate-100 border border-slate-200 px-1.5 py-0.5 text-[10px] font-medium text-slate-700 ml-1">{{ $piagam->document_type_display_name }}</span>
                             </div>
@@ -540,11 +550,12 @@
                 <table class="w-full min-w-[1024px] border-collapse bg-white text-sm shadow-xs rounded-lg border border-slate-200">
                     <thead>
                         <tr class="border-b border-slate-200 bg-slate-50/80 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                            <th class="p-3">Waktu Pencatatan</th>
-                            <th class="p-3">Jenis Dokumen</th>
-                            <th class="p-3">Keterangan Piagam / Lomba</th>
+                            <th class="p-3 w-12 text-center">No</th>
+                            <th class="p-3"><x-sort-link column="created_at" title="Waktu Pencatatan" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" /></th>
+                            <th class="p-3"><x-sort-link column="document_type_name" title="Jenis Dokumen" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" defaultDir="asc" /></th>
+                            <th class="p-3"><x-sort-link column="student_name" title="Keterangan Piagam / Lomba" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" defaultDir="asc" /></th>
                             <th class="p-3">Asal Sekolah / Instansi</th>
-                            <th class="p-3">Nama Pengambil Fisik</th>
+                            <th class="p-3"><x-sort-link column="recipient_name" title="Nama Pengambil Fisik" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" defaultDir="asc" /></th>
                             <th class="p-3">Jabatan / Unit Kerja</th>
                             <th class="p-3">Divisi</th>
                             <th class="p-3 text-center">Tanda Tangan</th>
@@ -554,6 +565,7 @@
                     <tbody class="divide-y divide-slate-100">
                         @forelse ($piagams as $piagam)
                             <tr class="hover:bg-slate-50/75 cursor-pointer transition-colors" onclick="openPiagamDetailModal({{ $piagam->id }})">
+                                <td class="p-3 text-center font-mono text-xs text-slate-500">{{ ($piagams->currentPage() - 1) * $piagams->perPage() + $loop->iteration }}</td>
                                 <td class="p-3 font-mono text-xs text-slate-600 whitespace-nowrap">{{ $piagam->created_at->format('d/m/Y H:i') }}</td>
                                 <td class="p-3 whitespace-nowrap">
                                     <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 border border-slate-200">
@@ -613,7 +625,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="p-8 text-center text-sm text-slate-500">
+                                <td colspan="10" class="p-8 text-center text-sm text-slate-500">
                                     <x-icon name="signature" class="mx-auto h-8 w-8 text-slate-300 mb-2" />
                                     Tidak ada catatan bukti serah terima piagam ditemukan.
                                 </td>
@@ -623,8 +635,11 @@
                 </table>
             </div>
 
-            <div class="mt-4">
-                {{ $piagams->appends(['tab' => 'piagam'])->links() }}
+            <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <x-per-page-selector :current="$perPage ?? 15" id="piagam" />
+                <div>
+                    {{ $piagams->appends(['tab' => 'piagam', 'status' => $status, 'q' => request('q'), 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'sort' => request('sort'), 'dir' => request('dir'), 'per_page' => $perPage ?? 15])->links() }}
+                </div>
             </div>
         </div>
 

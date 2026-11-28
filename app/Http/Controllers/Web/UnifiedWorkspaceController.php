@@ -31,7 +31,19 @@ class UnifiedWorkspaceController extends Controller
             $tab = 'masuk';
         }
 
+        $allowedPerPage = [15, 30, 50, 100, 250];
+        $perPage = in_array((int) $request->input('per_page'), $allowedPerPage, true)
+            ? (int) $request->input('per_page')
+            : 15;
+
+        $sort = $request->input('sort', 'id');
+        $dir = strtolower($request->input('dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+
         // 1. Incoming Letters Query
+        $incomingAllowedSorts = ['id', 'letter_number', 'origin_agency', 'letter_date', 'received_date'];
+        $incomingSort = in_array($sort, $incomingAllowedSorts, true) ? $sort : 'id';
+        $incomingDir = $dir;
+
         $incomingQuery = IncomingLetter::query()
             ->when($canViewTrashed && $status === 'trashed', fn ($query) => $query->onlyTrashed())
             ->when($activeDivisionId !== null, fn ($query) => $query->where('division_id', $activeDivisionId))
@@ -45,12 +57,20 @@ class UnifiedWorkspaceController extends Controller
             ->when($dateFrom !== '', fn ($query) => $query->whereDate('letter_date', '>=', $dateFrom))
             ->when($dateTo !== '', fn ($query) => $query->whereDate('letter_date', '<=', $dateTo))
             ->with(['division', 'createdBy', 'attachments'])
-            ->latest('id');
+            ->orderBy($incomingSort, $incomingDir);
+
+        if ($incomingSort !== 'id') {
+            $incomingQuery->orderBy('id', 'desc');
+        }
 
         $totalIncoming = (clone $incomingQuery)->count();
-        $incomingLetters = $incomingQuery->paginate(15, ['*'], 'masuk_page')->withQueryString();
+        $incomingLetters = $incomingQuery->paginate($perPage, ['*'], 'masuk_page')->withQueryString();
 
         // 2. Outgoing Letters Query
+        $outgoingAllowedSorts = ['id', 'letter_number', 'letter_year', 'letter_date', 'disseminated_date'];
+        $outgoingSort = in_array($sort, $outgoingAllowedSorts, true) ? $sort : 'id';
+        $outgoingDir = $dir;
+
         $outgoingQuery = OutgoingLetter::query()
             ->when($canViewTrashed && $status === 'trashed', fn ($query) => $query->onlyTrashed())
             ->when($activeDivisionId !== null, fn ($query) => $query->where('division_id', $activeDivisionId))
@@ -63,12 +83,20 @@ class UnifiedWorkspaceController extends Controller
             ->when($dateFrom !== '', fn ($query) => $query->whereDate('letter_date', '>=', $dateFrom))
             ->when($dateTo !== '', fn ($query) => $query->whereDate('letter_date', '<=', $dateTo))
             ->with(['division', 'createdBy', 'attachments'])
-            ->latest('id');
+            ->orderBy($outgoingSort, $outgoingDir);
+
+        if ($outgoingSort !== 'id') {
+            $outgoingQuery->orderBy('id', 'desc');
+        }
 
         $totalOutgoing = (clone $outgoingQuery)->count();
-        $outgoingLetters = $outgoingQuery->paginate(15, ['*'], 'keluar_page')->withQueryString();
+        $outgoingLetters = $outgoingQuery->paginate($perPage, ['*'], 'keluar_page')->withQueryString();
 
         // 3. Piagams Query
+        $piagamAllowedSorts = ['id', 'created_at', 'student_name', 'recipient_name', 'document_type_name'];
+        $piagamSort = in_array($sort, $piagamAllowedSorts, true) ? $sort : 'id';
+        $piagamDir = $dir;
+
         $piagamQuery = Piagam::query()
             ->when($canViewTrashed && $status === 'trashed', fn ($query) => $query->onlyTrashed())
             ->when($activeDivisionId !== null, fn ($query) => $query->where('division_id', $activeDivisionId))
@@ -86,10 +114,14 @@ class UnifiedWorkspaceController extends Controller
             ->when($dateFrom !== '', fn ($query) => $query->whereDate('created_at', '>=', $dateFrom))
             ->when($dateTo !== '', fn ($query) => $query->whereDate('created_at', '<=', $dateTo.' 23:59:59'))
             ->with(['division', 'school', 'workUnit', 'competitionCategory', 'pickupCategory', 'documentType', 'attachments'])
-            ->latest('id');
+            ->orderBy($piagamSort, $piagamDir);
+
+        if ($piagamSort !== 'id') {
+            $piagamQuery->orderBy('id', 'desc');
+        }
 
         $totalPiagam = (clone $piagamQuery)->count();
-        $piagams = $piagamQuery->paginate(15, ['*'], 'piagam_page')->withQueryString();
+        $piagams = $piagamQuery->paginate($perPage, ['*'], 'piagam_page')->withQueryString();
 
         $trashedIncomingCount = $canViewTrashed
             ? IncomingLetter::onlyTrashed()
@@ -122,6 +154,9 @@ class UnifiedWorkspaceController extends Controller
             'totalOutgoing' => $totalOutgoing,
             'piagams' => $piagams,
             'totalPiagam' => $totalPiagam,
+            'perPage' => $perPage,
+            'sort' => $sort,
+            'dir' => $dir,
         ]);
     }
 }

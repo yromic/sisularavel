@@ -8,6 +8,14 @@
         >
             @if (auth()->user()->role === 'super_admin' && ($status ?? 'active') !== 'trashed')
                 <x-slot:actions>
+                    <a href="/master/sekolah/template-csv" class="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-[#E3E8EE] bg-white px-3.5 text-xs font-semibold text-[#17243A] shadow-2xs hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
+                        <x-icon name="download" class="h-4 w-4 text-slate-500" />
+                        <span>Unduh Template CSV</span>
+                    </a>
+                    <button type="button" onclick="openImportSchoolModal()" class="flex min-h-[44px] items-center gap-1.5 rounded-lg border border-teal-300 bg-teal-50 px-3.5 text-xs font-semibold text-teal-800 shadow-2xs hover:bg-teal-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
+                        <x-icon name="upload" class="h-4 w-4 text-teal-700" />
+                        <span>Import CSV</span>
+                    </button>
                     <button type="button" onclick="openCreateSchoolModal()" class="flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#147D73] px-4 text-xs font-semibold text-white shadow-xs hover:bg-[#0F635B] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-700 transition-colors">
                         <x-icon name="plus" class="h-4 w-4" />
                         <span>+ Tambah Sekolah</span>
@@ -90,6 +98,55 @@
                         <div class="flex justify-end gap-2 border-t border-slate-200 pt-3">
                             <button type="button" onclick="closeCreateSchoolModal()" class="min-h-[44px] rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700 hover:bg-slate-100">Batal</button>
                             <button type="submit" class="min-h-[44px] rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800">Simpan Sekolah</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal Import Sekolah via CSV -->
+            <div id="modal-import-sekolah" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="import-school-title">
+                <div class="relative w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-2xl transition-all">
+                    <div class="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
+                        <div>
+                            <h2 class="text-base font-bold text-slate-900" id="import-school-title">Import Data Sekolah via CSV</h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Unggah berkas CSV untuk menambahkan data sekolah secara massal.</p>
+                        </div>
+                        <button type="button" onclick="closeImportSchoolModal()" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label="Tutup modal import sekolah">
+                            <x-icon name="x" class="h-5 w-5" />
+                        </button>
+                    </div>
+                    <form method="post" action="/api/v1/schools/import-csv" enctype="multipart/form-data" class="space-y-4">
+                        @csrf
+                        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3.5 text-xs text-slate-700 space-y-2">
+                            <div class="font-semibold text-slate-900 flex items-center gap-1.5">
+                                <x-icon name="file-text" class="h-4 w-4 text-emerald-700" />
+                                <span>Petunjuk Format CSV:</span>
+                            </div>
+                            <ul class="list-disc pl-4 space-y-1 text-slate-600">
+                                <li>Header wajib: <code class="font-mono bg-white px-1 py-0.5 rounded border border-slate-200">npsn,nama_sekolah,status_aktif</code></li>
+                                <li>NPSN harus berupa 8 digit angka unik satuan pendidikan.</li>
+                                <li>Jika NPSN sudah terdaftar, nama sekolah akan diperbarui otomatis.</li>
+                            </ul>
+                            <div class="pt-1">
+                                <a href="/master/sekolah/template-csv" class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:underline">
+                                    <x-icon name="download" class="h-3.5 w-3.5" />
+                                    <span>Unduh Berkas Template Resmi (.csv)</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="import-school-file" class="block text-xs font-semibold text-slate-700">Pilih Berkas CSV *</label>
+                            <input type="file" name="file" id="import-school-file" accept=".csv,text/csv,text/plain" class="mt-1 block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-800 hover:file:bg-emerald-100 cursor-pointer border border-slate-300 rounded-md" required>
+                            <p class="text-[11px] text-slate-500 mt-1">Ukuran berkas maksimal 2 MB.</p>
+                        </div>
+
+                        <div class="flex justify-end gap-2 border-t border-slate-200 pt-3">
+                            <button type="button" onclick="closeImportSchoolModal()" class="min-h-[44px] rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700 hover:bg-slate-100">Batal</button>
+                            <button type="submit" class="min-h-[44px] rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800 flex items-center gap-1.5">
+                                <x-icon name="upload" class="h-4 w-4" />
+                                <span>Unggah & Impor</span>
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -262,12 +319,25 @@
             </div>
         @endif
 
-        <div class="mt-4">
-            {{ $schools->links() }}
+        <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <x-per-page-selector :current="$perPage ?? 15" id="schools" />
+            <div>
+                {{ $schools->links() }}
+            </div>
         </div>
     </section>
 
     <script>
+        function openImportSchoolModal() {
+            const modal = document.getElementById('modal-import-sekolah');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeImportSchoolModal() {
+            const modal = document.getElementById('modal-import-sekolah');
+            if (modal) modal.classList.add('hidden');
+        }
+
         function openCreateSchoolModal() {
             const modal = document.getElementById('modal-tambah-sekolah');
             if (modal) {
@@ -325,6 +395,7 @@
 
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
+                closeImportSchoolModal();
                 closeCreateSchoolModal();
                 closeEditSchoolModal();
                 closeDeleteSchoolModal();

@@ -115,11 +115,26 @@
                 <td style="width: 15%; font-weight: bold;">Tanggal Cetak</td>
                 <td style="width: 35%;">: {{ now()->translatedFormat('d F Y, H:i') }} WIB</td>
             </tr>
+            @php
+                $typeLabels = [
+                    'incoming' => 'Rekapitulasi Surat Masuk',
+                    'outgoing' => 'Rekapitulasi Surat Keluar',
+                    'piagam' => 'Buku Ekspedisi Piagam & Dokumen Dinas',
+                    'all' => 'Seluruh Administrasi Persuratan & Piagam',
+                ];
+                $roleLabels = [
+                    'super_admin' => 'Super Administrator',
+                    'division_admin' => 'Administrator Divisi',
+                    'operator' => 'Operator Pelaksana',
+                ];
+                $typeDisplay = $typeLabels[$type] ?? strtoupper($type);
+                $roleDisplay = $roleLabels[$printedBy->role] ?? ucfirst(str_replace('_', ' ', $printedBy->role));
+            @endphp
             <tr>
                 <td style="font-weight: bold;">Jenis Laporan</td>
-                <td>: {{ strtoupper($type) }}</td>
+                <td>: {{ $typeDisplay }}</td>
                 <td style="font-weight: bold;">Petugas</td>
-                <td>: {{ $printedBy->name }} ({{ $printedBy->role }})</td>
+                <td>: {{ $printedBy->name }} ({{ $roleDisplay }})</td>
             </tr>
             @if ($dateFrom || $dateTo || $year)
                 <tr>
