@@ -69,10 +69,12 @@
                 <!-- Status Toggle for Admin: Aktif vs Kotak Sampah (UX-010) -->
                 <div class="inline-flex items-center rounded-lg bg-slate-100 p-1 border border-slate-200 text-xs self-start sm:self-auto shrink-0">
                     <a href="/persuratan?tab={{ $tab }}&status=active{{ request('q') ? '&q='.urlencode(request('q')) : '' }}{{ request('date_from') ? '&date_from='.urlencode(request('date_from')) : '' }}{{ request('date_to') ? '&date_to='.urlencode(request('date_to')) : '' }}" 
+                       id="status-link-active"
                        class="flex items-center gap-1.5 rounded-md px-3 py-1.5 font-semibold transition-all {{ $status === 'trashed' ? 'text-slate-600 hover:text-slate-900' : 'bg-white text-slate-800 shadow-2xs font-bold' }}">
                         <span>Arsip Aktif</span>
                     </a>
                     <a href="/persuratan?tab={{ $tab }}&status=trashed{{ request('q') ? '&q='.urlencode(request('q')) : '' }}{{ request('date_from') ? '&date_from='.urlencode(request('date_from')) : '' }}{{ request('date_to') ? '&date_to='.urlencode(request('date_to')) : '' }}" 
+                       id="status-link-trashed"
                        class="flex items-center gap-1.5 rounded-md px-3 py-1.5 font-semibold transition-all {{ $status === 'trashed' ? 'bg-rose-600 text-white shadow-2xs font-bold' : 'text-slate-600 hover:text-rose-700' }}">
                         <x-icon name="trash" class="h-3.5 w-3.5" />
                         <span>Kotak Sampah</span>
@@ -102,7 +104,16 @@
         <div class="mb-5 rounded-lg border border-slate-200 bg-white p-3.5 shadow-xs">
             <form method="get" action="/persuratan" id="workspace-search-form" class="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-12 sm:gap-2.5">
                 <input type="hidden" name="tab" id="form-active-tab-input" value="{{ $tab }}">
-                <input type="hidden" name="status" value="{{ $status ?? 'active' }}">
+                <input type="hidden" name="status" id="form-active-status-input" value="{{ $status ?? 'active' }}">
+                @if (request()->filled('sort'))
+                    <input type="hidden" name="sort" id="form-active-sort-input" value="{{ request('sort') }}">
+                @endif
+                @if (request()->filled('dir'))
+                    <input type="hidden" name="dir" id="form-active-dir-input" value="{{ request('dir') }}">
+                @endif
+                @if (request()->filled('per_page'))
+                    <input type="hidden" name="per_page" id="form-active-per-page-input" value="{{ request('per_page') }}">
+                @endif
                 
                 <div class="sm:col-span-5">
                     <label for="input-search-q" class="sr-only">Kata Kunci Pencarian</label>
@@ -144,7 +155,7 @@
                             Filter
                         </button>
                         @if (request()->hasAny(['q', 'date_from', 'date_to']))
-                            <a href="/persuratan?tab={{ $tab }}&status={{ $status ?? 'active' }}" class="min-h-[38px] sm:min-h-[42px] flex items-center justify-center rounded-md border border-slate-300 px-2.5 text-xs text-slate-600 hover:bg-slate-100 w-full sm:w-auto" title="Reset filter">
+                            <a href="/persuratan?tab={{ $tab }}&status={{ $status ?? 'active' }}" id="btn-reset-filter" class="min-h-[38px] sm:min-h-[42px] flex items-center justify-center rounded-md border border-slate-300 px-2.5 text-xs text-slate-600 hover:bg-slate-100 w-full sm:w-auto" title="Reset filter">
                                 Reset
                             </a>
                         @endif
@@ -154,36 +165,37 @@
 
             @php
                 $hasActiveFilters = request()->filled('q') || request()->filled('date_from') || request()->filled('date_to') || ($status === 'trashed');
+                $baseParams = ['tab' => $tab];
             @endphp
             @if ($hasActiveFilters)
                 <!-- Active Filter Chips Bar (UX-011) -->
                 <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 text-xs">
                     <span class="text-xs font-semibold text-slate-500">Filter Aktif:</span>
                     @if (request()->filled('q'))
-                        <a href="/persuratan?{{ http_build_query(request()->except('q')) }}" class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200">
+                        <a href="/persuratan?{{ http_build_query(array_merge($baseParams, request()->except(['q', 'page', 'masuk_page', 'keluar_page', 'piagam_page']))) }}" data-filter-chip class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200">
                             <span>Kata Kunci: "{{ request('q') }}"</span>
                             <span class="font-bold text-slate-400 hover:text-slate-700">&times;</span>
                         </a>
                     @endif
                     @if (request()->filled('date_from'))
-                        <a href="/persuratan?{{ http_build_query(request()->except('date_from')) }}" class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200">
+                        <a href="/persuratan?{{ http_build_query(array_merge($baseParams, request()->except(['date_from', 'page', 'masuk_page', 'keluar_page', 'piagam_page']))) }}" data-filter-chip class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200">
                             <span>Dari: {{ date('d/m/Y', strtotime(request('date_from'))) }}</span>
                             <span class="font-bold text-slate-400 hover:text-slate-700">&times;</span>
                         </a>
                     @endif
                     @if (request()->filled('date_to'))
-                        <a href="/persuratan?{{ http_build_query(request()->except('date_to')) }}" class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200">
+                        <a href="/persuratan?{{ http_build_query(array_merge($baseParams, request()->except(['date_to', 'page', 'masuk_page', 'keluar_page', 'piagam_page']))) }}" data-filter-chip class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200">
                             <span>Sampai: {{ date('d/m/Y', strtotime(request('date_to'))) }}</span>
                             <span class="font-bold text-slate-400 hover:text-slate-700">&times;</span>
                         </a>
                     @endif
                     @if ($status === 'trashed')
-                        <a href="/persuratan?{{ http_build_query(array_merge(request()->except('status'), ['status' => 'active'])) }}" class="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-800 hover:bg-rose-200">
+                        <a href="/persuratan?{{ http_build_query(array_merge($baseParams, request()->except(['status', 'page', 'masuk_page', 'keluar_page', 'piagam_page']), ['status' => 'active'])) }}" data-filter-chip class="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-800 hover:bg-rose-200">
                             <span>Status: Kotak Sampah</span>
                             <span class="font-bold text-rose-500 hover:text-rose-800">&times;</span>
                         </a>
                     @endif
-                    <a href="/persuratan?tab={{ $tab }}&status=active" class="ml-auto text-xs font-semibold text-emerald-700 hover:underline">
+                    <a href="/persuratan?tab={{ $tab }}&status=active" id="btn-clear-all-filters" class="ml-auto text-xs font-semibold text-emerald-700 hover:underline">
                         Hapus Semua Filter
                     </a>
                 </div>
@@ -255,11 +267,11 @@
                     <thead>
                         <tr class="border-b border-slate-200 bg-slate-50/80 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                             <th class="p-3 w-12 text-center">No</th>
-                            <th class="p-3"><x-sort-link column="id" title="No. Agenda" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" /></th>
-                            <th class="p-3"><x-sort-link column="letter_number" title="Nomor Surat" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" defaultDir="asc" /></th>
-                            <th class="p-3"><x-sort-link column="origin_agency" title="Asal Instansi" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" defaultDir="asc" /></th>
-                            <th class="p-3"><x-sort-link column="letter_date" title="Tgl Surat" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" /></th>
-                            <th class="p-3"><x-sort-link column="received_date" title="Diterima" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" /></th>
+                            <th class="p-3"><x-sort-link column="id" title="No. Agenda" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" tab="masuk" /></th>
+                            <th class="p-3"><x-sort-link column="letter_number" title="Nomor Surat" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" defaultDir="asc" tab="masuk" /></th>
+                            <th class="p-3"><x-sort-link column="origin_agency" title="Asal Instansi" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" defaultDir="asc" tab="masuk" /></th>
+                            <th class="p-3"><x-sort-link column="letter_date" title="Tgl Surat" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" tab="masuk" /></th>
+                            <th class="p-3"><x-sort-link column="received_date" title="Diterima" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" tab="masuk" /></th>
                             <th class="p-3">Perihal / Ringkasan</th>
                             <th class="p-3 text-center">Berkas</th>
                             <th class="p-3 text-center">Aksi</th>
@@ -326,7 +338,7 @@
             </div>
 
             <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <x-per-page-selector :current="$perPage ?? 15" id="masuk" />
+                <x-per-page-selector :current="$perPage ?? 15" id="masuk" tab="masuk" />
                 <div>
                     {{ $incomingLetters->appends(['tab' => 'masuk', 'status' => $status, 'q' => request('q'), 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'sort' => request('sort'), 'dir' => request('dir'), 'per_page' => $perPage ?? 15])->links() }}
                 </div>
@@ -398,11 +410,11 @@
                     <thead>
                         <tr class="border-b border-slate-200 bg-slate-50/80 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                             <th class="p-3 w-12 text-center">No</th>
-                            <th class="p-3"><x-sort-link column="id" title="No. Agenda" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" /></th>
-                            <th class="p-3"><x-sort-link column="letter_number" title="Nomor Surat" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" defaultDir="asc" /></th>
-                            <th class="p-3"><x-sort-link column="letter_year" title="Tahun" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" /></th>
-                            <th class="p-3"><x-sort-link column="letter_date" title="Tgl Surat" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" /></th>
-                            <th class="p-3"><x-sort-link column="disseminated_date" title="Diseminasi" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" /></th>
+                            <th class="p-3"><x-sort-link column="id" title="No. Agenda" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" tab="keluar" /></th>
+                            <th class="p-3"><x-sort-link column="letter_number" title="Nomor Surat" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" defaultDir="asc" tab="keluar" /></th>
+                            <th class="p-3"><x-sort-link column="letter_year" title="Tahun" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" tab="keluar" /></th>
+                            <th class="p-3"><x-sort-link column="letter_date" title="Tgl Surat" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" tab="keluar" /></th>
+                            <th class="p-3"><x-sort-link column="disseminated_date" title="Diseminasi" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" tab="keluar" /></th>
                             <th class="p-3">Perihal / Ringkasan</th>
                             <th class="p-3 text-center">Berkas</th>
                             <th class="p-3 text-center">Aksi</th>
@@ -469,7 +481,7 @@
             </div>
 
             <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <x-per-page-selector :current="$perPage ?? 15" id="keluar" />
+                <x-per-page-selector :current="$perPage ?? 15" id="keluar" tab="keluar" />
                 <div>
                     {{ $outgoingLetters->appends(['tab' => 'keluar', 'status' => $status, 'q' => request('q'), 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'sort' => request('sort'), 'dir' => request('dir'), 'per_page' => $perPage ?? 15])->links() }}
                 </div>
@@ -551,11 +563,11 @@
                     <thead>
                         <tr class="border-b border-slate-200 bg-slate-50/80 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                             <th class="p-3 w-12 text-center">No</th>
-                            <th class="p-3"><x-sort-link column="created_at" title="Waktu Pencatatan" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" /></th>
-                            <th class="p-3"><x-sort-link column="document_type_name" title="Jenis Dokumen" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" defaultDir="asc" /></th>
-                            <th class="p-3"><x-sort-link column="student_name" title="Keterangan Piagam / Lomba" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" defaultDir="asc" /></th>
+                            <th class="p-3"><x-sort-link column="created_at" title="Waktu Pencatatan" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" tab="piagam" /></th>
+                            <th class="p-3"><x-sort-link column="document_type_name" title="Jenis Dokumen" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" defaultDir="asc" tab="piagam" /></th>
+                            <th class="p-3"><x-sort-link column="student_name" title="Keterangan Piagam / Lomba" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" defaultDir="asc" tab="piagam" /></th>
                             <th class="p-3">Asal Sekolah / Instansi</th>
-                            <th class="p-3"><x-sort-link column="recipient_name" title="Nama Pengambil Fisik" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" defaultDir="asc" /></th>
+                            <th class="p-3"><x-sort-link column="recipient_name" title="Nama Pengambil Fisik" :currentSort="$sort ?? 'id'" :currentDir="$dir ?? 'desc'" defaultDir="asc" tab="piagam" /></th>
                             <th class="p-3">Jabatan / Unit Kerja</th>
                             <th class="p-3">Divisi</th>
                             <th class="p-3 text-center">Tanda Tangan</th>
@@ -636,7 +648,7 @@
             </div>
 
             <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <x-per-page-selector :current="$perPage ?? 15" id="piagam" />
+                <x-per-page-selector :current="$perPage ?? 15" id="piagam" tab="piagam" />
                 <div>
                     {{ $piagams->appends(['tab' => 'piagam', 'status' => $status, 'q' => request('q'), 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'sort' => request('sort'), 'dir' => request('dir'), 'per_page' => $perPage ?? 15])->links() }}
                 </div>
@@ -714,11 +726,86 @@
                 formActiveTab.value = tab;
             }
 
+            // Sync status toggle links (Arsip Aktif / Kotak Sampah)
+            const statusActive = document.getElementById('status-link-active');
+            if (statusActive) {
+                const u = new URL(statusActive.href, window.location.origin);
+                u.searchParams.set('tab', tab);
+                statusActive.href = u.toString();
+            }
+            const statusTrashed = document.getElementById('status-link-trashed');
+            if (statusTrashed) {
+                const u = new URL(statusTrashed.href, window.location.origin);
+                u.searchParams.set('tab', tab);
+                statusTrashed.href = u.toString();
+            }
+
+            // Sync reset filter & clear all filters buttons
+            const btnReset = document.getElementById('btn-reset-filter');
+            if (btnReset) {
+                const u = new URL(btnReset.href, window.location.origin);
+                u.searchParams.set('tab', tab);
+                btnReset.href = u.toString();
+            }
+            const btnClear = document.getElementById('btn-clear-all-filters');
+            if (btnClear) {
+                const u = new URL(btnClear.href, window.location.origin);
+                u.searchParams.set('tab', tab);
+                btnClear.href = u.toString();
+            }
+
+            // Sync filter chips
+            document.querySelectorAll('[data-filter-chip]').forEach(chip => {
+                const u = new URL(chip.href, window.location.origin);
+                u.searchParams.set('tab', tab);
+                chip.href = u.toString();
+            });
+
             // Update URL without page reload
-            const currentUrl = new URL(window.location);
+            const currentUrl = new URL(window.location.href);
             currentUrl.searchParams.set('tab', tab);
-            window.history.replaceState({}, '', currentUrl);
+            window.history.replaceState({}, '', currentUrl.toString());
         }
+
+        function handlePerPageChange(select) {
+            const targetTab = select.getAttribute('data-per-page-tab')
+                || (select.closest('#panel-keluar') ? 'keluar' : '')
+                || (select.closest('#panel-piagam') ? 'piagam' : '')
+                || (select.closest('#panel-masuk') ? 'masuk' : '')
+                || currentWorkspaceTab;
+
+            const u = new URL(select.value, window.location.origin);
+            if (targetTab) {
+                u.searchParams.set('tab', targetTab);
+            }
+            u.searchParams.delete('page');
+            u.searchParams.delete('masuk_page');
+            u.searchParams.delete('keluar_page');
+            u.searchParams.delete('piagam_page');
+            window.location.href = u.toString();
+        }
+
+        // Global click interceptor to guarantee sorting headers always carry correct tab and reset pagination
+        document.addEventListener('click', function (e) {
+            const sortLink = e.target.closest('a[data-sort-link]');
+            if (!sortLink) return;
+
+            const targetTab = sortLink.getAttribute('data-sort-link')
+                || (sortLink.closest('#panel-keluar') ? 'keluar' : '')
+                || (sortLink.closest('#panel-piagam') ? 'piagam' : '')
+                || (sortLink.closest('#panel-masuk') ? 'masuk' : '')
+                || currentWorkspaceTab;
+
+            if (targetTab) {
+                const u = new URL(sortLink.href, window.location.origin);
+                u.searchParams.set('tab', targetTab);
+                u.searchParams.delete('page');
+                u.searchParams.delete('masuk_page');
+                u.searchParams.delete('keluar_page');
+                u.searchParams.delete('piagam_page');
+                sortLink.href = u.toString();
+            }
+        });
 
         function toggleMobileFilterPanel() {
             const panel = document.getElementById('workspace-date-filter-panel');

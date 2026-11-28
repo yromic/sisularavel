@@ -31,6 +31,15 @@
         <!-- Filter & Search Toolbar -->
         <div class="mb-5 rounded-lg border border-slate-200 bg-white p-3.5 shadow-xs">
             <form method="get" action="/piagam" class="grid grid-cols-1 gap-2.5 sm:grid-cols-4">
+                @if (request()->filled('sort'))
+                    <input type="hidden" name="sort" value="{{ request('sort') }}">
+                @endif
+                @if (request()->filled('dir'))
+                    <input type="hidden" name="dir" value="{{ request('dir') }}">
+                @endif
+                @if (request()->filled('per_page'))
+                    <input type="hidden" name="per_page" value="{{ request('per_page') }}">
+                @endif
                 <div class="sm:col-span-2">
                     <div class="flex min-h-[42px] items-center gap-2 rounded-md border border-slate-300 bg-white px-3">
                         <x-icon name="search" class="h-4 w-4 text-slate-400 shrink-0" />

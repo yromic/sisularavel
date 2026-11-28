@@ -44,6 +44,15 @@
 
         <form method="get" action="/surat-masuk" class="mb-4 flex min-h-[44px] items-center gap-2 rounded-md border border-slate-300 bg-white px-3 shadow-xs">
             <input type="hidden" name="status" value="{{ $status ?? 'active' }}">
+            @if (request()->filled('sort'))
+                <input type="hidden" name="sort" value="{{ request('sort') }}">
+            @endif
+            @if (request()->filled('dir'))
+                <input type="hidden" name="dir" value="{{ request('dir') }}">
+            @endif
+            @if (request()->filled('per_page'))
+                <input type="hidden" name="per_page" value="{{ request('per_page') }}">
+            @endif
             <x-icon name="search" class="h-5 w-5 text-slate-600" />
             <input name="q" value="{{ request('q') }}" class="min-h-[42px] flex-1 border-0 bg-transparent text-sm focus:outline-hidden" placeholder="Cari nomor surat, instansi asal, atau perihal...">
             @if(request('q'))
