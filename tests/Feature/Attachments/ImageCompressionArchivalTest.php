@@ -19,7 +19,7 @@ class ImageCompressionArchivalTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function createGdImage(int $width, int $height, string $format = 'jpg'): UploadedFile
+    private function createGdImage(int $width, int $height, string $format = 'jpg', ?string $label = null): UploadedFile
     {
         $im = imagecreatetruecolor($width, $height);
         $bg = imagecolorallocate($im, 245, 245, 245);
@@ -29,6 +29,11 @@ class ImageCompressionArchivalTest extends TestCase
         $lineColor = imagecolorallocate($im, 40, 40, 40);
         for ($i = 0; $i < $height; $i += 30) {
             imageline($im, 0, $i, $width, $i, $lineColor);
+        }
+
+        if ($label !== null) {
+            $textColor = imagecolorallocate($im, 180, 20, 20);
+            imagestring($im, 5, 30, 30, $label, $textColor);
         }
 
         $tempPath = tempnam(sys_get_temp_dir(), 'test_img_').'.'.$format;
@@ -278,11 +283,11 @@ class ImageCompressionArchivalTest extends TestCase
 
         $initialTempCount = $this->countTempPhotos();
 
-        // Siapkan 4 foto berdimensi 1400x1000
-        $photo1 = $this->createGdImage(1400, 1000, 'jpg');
-        $photo2 = $this->createGdImage(1400, 1000, 'jpg');
-        $photo3 = $this->createGdImage(1400, 1000, 'jpg');
-        $photo4 = $this->createGdImage(1400, 1000, 'jpg');
+        // Siapkan 4 foto berdimensi 1400x1000 dengan konten unik
+        $photo1 = $this->createGdImage(1400, 1000, 'jpg', 'Lembar 1 - Surat Masuk');
+        $photo2 = $this->createGdImage(1400, 1000, 'jpg', 'Lembar 2 - Lampiran Tabel');
+        $photo3 = $this->createGdImage(1400, 1000, 'jpg', 'Lembar 3 - Uraian Kegiatan');
+        $photo4 = $this->createGdImage(1400, 1000, 'jpg', 'Lembar 4 - Tanda Tangan');
 
         $response = $this->actingAs($operator)
             ->withHeader('Idempotency-Key', (string) Str::uuid())
@@ -304,8 +309,16 @@ class ImageCompressionArchivalTest extends TestCase
         $this->assertStringEndsWith('.pdf', $attachment->original_name);
         $this->assertStringContainsString('4_lembar', $attachment->original_name);
 
-        // Ukuran PDF 4 halaman hasil kompresi harus jauh di bawah 1.5 MB (maksimal ~500 KB)
-        $this->assertLessThan(600 * 1024, $attachment->file_size_bytes);
+        // Ukuran PDF 4 halaman hasil kompresi harus realistis (tidak kosong/rusak dan efisien di bawah 500 KB)
+        $this->assertGreaterThan(15 * 1024, $attachment->file_size_bytes);
+        $this->assertLessThan(500 * 1024, $attachment->file_size_bytes);
+
+        // Verifikasi isi biner PDF: Memastikan 4 objek gambar tertanam sempurna (bukan broken image/kotak silang)
+        $pdfContent = Storage::disk('private_documents')->get($attachment->file_path);
+        $imageCount = substr_count($pdfContent, '/Subtype /Image') + substr_count($pdfContent, '/Subtype/Image');
+        $this->assertSame(4, $imageCount, 'PDF wajib memuat tepat 4 objek /Subtype /Image (bukan broken image).');
+        $this->assertGreaterThanOrEqual(4, substr_count($pdfContent, '/DCTDecode'), 'PDF wajib memuat filter kompresi /DCTDecode untuk setiap citra JPEG.');
+        $this->assertStringNotContainsString('Image not found or type unknown', $pdfContent);
 
         // Seluruh berkas temporary di storage/app/private/temp_photos wajib bersih
         $this->assertSame($initialTempCount, $this->countTempPhotos());

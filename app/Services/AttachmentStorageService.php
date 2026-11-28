@@ -8,7 +8,6 @@ use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -59,60 +58,51 @@ class AttachmentStorageService
      */
     public function storeMergedPhotosAsPdf(array $photos, Model $attachable, Division $division, User $actor, string $letterNumber): Attachment
     {
-        $tempDir = storage_path('app/private/temp_photos');
-        File::ensureDirectoryExists($tempDir);
+        $base64Images = [];
 
-        $optimizedResults = [];
-        $photoPaths = [];
-
-        try {
-            foreach ($photos as $photo) {
-                $optimized = $this->imageOptimizer->optimize($photo);
-                $optimizedResults[] = $optimized;
-                $photoPaths[] = str_replace('\\', '/', realpath($optimized->path) ?: $optimized->path);
-            }
-
-            $cleanNumber = preg_replace('/[^A-Za-z0-9_\-]/', '_', $letterNumber);
-            $fileName = 'Surat_'.$cleanNumber.'_'.count($photos).'_lembar.pdf';
-
-            $pdf = Pdf::loadView('letters.pdf_photos', [
-                'photos' => $photoPaths,
-                'title' => 'Lampiran Foto Surat '.$letterNumber,
-            ])->setPaper('a4', 'portrait');
-
-            $pdf->getDomPDF()->getOptions()->setChroot([
-                base_path(),
-                storage_path(),
-            ]);
-
-            $pdfContent = $pdf->output();
-
-            $datePath = now()->format('Y/m');
-            $path = 'documents/'.$division->code.'/'.$datePath.'/'.Str::uuid().'.pdf';
-
-            Storage::disk(self::DISK)->put($path, $pdfContent);
-            $hash = hash('sha256', $pdfContent);
-
-            return Attachment::query()->create([
-                'uuid' => (string) Str::uuid(),
-                'division_id' => $division->id,
-                'attachable_type' => $attachable::class,
-                'attachable_id' => $attachable->getKey(),
-                'file_path' => $path,
-                'original_name' => $fileName,
-                'file_size_bytes' => strlen($pdfContent),
-                'mime_type' => 'application/pdf',
-                'file_hash' => $hash,
-                'is_missing' => false,
-                'migration_status' => 'migrated',
-                'missing_reason' => null,
-                'created_by_user_id' => $actor->id,
-            ]);
-        } finally {
-            foreach ($optimizedResults as $opt) {
-                $opt->cleanup();
+        foreach ($photos as $photo) {
+            $optimized = $this->imageOptimizer->optimize($photo);
+            try {
+                $rawBytes = file_exists($optimized->path) ? file_get_contents($optimized->path) : '';
+                $base64Images[] = 'data:'.$optimized->mimeType.';base64,'.base64_encode($rawBytes);
+                unset($rawBytes);
+            } finally {
+                $optimized->cleanup();
             }
         }
+
+        $cleanNumber = preg_replace('/[^A-Za-z0-9_\-]/', '_', $letterNumber);
+        $fileName = 'Surat_'.$cleanNumber.'_'.count($photos).'_lembar.pdf';
+
+        $pdf = Pdf::loadView('letters.pdf_photos', [
+            'photos' => $base64Images,
+            'title' => 'Lampiran Foto Surat '.$letterNumber,
+        ])->setPaper('a4', 'portrait');
+
+        $pdfContent = $pdf->output();
+        unset($base64Images);
+
+        $datePath = now()->format('Y/m');
+        $path = 'documents/'.$division->code.'/'.$datePath.'/'.Str::uuid().'.pdf';
+
+        Storage::disk(self::DISK)->put($path, $pdfContent);
+        $hash = hash('sha256', $pdfContent);
+
+        return Attachment::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'division_id' => $division->id,
+            'attachable_type' => $attachable::class,
+            'attachable_id' => $attachable->getKey(),
+            'file_path' => $path,
+            'original_name' => $fileName,
+            'file_size_bytes' => strlen($pdfContent),
+            'mime_type' => 'application/pdf',
+            'file_hash' => $hash,
+            'is_missing' => false,
+            'migration_status' => 'migrated',
+            'missing_reason' => null,
+            'created_by_user_id' => $actor->id,
+        ]);
     }
 
     public function remediate(Attachment $attachment, UploadedFile $file, Division $division, User $actor): Attachment
