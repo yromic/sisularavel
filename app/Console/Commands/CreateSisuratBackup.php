@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\Backup\BackupOrchestrator;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class CreateSisuratBackup extends Command
@@ -97,6 +98,12 @@ class CreateSisuratBackup extends Command
 
             return self::SUCCESS;
         } catch (Throwable $e) {
+            Log::error('CreateSisuratBackup CLI execution failed: '.$e->getMessage(), [
+                'exception' => $e,
+                'type' => $type,
+                'trigger' => $trigger,
+            ]);
+
             $this->newLine();
             $this->line('<bg=red;fg=white;options=bold>                                                                                </>');
             $this->line('<bg=red;fg=white;options=bold>   FAILURE: BACKUP PIPELINE ENCOUNTERED AN ERROR!                               </>');

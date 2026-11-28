@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Piagam;
 
-use App\Models\AuditLog;
 use App\Models\CompetitionCategory;
 use App\Models\Division;
 use App\Models\Piagam;
@@ -136,4 +135,3 @@ class PiagamDeleteTest extends TestCase
         ]);
     }
 }
-

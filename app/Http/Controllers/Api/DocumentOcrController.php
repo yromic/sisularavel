@@ -42,9 +42,8 @@ class DocumentOcrController extends Controller
         } catch (Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat memproses pemindaian dokumen: ' . $e->getMessage(),
+                'message' => 'Terjadi kesalahan saat memproses pemindaian dokumen: '.$e->getMessage(),
             ], 500);
         }
     }
 }
-

@@ -27,32 +27,8 @@ class BackupController extends Controller
     ) {
         abort_unless($request->user()?->role === 'super_admin', 403, 'Akses terbatas untuk Super Admin.');
 
-        // 1. Evaluate storage metrics
-        $freeBytes = @disk_free_space(storage_path()) ?: 0;
-        $totalBytes = @disk_total_space(storage_path()) ?: 1;
-        $usedBytes = max(0, $totalBytes - $freeBytes);
-        $usedPercent = round(($usedBytes / $totalBytes) * 100, 1);
-
-        $diskCritical = (float) config('backup.thresholds.disk_critical_percent', 90.0);
-        $diskWarning = (float) config('backup.thresholds.disk_warning_percent', 75.0);
-
-        $diskStatus = 'normal';
-        if ($usedPercent >= $diskCritical || $freeBytes < config('backup.thresholds.min_free_bytes', 104857600)) {
-            $diskStatus = 'critical';
-        } elseif ($usedPercent >= $diskWarning) {
-            $diskStatus = 'warning';
-        }
-
-        $storageMetrics = [
-            'total_bytes' => $totalBytes,
-            'total_formatted' => round($totalBytes / (1024 * 1024 * 1024), 2).' GB',
-            'used_bytes' => $usedBytes,
-            'used_formatted' => round($usedBytes / (1024 * 1024 * 1024), 2).' GB',
-            'free_bytes' => $freeBytes,
-            'free_formatted' => round($freeBytes / (1024 * 1024 * 1024), 2).' GB',
-            'used_percent' => $usedPercent,
-            'status' => $diskStatus,
-        ];
+        // 1. Evaluate storage metrics (Shared-Hosting Quota Compliant)
+        $storageMetrics = $preflight->getHostingStorageMetrics();
 
         // 2. Off-site Google Drive metrics
         $remoteConfig = [

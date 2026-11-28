@@ -4,6 +4,7 @@ namespace App\Services\Backup;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Process\Process;
 use Throwable;
@@ -460,6 +461,112 @@ class BackupPreflightService
     }
 
     /**
+     * Calculate total size of files inside a directory (scans only storage_path(), never vendor/).
+     */
+    public function getDirectorySizeBytes(string $directory): int
+    {
+        if (! File::isDirectory($directory)) {
+            return 0;
+        }
+
+        $size = 0;
+        try {
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::FOLLOW_SYMLINKS)
+            );
+            foreach ($iterator as $file) {
+                if ($file->isFile()) {
+                    $size += $file->getSize();
+                }
+            }
+        } catch (Throwable $e) {
+            Log::warning("Could not calculate directory size for {$directory}: ".$e->getMessage());
+        }
+
+        return $size;
+    }
+
+    /**
+     * Calculate database size gracefully across MySQL/MariaDB and SQLite (tests).
+     */
+    public function getDatabaseSizeBytes(): int
+    {
+        try {
+            $connection = DB::connection();
+
+            if ($connection->getDriverName() === 'sqlite') {
+                $dbPath = $connection->getDatabaseName();
+
+                return ($dbPath && File::exists($dbPath)) ? (int) @File::size($dbPath) : 0;
+            }
+
+            $databaseName = $connection->getDatabaseName();
+            if (! $databaseName) {
+                return 0;
+            }
+
+            $result = DB::selectOne(
+                'SELECT SUM(data_length + index_length) AS size_bytes FROM information_schema.TABLES WHERE table_schema = ?',
+                [$databaseName]
+            );
+
+            return (int) ($result->size_bytes ?? 0);
+        } catch (Throwable $e) {
+            Log::warning('Could not query database size from information_schema: '.$e->getMessage());
+
+            return 0;
+        }
+    }
+
+    /**
+     * Get accurate hosting storage metrics evaluating application footprint against configured quota.
+     */
+    public function getHostingStorageMetrics(): array
+    {
+        $quotaMb = (int) config('backup.hosting_quota_mb', 4096);
+        $totalBytes = $quotaMb * 1024 * 1024;
+
+        $storageBytes = $this->getDirectorySizeBytes(storage_path());
+        $databaseBytes = $this->getDatabaseSizeBytes();
+        $usedBytes = $storageBytes + $databaseBytes;
+        $freeBytes = max(0, $totalBytes - $usedBytes);
+        $usedPercent = $totalBytes > 0 ? round(($usedBytes / $totalBytes) * 100, 1) : 0.0;
+
+        $diskCritical = (float) config('backup.thresholds.disk_critical_percent', 90.0);
+        $diskWarning = (float) config('backup.thresholds.disk_warning_percent', 75.0);
+        $minFreeBytes = (int) config('backup.thresholds.min_free_bytes', 104857600);
+
+        $diskStatus = 'normal';
+        if ($usedPercent >= $diskCritical || $freeBytes < $minFreeBytes) {
+            $diskStatus = 'critical';
+        } elseif ($usedPercent >= $diskWarning) {
+            $diskStatus = 'warning';
+        }
+
+        $formatBytes = function (int $bytes): string {
+            if ($bytes >= 1024 * 1024 * 1024) {
+                return round($bytes / (1024 * 1024 * 1024), 2).' GB';
+            }
+
+            return round($bytes / (1024 * 1024), 2).' MB';
+        };
+
+        return [
+            'total_bytes' => $totalBytes,
+            'total_formatted' => $formatBytes($totalBytes),
+            'used_bytes' => $usedBytes,
+            'used_formatted' => $formatBytes($usedBytes),
+            'free_bytes' => $freeBytes,
+            'free_formatted' => $formatBytes($freeBytes),
+            'used_percent' => $usedPercent,
+            'status' => $diskStatus,
+            'storage_bytes' => $storageBytes,
+            'database_bytes' => $databaseBytes,
+            'quota_mb' => $quotaMb,
+        ];
+    }
+
+    /**
      * Check SSD storage capacity against safety thresholds (Section 10.4 of docs/backup.md).
      *
      * <= 70%: Normal (PASS)
@@ -480,31 +587,11 @@ class BackupPreflightService
             $totalBytes = (int) ($freeBytes / max(0.01, (1 - ($usedPercent / 100))));
             $usedBytes = $totalBytes - $freeBytes;
         } else {
-            $freeBytes = @disk_free_space($targetPath);
-            $totalBytes = @disk_total_space($targetPath);
-
-            if ($freeBytes === false || $totalBytes === false || $totalBytes <= 0) {
-                return [
-                    'check' => [
-                        'key' => 'disk_capacity',
-                        'category' => 'Resources & Capacity',
-                        'name' => 'Hosting SSD Storage Capacity',
-                        'status' => 'WARN',
-                        'critical' => false,
-                        'message' => "Unable to read disk capacity metrics on path '{$targetPath}'.",
-                        'data' => ['path' => $targetPath],
-                    ],
-                    'data' => [
-                        'total_bytes' => 0,
-                        'free_bytes' => 0,
-                        'used_bytes' => 0,
-                        'used_percent' => 0.0,
-                    ],
-                ];
-            }
-
-            $usedBytes = $totalBytes - $freeBytes;
-            $usedPercent = round(($usedBytes / $totalBytes) * 100, 2);
+            $metrics = $this->getHostingStorageMetrics();
+            $totalBytes = $metrics['total_bytes'];
+            $usedBytes = $metrics['used_bytes'];
+            $freeBytes = $metrics['free_bytes'];
+            $usedPercent = $metrics['used_percent'];
         }
 
         $freeGb = round($freeBytes / (1024 * 1024 * 1024), 2);

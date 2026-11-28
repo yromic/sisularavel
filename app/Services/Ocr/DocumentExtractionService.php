@@ -11,7 +11,7 @@ use Throwable;
 
 class DocumentExtractionService
 {
-    private const SYSTEM_INSTRUCTION = <<<PROMPT
+    private const SYSTEM_INSTRUCTION = <<<'PROMPT'
 Anda adalah asisten AI resmi pencatat administrasi persuratan dan piagam penghargaan dinas pendidikan.
 Tugas Anda adalah membaca gambar/dokumen resmi dan mengekstrak entitas penting dengan presisi tinggi.
 
@@ -42,6 +42,7 @@ PROMPT;
         if ($result !== null) {
             $result->provider = 'gemini';
             $result->model = config('services.gemini.model_primary', 'gemini-3.5-flash-lite');
+
             return $result;
         }
 
@@ -50,6 +51,7 @@ PROMPT;
         if ($result !== null) {
             $result->provider = 'gemini';
             $result->model = config('services.gemini.model_fallback', 'gemini-3.1-flash-lite');
+
             return $result;
         }
 
@@ -58,6 +60,7 @@ PROMPT;
         if ($result !== null) {
             $result->provider = 'groq';
             $result->model = config('services.groq.model', 'qwen/qwen3.8-27b');
+
             return $result;
         }
 
@@ -66,6 +69,7 @@ PROMPT;
         if ($result !== null) {
             $result->provider = 'ocr_space';
             $result->model = 'ocr_engine_2';
+
             return $result;
         }
 
@@ -133,15 +137,16 @@ PROMPT;
                         return $this->parseJsonToDto($rawText);
                     }
                 } else {
-                    Log::warning("Gemini {$model} returned [{$response->status()}]: " . substr($response->body(), 0, 300));
+                    Log::warning("Gemini {$model} returned [{$response->status()}]: ".substr($response->body(), 0, 300));
                 }
 
                 if ($response->status() === 429) {
-                    Log::warning("Gemini model {$model} rate-limited on key: " . substr($apiKey, 0, 6) . "...");
+                    Log::warning("Gemini model {$model} rate-limited on key: ".substr($apiKey, 0, 6).'...');
+
                     continue; // try next key
                 }
             } catch (Throwable $e) {
-                Log::warning("Gemini exception on {$model}: " . $e->getMessage());
+                Log::warning("Gemini exception on {$model}: ".$e->getMessage());
             }
         }
 
@@ -158,6 +163,7 @@ PROMPT;
         // Groq vision ONLY accepts image formats (JPEG, PNG, WEBP, GIF). It does NOT support PDF documents.
         if (! str_starts_with($mime, 'image/')) {
             Log::info("Groq vision skipped: MIME type [{$mime}] is not a supported image format.");
+
             return null;
         }
 
@@ -189,10 +195,10 @@ PROMPT;
                     return $this->parseJsonToDto($content);
                 }
             } else {
-                Log::warning("Groq vision returned [{$response->status()}]: " . substr($response->body(), 0, 300));
+                Log::warning("Groq vision returned [{$response->status()}]: ".substr($response->body(), 0, 300));
             }
         } catch (Throwable $e) {
-            Log::warning("Groq vision exception: " . $e->getMessage());
+            Log::warning('Groq vision exception: '.$e->getMessage());
         }
 
         return null;
@@ -222,7 +228,7 @@ PROMPT;
                 }
             }
         } catch (Throwable $e) {
-            Log::warning("OCR.space exception: " . $e->getMessage());
+            Log::warning('OCR.space exception: '.$e->getMessage());
         }
 
         return null;
@@ -312,4 +318,3 @@ PROMPT;
         );
     }
 }
-

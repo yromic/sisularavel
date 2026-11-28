@@ -80,4 +80,16 @@ class BackupRun extends Model
             'completed_at' => now(),
         ]);
     }
+
+    /**
+     * Get duration of backup run in seconds.
+     */
+    public function getDurationSecondsAttribute(): ?int
+    {
+        if (! $this->started_at || ! $this->completed_at) {
+            return null;
+        }
+
+        return max(0, $this->started_at->diffInSeconds($this->completed_at));
+    }
 }

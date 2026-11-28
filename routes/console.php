@@ -21,14 +21,21 @@ Artisan::command('inspire', function () {
 Schedule::command('sisurat:backup --type=full --upload --trigger=scheduled')
     ->dailyAt('02:00')
     ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/backup.log'));
+    ->sendOutputTo(storage_path('logs/backup-last.log'));
 
 // 2. Daily rolling retention pruning (Grandfather-Father-Son rotation) at 03:00 WIB
 Schedule::command('sisurat:backup:prune')
     ->dailyAt('03:00')
     ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/backup.log'));
+    ->sendOutputTo(storage_path('logs/backup-last.log'));
 
 // 3. Hourly maintenance pruning of expired idempotency keys
 Schedule::command('sisurat:prune-idempotency')
-    ->hourly();
+    ->hourly()
+    ->withoutOverlapping();
+
+// 4. Hourly progressive sync of attachments to Google Drive
+Schedule::command('sisurat:sync-drive-files --chunk=50 --max-chunks=5')
+    ->hourly()
+    ->withoutOverlapping()
+    ->sendOutputTo(storage_path('logs/backup-last.log'));

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\Backup\AttachmentDriveSyncService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class SyncDriveFilesCommand extends Command
 {
@@ -14,7 +15,8 @@ class SyncDriveFilesCommand extends Command
      */
     protected $signature = 'sisurat:sync-drive-files 
                             {--chunk=50 : Number of files to sync per batch}
-                            {--max-chunks=10 : Maximum number of batches to run}';
+                            {--max-chunks=10 : Maximum number of batches to run}
+                            {--retry-missing : Also re-evaluate attachments previously flagged as missing}';
 
     /**
      * The console command description.
@@ -41,8 +43,9 @@ class SyncDriveFilesCommand extends Command
 
         $chunk = (int) $this->option('chunk');
         $maxChunks = (int) $this->option('max-chunks');
+        $retryMissing = (bool) $this->option('retry-missing');
 
-        $result = $syncService->syncAll($chunk, $maxChunks);
+        $result = $syncService->syncAll($chunk, $maxChunks, $retryMissing);
 
         if ($result['status'] === 'skipped') {
             $this->warn("Sinkronisasi dilewati: {$result['reason']}");
@@ -53,6 +56,11 @@ class SyncDriveFilesCommand extends Command
         $this->info("Sinkronisasi selesai! Berhasil: {$result['synced']}, Gagal: {$result['failed']}, Dilewati: {$result['skipped']}");
 
         if (! empty($result['errors'])) {
+            Log::error('SyncDriveFilesCommand: Encountered errors during file sync.', [
+                'failed_count' => $result['failed'],
+                'errors' => $result['errors'],
+            ]);
+
             $this->warn('Beberapa galat ditemukan saat proses:');
             foreach ($result['errors'] as $err) {
                 $this->error(" - {$err}");

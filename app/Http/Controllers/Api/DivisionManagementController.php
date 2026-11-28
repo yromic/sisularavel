@@ -8,6 +8,7 @@ use App\Models\IncomingLetter;
 use App\Models\OutgoingLetter;
 use App\Models\Piagam;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -103,7 +104,7 @@ class DivisionManagementController extends Controller
             $request->session()->forget('active_division_id');
         }
 
-        \Illuminate\Support\Facades\Cache::forget('active_divisions_dropdown');
+        Cache::forget('active_divisions_dropdown');
 
         if (! $request->expectsJson()) {
             return redirect('/master/divisi')->with('success', "Divisi {$division->code} berhasil dihapus permanen.");

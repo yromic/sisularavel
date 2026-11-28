@@ -65,7 +65,7 @@ class DummyLetterSeeder extends Seeder
 
         foreach ($incomingLetters as $data) {
             $division = $divisions->get($data['division_code']) ?? $divisions->first();
-            if (!$division) {
+            if (! $division) {
                 continue;
             }
 
@@ -133,7 +133,7 @@ class DummyLetterSeeder extends Seeder
 
         foreach ($outgoingLetters as $data) {
             $division = $divisions->get($data['division_code']) ?? $divisions->first();
-            if (!$division) {
+            if (! $division) {
                 continue;
             }
 

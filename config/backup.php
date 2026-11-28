@@ -22,6 +22,9 @@ return [
         'key' => env('BACKUP_ENCRYPTION_KEY'),
     ],
 
+    // Shared-hosting account storage quota in megabytes (cPanel limit, default 4096 MB = 4 GB)
+    'hosting_quota_mb' => (int) env('HOSTING_STORAGE_QUOTA_MB', 4096),
+
     // Storage capacity thresholds (Section 10.4 of docs/backup.md)
     'thresholds' => [
         // Disk usage warning threshold (in percent, e.g. 75%)

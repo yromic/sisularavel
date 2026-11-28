@@ -20,9 +20,58 @@ class AttachmentDriveSyncService
     ) {}
 
     /**
+     * Resolve the absolute path of the attachment on local storage disks with fallbacks.
+     */
+    public function resolveLocalFilePath(Attachment $attachment): ?string
+    {
+        $filePath = $attachment->file_path;
+        if (! $filePath) {
+            return null;
+        }
+
+        $diskName = $attachment->attachable_type === Piagam::class
+            ? 'private_signatures'
+            : AttachmentStorageService::DISK;
+
+        $disk = Storage::disk($diskName);
+
+        // 1. Direct path check on designated disk
+        if ($disk->exists($filePath)) {
+            $path = $disk->path($filePath);
+            if (File::exists($path)) {
+                return $path;
+            }
+        }
+
+        // 2. Fallback: Strip prefix 'documents/' or 'signatures/' (BUG-012 compatibility)
+        $stripped = preg_replace('/^(documents|signatures)\//', '', $filePath);
+        if ($stripped && $stripped !== $filePath && $disk->exists($stripped)) {
+            $path = $disk->path($stripped);
+            if (File::exists($path)) {
+                return $path;
+            }
+        }
+
+        // 3. Fallback: Check inside private storage root
+        $privatePath = storage_path('app/private/'.ltrim($filePath, '/\\'));
+        if (File::exists($privatePath)) {
+            return $privatePath;
+        }
+
+        // 4. Fallback: Prefix with documents or signatures inside private storage root
+        $prefix = $attachment->attachable_type === Piagam::class ? 'signatures/' : 'documents/';
+        $prefixedPath = storage_path('app/private/'.$prefix.ltrim($stripped ?: $filePath, '/\\'));
+        if (File::exists($prefixedPath)) {
+            return $prefixedPath;
+        }
+
+        return null;
+    }
+
+    /**
      * Synchronize a batch of un-synced attachments to Google Drive.
      */
-    public function syncBatch(int $limit = 50): array
+    public function syncBatch(int $limit = 50, bool $retryMissing = false): array
     {
         if (! $this->googleDrive->isConfigured()) {
             return [
@@ -37,10 +86,13 @@ class AttachmentDriveSyncService
         $query = Attachment::query()
             ->with('attachable')
             ->whereNull('google_drive_view_url')
-            ->where('is_missing', false)
             ->whereNotNull('file_path')
             ->orderBy('id')
             ->limit($limit);
+
+        if (! $retryMissing) {
+            $query->where('is_missing', false);
+        }
 
         $attachments = $query->get();
 
@@ -50,20 +102,11 @@ class AttachmentDriveSyncService
         $errors = [];
 
         foreach ($attachments as $attachment) {
-            $diskName = $attachment->attachable_type === Piagam::class
-                ? 'private_signatures'
-                : AttachmentStorageService::DISK;
+            $localPath = $this->resolveLocalFilePath($attachment);
 
-            if (! Storage::disk($diskName)->exists($attachment->file_path)) {
+            if (! $localPath) {
                 $skipped++;
                 Log::warning("DriveSync: Local file missing for attachment ID {$attachment->id} ({$attachment->file_path}).");
-
-                continue;
-            }
-
-            $localPath = Storage::disk($diskName)->path($attachment->file_path);
-            if (! File::exists($localPath)) {
-                $skipped++;
 
                 continue;
             }
@@ -82,11 +125,19 @@ class AttachmentDriveSyncService
                     true
                 );
 
-                $attachment->update([
+                $updateData = [
                     'google_drive_file_id' => $result['file_id'],
                     'google_drive_view_url' => $result['view_url'],
                     'google_drive_synced_at' => now(),
-                ]);
+                ];
+
+                if ($attachment->is_missing) {
+                    $updateData['is_missing'] = false;
+                    $updateData['missing_reason'] = null;
+                    $updateData['migration_status'] = 'migrated';
+                }
+
+                $attachment->update($updateData);
 
                 $synced++;
             } catch (Throwable $e) {
@@ -109,7 +160,7 @@ class AttachmentDriveSyncService
     /**
      * Synchronize all pending attachments to Google Drive in progressive chunks.
      */
-    public function syncAll(int $chunkSize = 50, int $maxChunks = 20): array
+    public function syncAll(int $chunkSize = 50, int $maxChunks = 20, bool $retryMissing = false): array
     {
         $totalSynced = 0;
         $totalFailed = 0;
@@ -117,7 +168,7 @@ class AttachmentDriveSyncService
         $allErrors = [];
 
         for ($i = 0; $i < $maxChunks; $i++) {
-            $batch = $this->syncBatch($chunkSize);
+            $batch = $this->syncBatch($chunkSize, $retryMissing);
 
             if ($batch['status'] === 'skipped') {
                 return $batch;

@@ -144,4 +144,3 @@ class DocumentOcrExtractionTest extends TestCase
             ->assertSee('Layanan pemindai AI sedang sibuk');
     }
 }
-

@@ -253,15 +253,15 @@
                 <div class="mt-4 space-y-2 text-xs">
                     <div class="flex items-center justify-between text-slate-600">
                         <span>Cadangan Harian:</span>
-                        <strong class="text-slate-800">7 hari terakhir</strong>
+                        <strong class="text-slate-800">{{ config('backup.retention.keep_daily_days', 2) }} hari terakhir</strong>
                     </div>
                     <div class="flex items-center justify-between text-slate-600">
                         <span>Cadangan Mingguan:</span>
-                        <strong class="text-slate-800">4 minggu terakhir</strong>
+                        <strong class="text-slate-800">{{ config('backup.retention.keep_weekly_weeks', 1) }} minggu terakhir</strong>
                     </div>
                     <div class="flex items-center justify-between text-slate-600">
                         <span>Cadangan Bulanan:</span>
-                        <strong class="text-slate-800">12 bulan terakhir</strong>
+                        <strong class="text-slate-800">{{ config('backup.retention.keep_monthly_months', 0) > 0 ? config('backup.retention.keep_monthly_months') . ' bulan terakhir' : 'Tidak aktif' }}</strong>
                     </div>
                 </div>
 
@@ -322,7 +322,7 @@
                                             {{ $run->type === 'full' ? 'Lengkap' : ($run->type === 'database' ? 'Data saja' : 'Berkas saja') }}
                                         </span>
                                         <span class="text-xs text-slate-500">
-                                            {{ $run->trigger_type === 'scheduled' ? 'Otomatis' : 'Manual' }}
+                                            {{ $run->trigger === 'scheduled' ? 'Otomatis' : 'Manual' }}
                                         </span>
                                     </div>
                                     @if ($run->requestedBy)
@@ -345,9 +345,8 @@
                                     <div class="text-xs font-bold text-slate-900">
                                         {{ $run->archive_size_bytes ? round($run->archive_size_bytes / (1024 * 1024), 2) . ' MB' : '-' }}
                                     </div>
-                                    <div class="text-[10px] text-slate-400">
-                                        Data: {{ $run->database_size_bytes ? round($run->database_size_bytes / 1024, 1) . ' KB' : '0' }} ·
-                                        Berkas: {{ $run->files_size_bytes ? round($run->files_size_bytes / 1024, 1) . ' KB' : '0' }}
+                                    <div class="text-[10px] text-slate-500">
+                                        {{ number_format($run->files_count ?? 0) }} berkas terarsip
                                     </div>
                                 </td>
 
